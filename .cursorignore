@@ -1,0 +1,5 @@
+# Ignore Build and other generated files
+Binaries/
+Intermediate/
+DerivedDataCache/
+Saved/
