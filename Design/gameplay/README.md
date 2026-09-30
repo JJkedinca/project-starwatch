@@ -56,7 +56,7 @@ The player:
 
 ### Rewind layer
 
-The player has a limited number of timeline attempts. Five rewinds are the current design target.
+The player has five timeline attempts: Rewind 0 through Rewind 4.
 
 A rewind resets the current empire state but preserves selected forms of progression:
 
@@ -70,16 +70,89 @@ A rewind resets the current empire state but preserves selected forms of progres
 
 The player should carry forward knowledge and access to tools, not a complete finished empire.
 
+Players may voluntarily rewind whenever they want as a convenience. This consumes the current attempt and ends the timeline, so choosing to rewind early means giving up the chance to discover more information or extract additional intel from that timeline. Defeat also ends the timeline.
+
+Discoveries are recorded immediately when observed. The player does not need to survive a timeline for its knowledge to enter the archive.
+
+Related brainstorming for mid-campaign obstacles and discovery-as-optimization lives in [additional-ideas.md](additional-ideas.md). Post-run persistence is outlined in [post-run-progression.md](post-run-progression.md). Multiplayer structure is outlined in [multiplayer-plan.md](multiplayer-plan.md).
+
+Detailed system design:
+
+- [Universe and Travel](universe-and-travel.md)
+- [Planets and Economy](planets-and-economy.md)
+- [Fleet Combat](fleet-combat.md)
+- [Politics and Diplomacy](politics-and-diplomacy.md)
+- [Roguelike Systems](roguelike-systems.md)
+- [Invasion and Sabotage](invasion-and-sabotage.md)
+
+### Campaign milestones
+
+These are the intended learning targets across the five attempts. They are soft gates, not hard scripted locks.
+
+Skilled players can push as far as their preparation allows in any timeline. In practice, early attempts should still usually fail at the expected beat because the player lacks intel, unlocks, and empire tools — not because the game forcibly stops them.
+
+| Attempt | Target outcome | What the player should learn / unlock |
+| --- | --- | --- |
+| **Rewind 0** | Destroyed by neighboring hostile aliens (not the invasion force) | Local map geography, nearby threats, basic expansion and fleet building. The invasion is still mostly rumor or distant signal. |
+| **Rewind 1** | Push past the initial surroundings; encounter an invasion scout fleet and lose | How to clear or manage local hostiles. First contact with the real enemy. Key intel from the scout fight (composition, weapons, origin vector, or a recoverable wreck/sample). |
+| **Rewind 2** | Defeat the scout fleet and expand further | Scout counter-tech or doctrine. Secure a wider empire footprint, resources, and alliances needed for the mid game. |
+| **Rewind 3** | Reach the main invasion fleet; lose, but uncover critical intel | Main fleet scale, timing, weaknesses, and what a winning defense plan requires. |
+| **Rewind 4** | Beat the game | Execute the accumulated plan: right tech, right fleets, right systems held, invasion defeated. |
+
+Important distinctions:
+
+- **Neighboring hostiles** are local factions or raiders. They teach the early map and create the first "you are not ready" failure without revealing the full invasion.
+- **Invasion scouts** are the first true contact with the invaders. Losing to them should feel informative, not unfair once the player understands Rewind 0.
+- **The main fleet** is the campaign climax threat. Rewind 3 is allowed — and expected — to end in defeat if it yields the information needed to win Rewind 4.
+- Soft-gate pacing comes from missing knowledge and tools, not from blocking content. A great Rewind 1 run might beat the scouts early; it still probably cannot solve the main fleet.
+
 ### Final attempt
 
-The final successful attempt should feel like the result of accumulated understanding:
+Rewind 4 should feel like the result of accumulated understanding:
 
 - The player knows which systems matter.
-- The player understands the invasion's timing.
-- The required technologies are available.
-- The correct factions or resources can be secured.
+- Local hostiles are manageable instead of run-ending.
+- Scout fleets can be beaten with prepared counters.
+- The player understands the main fleet's timing and weaknesses.
+- The required technologies, resources, and allies are available.
 - The player can field the right fleets in the right places.
-- The player still needs to execute the plan successfully.
+- The player launches and completes the final offensive successfully.
+
+### Final offensive
+
+The game should culminate in a final operation that takes the fight to the invaders. This is not a separate action-game boss mode; it is the largest and most consequential 4X operation in the campaign.
+
+The player must use the accumulated plan to:
+
+- Assemble and position the final fleet.
+- Secure a route or staging area into enemy territory.
+- Apply discovered countermeasures, sabotage points, allies, and resource synergies.
+- Survive or win the decisive auto-resolving fleet engagements.
+- Destroy the invasion's command structure, relay network, or other final objective.
+
+The final operation may contain several connected engagements and strategic decisions rather than one isolated battle. Earlier discoveries should make it more efficient and more winnable, but the player still needs to execute the plan during Rewind 4.
+
+### General pacing guidance
+
+The initial campaign target is approximately six to eight hours across Rewinds 0–4. This is guidance for the overall feel, not a fixed schedule or a requirement that every player spend the same amount of time in each timeline.
+
+Earlier timelines should generally be shorter because the player has less territory to manage and reaches an expected failure quickly. Later timelines should generally be longer because the player has more options, discoveries, alliances, and preparation to execute:
+
+- **Rewind 0:** approximately 30–60 minutes.
+- **Rewind 1:** approximately 60–90 minutes.
+- **Rewind 2:** approximately 75–105 minutes.
+- **Rewind 3:** approximately 90–120 minutes.
+- **Rewind 4:** approximately 2–3 hours.
+
+These ranges are soft. Skilled players can advance further or win earlier, while struggling players may need more time or additional attempts. The game should not hold content back to preserve the intended order.
+
+A compressed 4X layer should come online quickly:
+
+- The player makes an initial exploration or expansion decision within the first 15 minutes.
+- A discovery, research result, or diplomatic contact changes the plan within the first 30 minutes.
+- The player faces a meaningful strategic conflict by roughly the first hour.
+
+Prioritize decision density over elapsed time. Travel, research, and resource generation should create anticipation, not long periods where the player has nothing important to decide.
 
 ## The Three Progression Layers
 
@@ -137,7 +210,7 @@ The relationship should be:
 
 The empire / 4X layer is the core of the game. Most of the player's time and skill expression should live here.
 
-The scope can still be tighter than a full Stellaris campaign so that a timeline remains readable and rewindable, but the systems should feel like real 4X play: exploring, claiming systems, researching, managing factions, building fleets, and racing an escalation clock.
+The scope can still be tighter than a full Stellaris campaign so that a timeline remains readable and rewindable, but the systems should feel like real 4X play: exploring, claiming systems, researching, managing factions, building fleets, and racing an escalation clock. The empire simulation runs continuously, with pause and speed controls available so the player can manage decisions without waiting or losing control.
 
 The player should make meaningful decisions about:
 
@@ -197,17 +270,19 @@ The fantasy is:
 
 ## Invasion Structure
 
-The invasion should create an unavoidable escalation clock.
+The invasion should create an unavoidable escalation clock, but it is not the only military threat.
 
-Possible phases include:
+Early timelines should also feature **neighboring hostile aliens** — local powers distinct from the invaders. They are the intended Rewind 0 failure and remain a pressure the player must solve before focusing fully on the invasion.
+
+Possible invasion phases include:
 
 1. Strange signals and unexplained anomalies.
 2. Alien probes and reconnaissance.
-3. Sabotage and small incursions.
-4. Coordinated attacks on frontier systems.
-5. Major invasion fleets.
-6. Multi-front collapse.
-7. Final offensive.
+3. Scout fleets (intended major contact around Rewind 1–2).
+4. Sabotage and small incursions.
+5. Coordinated attacks on frontier systems.
+6. Main invasion fleet (intended major contact around Rewind 3–4).
+7. Multi-front collapse or final offensive if the main fleet is not stopped.
 
 The player may delay, redirect, or weaken the invasion, but cannot ignore it forever.
 
@@ -267,11 +342,11 @@ Counterplay should come from matching preparation to discovered alien weaknesses
 
 ## Learning Through Failure
 
-Every failed timeline should reveal something meaningful.
+Every failed timeline should reveal something meaningful, ideally matching the campaign milestone for that rewind.
 
 Good failure:
 
-> The northern colony fell because the player did not secure the relay before the second invasion wave.
+> Rewind 1: the scout fleet destroyed the forward colony, but wreck analysis unlocked a countermeasure research branch.
 
 Bad failure:
 
@@ -281,6 +356,7 @@ The game should record:
 
 - What caused the loss.
 - What new information was discovered.
+- Which milestone knowledge was gained (local map, scout intel, main fleet intel).
 - Which objectives were completed.
 - Which alien ship types and technologies were observed.
 - Which new research or fleet options became available.
@@ -337,13 +413,12 @@ Final art, faction identity, and detailed visual presentation can be developed a
 
 ## Open Questions
 
-- What exactly causes a rewind: defeat, a voluntary reset, or a timeline resource?
-- Are there exactly five timelines, or is five the initial campaign target?
+- Are neighboring hostiles a fixed faction, randomized local powers, or both?
 - Which empire actions should resolve abstractly versus through visible fleet battles?
 - What information should be deterministic between timelines?
-- How much of the invasion plan should be discoverable in each attempt?
 - What types of permanent power should carry across timelines?
-- Should the player choose one of several viable defense plans?
+- Should the player choose one of several viable defense plans for Rewind 4?
+- What exactly is the final objective of the offensive: command structure, relay network, invasion fleet, or another target?
 - How many discovery synergy families does a campaign need to feel expressive?
 - Which discoveries are fixed on the map versus randomized per timeline?
 - How much combat detail should the player see: full visual fight, summary screen, or both?
