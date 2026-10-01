@@ -79,6 +79,7 @@ Related brainstorming for mid-campaign obstacles and discovery-as-optimization l
 Detailed system design:
 
 - [Universe and Travel](universe-and-travel.md)
+- [Star Systems](star-systems.md)
 - [Planets and Economy](planets-and-economy.md)
 - [Fleet Combat](fleet-combat.md)
 - [Politics and Diplomacy](politics-and-diplomacy.md)
@@ -125,10 +126,10 @@ The game should culminate in a final operation that takes the fight to the invad
 The player must use the accumulated plan to:
 
 - Assemble and position the final fleet.
-- Secure a route or staging area into enemy territory.
+- Secure the approach route and a suitable staging area.
 - Apply discovered countermeasures, sabotage points, allies, and resource synergies.
 - Survive or win the decisive auto-resolving fleet engagements.
-- Destroy the invasion's command structure, relay network, or other final objective.
+- Destroy or decisively cripple the main invasion fleet.
 
 The final operation may contain several connected engagements and strategic decisions rather than one isolated battle. Earlier discoveries should make it more efficient and more winnable, but the player still needs to execute the plan during Rewind 4.
 
@@ -282,11 +283,11 @@ Possible invasion phases include:
 4. Sabotage and small incursions.
 5. Coordinated attacks on frontier systems.
 6. Main invasion fleet (intended major contact around Rewind 3–4).
-7. Multi-front collapse or final offensive if the main fleet is not stopped.
+7. Multi-front collapse or final offensive to stop the main fleet.
 
 The player may delay, redirect, or weaken the invasion, but cannot ignore it forever.
 
-The major invasion events should be consistent enough to learn between timelines. Smaller skirmishes and minor enemy fleet compositions can remain variable.
+The generated major invasion events should remain consistent across timelines within the same run so the player can learn and exploit them. A new run can randomize their identities, locations, and exact compositions while preserving the same escalation rules. Smaller skirmishes and minor enemy fleet compositions can vary more freely.
 
 ## Fleet Combat
 
@@ -418,9 +419,9 @@ Final art, faction identity, and detailed visual presentation can be developed a
 - What information should be deterministic between timelines?
 - What types of permanent power should carry across timelines?
 - Should the player choose one of several viable defense plans for Rewind 4?
-- What exactly is the final objective of the offensive: command structure, relay network, invasion fleet, or another target?
+- What final fleet composition and support conditions make the main invasion fleet a satisfying endgame target?
 - How many discovery synergy families does a campaign need to feel expressive?
-- Which discoveries are fixed on the map versus randomized per timeline?
+- Which generation rules guarantee varied but solvable map and discovery setups?
 - How much combat detail should the player see: full visual fight, summary screen, or both?
 - Can the player issue any orders during a battle beyond retreat?
 - How should ship design depth compare to Stellaris without becoming a full ship designer?

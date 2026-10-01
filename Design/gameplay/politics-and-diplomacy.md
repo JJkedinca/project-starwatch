@@ -198,7 +198,7 @@ The design should avoid hidden player-versus-player betrayal in the cooperative 
 ## Open Questions
 
 - How many active factions can the map support before diplomacy becomes noisy?
-- Are faction motives fully authored, procedurally generated, or hybrid?
+- Which procedural constraints ensure faction motives and relationships remain readable and fair?
 - How much internal politics belongs in the first playable version?
 - Can players transfer territory, or only access and resources?
 - How are treaties represented and enforced?

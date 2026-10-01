@@ -209,10 +209,10 @@ An allied fleet may contribute to a battle without transferring permanent owners
 The final offensive should be a sequence of strategically connected fleet operations:
 
 - Assemble the required fleet and supplies.
-- Secure or create a route into enemy territory.
+- Secure the approach route and a suitable staging area.
 - Disable relays or defenses.
 - Survive the main enemy fleet.
-- Reach and destroy the command structure or final objective.
+- Destroy or decisively cripple the main invasion fleet.
 
 Earlier discoveries should make this operation more efficient, but the player still needs enough timeline power to execute the plan.
 

@@ -115,6 +115,36 @@ Examples:
 
 The player should not be able to force the same combo every run. The available map, resources, factions, and threats determine which combinations are practical.
 
+## Rule-Bending Technologies and Artifacts
+
+Some technologies, relics, and artifacts should give the player powerful features that bend or temporarily rewrite normal system rules. These are a major source of agency and should let players build a run around an unusual opportunity.
+
+Examples:
+
+- **Escape Drive:** Temporarily bypass the corridor graph at extreme cost.
+- **Relay Hijacker:** Convert an enemy relay into a temporary player route.
+- **Diplomatic Translator:** Establish contact with a species without conquering its border.
+- **Ancient Forge:** Produce one advanced ship class without its normal industrial chain.
+- **Invasion Scrambler:** Delay or redirect one invasion wave.
+- **Gravitic Weapon:** Defeat a defense that would otherwise require an entire research branch.
+
+These effects should be powerful rather than perfectly efficient. They are balanced through constraints:
+
+- Narrow use cases.
+- Significant resource, research, or political costs.
+- Fleet damage, casualties, instability, or other risks.
+- Limited uses, cooldowns, or recovery periods.
+- Opportunity costs within the current timeline.
+- Clear discovery requirements and counterplay.
+
+Rule-bending effects should not permanently change the generated map or erase the broader strategic problem. They create temporary exceptions, alternate solutions, or new routes through a problem while preserving the rest of the game.
+
+The player should be able to recognize a potential power fantasy and commit to it:
+
+> This changes what is possible. I can build the rest of this run around it.
+
+Not every artifact needs to be equally valuable. Its value depends on the current map, resources, factions, enemy behavior, and the player's chosen plan. Missing one component should encourage a pivot rather than make the timeline unwinnable.
+
 ## Knowledge and Uncertainty
 
 The player should gradually move from:
@@ -131,27 +161,29 @@ Knowledge should always change a future decision. A discovery that only adds fla
 
 ## Run Variation
 
-Major campaign structure should remain learnable while local conditions vary.
+The campaign is generated from authored content pools and strict scenario rules. Major content is not fixed to one map or one run.
 
-Potentially fixed:
+Stable rules should define:
 
-- Major invasion beats.
-- Key systems and final objective.
-- Major relic families.
-- Main faction identities.
-- Core enemy technology.
+- Number and approximate size of important systems.
+- Route connectivity and expansion requirements.
+- Number and tiers of relics, factions, sabotage events, and objectives.
+- Timeline windows for scouts, main fleets, and the final offensive.
+- Required clues, counters, and recovery paths.
+- Minimum conditions that guarantee a solvable defense plan.
 
-Potentially variable:
+The run generator determines:
 
-- Resource deposits.
-- Minor factions.
-- Local hostility.
-- Secondary routes.
-- Minor enemy compositions.
-- Which optional relics appear.
-- Which diplomatic opportunities are available.
+- Map topology and important routes.
+- Which systems receive special roles.
+- Resource deposits and production sites.
+- Which relics and blueprints appear.
+- Faction identities, locations, and starting attitudes.
+- Invasion wormhole location and fleet compositions.
+- Sabotage events and their targets.
+- The final objective and the enemy's vulnerable structure.
 
-The desired result is a player who understands the system well enough to optimize but must still analyze the current setup.
+The desired result is a player who understands the rules and content pool well enough to optimize, but must still analyze the current setup rather than follow one solved checklist.
 
 ## Failure and Rewards
 
@@ -186,8 +218,7 @@ The final timeline should culminate in a multi-stage operation:
 - Secure the required resources and allies.
 - Position fleets and staging bases.
 - Disable relays or sabotage points.
-- Break through the main invasion force.
-- Destroy the enemy command structure or final objective.
+- Intercept and defeat or decisively cripple the main invasion fleet.
 
 The final offensive should test execution, not merely check whether the player found the correct answer.
 
@@ -195,8 +226,8 @@ The final offensive should test execution, not merely check whether the player f
 
 - What exact knowledge persists between separate runs?
 - Are five timelines always available, or can post-run modifiers change the count?
-- How much randomness can the campaign support without undermining learning?
+- How much scenario variation can the campaign support without undermining learning?
 - Which discoveries grant immediate run unlocks versus only archive knowledge?
 - Can a run be won before Rewind 4?
-- What is the exact final objective?
+- What fleet composition, support network, and conditions make defeating the main fleet a satisfying final objective?
 - How are partial discoveries and uncertain hypotheses represented?

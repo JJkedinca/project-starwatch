@@ -179,15 +179,14 @@ Shared intelligence should reveal known sabotage patterns to all players. Cooper
 
 ## Final Offensive
 
-The invasion should have a vulnerable strategic structure that can be learned over multiple timelines.
+The main invasion fleet should have a vulnerable strategic structure that can be learned over multiple timelines. The initial game's final objective is to intercept and destroy or decisively cripple that fleet.
 
-Possible final objectives include:
+The final operation may also involve supporting objectives:
 
-- Destroying a command structure.
 - Collapsing a relay network.
 - Breaking a supply or reinforcement route.
-- Defeating the main invasion fleet.
-- Reaching the invaders' staging world.
+- Disabling a defense or staging system.
+- Protecting the approach route.
 
 The final offensive should combine fleet power, discovered weaknesses, route knowledge, diplomacy, and logistics. It should be possible to win through more than one defense plan, even if some plans are more efficient.
 
@@ -196,9 +195,9 @@ The final offensive should combine fleet power, discovered weaknesses, route kno
 - What is the invaders' ultimate goal?
 - How much information does the enemy begin with?
 - How large should the sabotage event pool be?
-- Which sabotage events are fixed campaign beats versus random selections?
+- Which sabotage slots are required by the escalation rules, and which event identities can be randomized?
 - How are warnings communicated without making every crisis obvious?
 - Can the player permanently eliminate an enemy capability?
 - How much should the invasion adapt to repeated player strategies?
 - Can local hostile factions be recruited or manipulated by the invaders?
-- What final objective best represents defeating the invasion?
+- What support objectives make the main fleet battle feel like a strategic operation rather than one isolated engagement?

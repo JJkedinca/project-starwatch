@@ -10,6 +10,8 @@ The intended approach is strategic abstraction:
 - Populations are represented by broad groups, needs, identities, and political interests.
 - The economy creates tradeoffs and dependencies that support run-specific synergies.
 
+System-level procedural generation is defined in [star-systems.md](star-systems.md). This document focuses on how generated planets, populations, infrastructure, and resources function during a timeline.
+
 ## Planet Model
 
 Each important planet or colony can be described by:

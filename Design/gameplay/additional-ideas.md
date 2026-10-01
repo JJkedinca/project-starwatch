@@ -232,6 +232,20 @@ Possible payoffs:
 - It happens from a pool - so you don't know which one it is 
 - Can be prepared for, but each event requires specific prevention mechanics that are hard to know.
 
+## Future Expansion: Enemy Endgame Area
+
+The core game should end when the coalition defeats or decisively cripples the main invasion fleet. The player does not need to invade the enemy's home territory to complete the initial six-to-eight-hour campaign.
+
+An enemy endgame area could become a later expansion, higher-difficulty objective, or optional post-victory operation. It might introduce:
+
+- Enemy territory beyond the invasion front.
+- A larger strategic map and new travel rules.
+- Enemy command worlds, shipyards, and relay networks.
+- New resources, relics, and sabotage opportunities.
+- A second campaign arc with additional time pressure or rewinds.
+
+This should remain separate from the initial victory condition. Defeating the main fleet should feel like a complete and satisfying win, while pursuing the enemy endgame area can provide a further challenge for players who want it.
+
 ## How These Fit the Rewind Spine
 
 | Spine beat | How extra obstacles help |
