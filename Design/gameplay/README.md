@@ -80,7 +80,8 @@ Detailed system design:
 
 - [Universe and Travel](universe-and-travel.md)
 - [Star Systems](star-systems.md)
-- [Planets and Economy](planets-and-economy.md)
+- [Planets and Settlement](planets-and-economy.md)
+- [Economy](economy.md)
 - [Fleet Combat](fleet-combat.md)
 - [Politics and Diplomacy](politics-and-diplomacy.md)
 - [Roguelike Systems](roguelike-systems.md)
