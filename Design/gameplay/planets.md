@@ -1,4 +1,4 @@
-# Planets and Settlement
+# Planets
 
 ## Role in the Game
 
@@ -10,7 +10,7 @@ The intended approach is strategic abstraction:
 - Planet archetypes create strong specializations and opportunity costs.
 - Settlement and development can reveal local challenges.
 
-System-level procedural generation is defined in [star-systems.md](star-systems.md). Economy, production, populations, logistics, and trade are defined in [economy.md](economy.md). This document focuses on planet identity, settlement, exploration commitment, and local challenges during a timeline.
+System-level procedural generation is defined in [star-systems.md](star-systems.md). Economy, production, populations, logistics, and trade are defined in [economy-and-building.md](economy-and-building.md). This document focuses on planet identity, settlement, exploration commitment, and local challenges during a timeline.
 
 ## Planet Model
 
@@ -201,6 +201,6 @@ A planet should usually have a reason to exist beyond producing generic income. 
 
 ## Related Economy Design
 
-Economy, infrastructure, resources, production, populations, stability, logistics, trade, and economic discovery synergies now live in [economy.md](economy.md).
+Economy, infrastructure, resources, production, populations, stability, logistics, trade, and economic discovery synergies now live in [economy-and-building.md](economy-and-building.md).
 
 Planet design still determines which economic roles and infrastructure are effective, but the economy document defines how those outputs function across the empire.

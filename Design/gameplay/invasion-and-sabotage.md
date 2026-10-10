@@ -80,6 +80,37 @@ Possible sabotage categories include:
 
 Each event should have specific prevention or mitigation mechanics that are difficult to know initially but discoverable through clues, scouting, diplomacy, research, or failure.
 
+## The Alien-Aligned Underground
+
+The invaders are supported by an underground movement within settled space that welcomes, assists, or worships the alien overlords. This is not a conventional diplomatic faction and should not create a separate internal-politics simulation. It is an invasion pressure system represented by organized local cells.
+
+The player-facing model should use:
+
+- An empire-level **subversion pressure** meter.
+- Local cells or hotspots that determine where incidents occur.
+- Clues and investigations that reveal what a cell is trying to accomplish.
+
+Subversion pressure can rise through:
+
+- Major military defeats or abandoned colonies.
+- Shortages, poor colony stability, or visible overextension.
+- Alien propaganda, contact, or cultural influence.
+- Enemy victories nearby.
+- Repeatedly exposing the same strategic weakness.
+
+At increasing pressure levels, the underground may cause:
+
+- Reduced output or delayed construction.
+- Intelligence leaks and false sensor reports.
+- Research, shipyard, or logistics sabotage.
+- Unrest during settlement or expansion.
+- Coordinated attacks on infrastructure.
+- Assistance to the invasion during a major offensive.
+
+Subversion should remain distinct from colony stability. Stability describes whether a colony can function; subversion describes whether an organized movement is actively undermining the empire. Improving stability can reduce the conditions that fuel subversion, but it should not automatically eliminate an established cell.
+
+Counterplay may include counterintelligence, investigations, improved supply and stability, exposing the movement's connection to the invaders, and protecting likely targets. Investigating or surviving a cell should reveal useful information about enemy methods, future targets, infiltration routes, or sabotage weaknesses. A player may even tolerate a low-level cell temporarily to gain intelligence, accepting short-term damage for a long-term advantage.
+
 ## Fairness Rules
 
 Sabotage should be surprising but not arbitrary.
@@ -174,8 +205,9 @@ The invasion can:
 - Create a crisis that requires fleets from two empires.
 - Spread misinformation between allies.
 - Force one empire to choose between defending itself and supporting another.
+- Exploit a high-subversion empire as an entry point against shared infrastructure.
 
-Shared intelligence should reveal known sabotage patterns to all players. Cooperation comes from assigning responses and accepting opportunity costs.
+Each empire can have its own subversion pressure, while shared intelligence reveals known cells and sabotage patterns to all players. Cooperation comes from assigning counterintelligence, protecting exposed targets, and accepting opportunity costs.
 
 ## Final Offensive
 

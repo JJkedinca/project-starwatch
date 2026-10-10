@@ -142,30 +142,7 @@ Conquest should have costs:
 
 Diplomacy should often be the cheaper solution, but not always the safer or more reliable one.
 
-## Internal Politics
-
-Player empires should have broad internal factions or population interests rather than detailed political simulation.
-
-Internal groups may care about:
-
-- Security and military spending.
-- Research ethics.
-- Alien cooperation.
-- Resource distribution.
-- Autonomy and species rights.
-- Expansion and conquest.
-- Sacrificing frontier systems to save the core.
-
-The player can respond through:
-
-- Policy choices.
-- Investment.
-- Representation.
-- Emergency authority.
-- Concessions.
-- Propaganda or information control.
-
-Internal politics should make major decisions feel costly and personal without generating constant administrative interruptions.
+Internal empire pressure should remain an aggregate colony-stability system defined in [economy-and-building.md](economy-and-building.md), not a separate internal-politics simulation.
 
 ## Diplomacy as Optimization
 
@@ -199,7 +176,6 @@ The design should avoid hidden player-versus-player betrayal in the cooperative 
 
 - How many active factions can the map support before diplomacy becomes noisy?
 - Which procedural constraints ensure faction motives and relationships remain readable and fair?
-- How much internal politics belongs in the first playable version?
 - Can players transfer territory, or only access and resources?
 - How are treaties represented and enforced?
 - Can diplomacy redirect or delay the invasion?

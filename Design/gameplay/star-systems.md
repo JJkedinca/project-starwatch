@@ -8,7 +8,7 @@ The system sits between the map and the economy:
 
 - [universe-and-travel.md](universe-and-travel.md) defines the system's location, graph connections, routes, radar, and travel.
 - This document defines what is generated inside the system.
-- [planets-and-economy.md](planets-and-economy.md) defines how planets, populations, infrastructure, and resources function after generation.
+- [planets.md](planets.md) defines planet identity, settlement, and local challenges after generation. [economy-and-building.md](economy-and-building.md) defines populations, infrastructure, resources, and production.
 
 A system should be more than a collection of generic planets. It should have a recognizable strategic identity that changes how the player evaluates and uses it.
 
@@ -67,7 +67,7 @@ System archetypes are stable for the run. Player actions can change ownership, d
 
 ## Planet and Site Roles
 
-Planet and site roles belong to the local contents of a system and are defined in [planets-and-economy.md](planets-and-economy.md).
+Planet and site roles belong to the local contents of a system and are defined in [planets.md](planets.md).
 
 Possible roles include:
 
