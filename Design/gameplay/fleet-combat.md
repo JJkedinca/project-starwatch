@@ -357,6 +357,41 @@ Fleet power should come from combinations across the empire:
 
 These combinations should be strong enough to support a power fantasy while remaining conditional on the current timeline's resources and discoveries.
 
+## Fleet Composition and Synergy Builds
+
+Fleet power should come from more than raw statistics. Players should be able to create strong builds through three interacting sources:
+
+1. **Raw strength:** Hulls, weapons, armor, shields, technology, and fleet size.
+2. **Composition:** The relationship between screens, carriers, brawlers, snipers, strike craft, and support ships.
+3. **Synergy effects:** Class traits, relics, research, and discoveries that create conditional interactions.
+
+Synergy effects may resemble readable fantasy tactics or board-game mechanics while remaining automatic during combat:
+
+- **Bloodlust:** A kill temporarily reduces reload times or improves offensive output.
+- **Drain EMP:** Continuously drains nearby enemy shields or reduces their recharge.
+- **Taunt:** Causes nearby enemies to prioritize the taunting ship or fleet.
+- **Mark:** Causes a target to take increased damage from a specific class or weapon type.
+- **Momentum:** Destroying a ship temporarily improves speed, accuracy, or range.
+- **Shield transfer:** A support ship redirects shields from itself to nearby allies.
+- **Last stand:** A damaged ship becomes more effective or harder to destroy below a health threshold.
+- **Disruption field:** Slows nearby ships, increases retreat time, or reduces targeting accuracy.
+
+These effects should be clear, limited, and tied to a specific class, relic, technology, or discovery. Ordinary ship classes should remain readable, while rare classes and run-specific discoveries provide the most dramatic interactions.
+
+Strong builds should feel temporarily overpowered, but remain conditional on:
+
+- Specific discoveries, research, or relics.
+- Resource and production requirements.
+- A particular fleet composition.
+- Vulnerabilities and counter-builds.
+- The current run's map and available opportunities.
+
+The intended power fantasy is:
+
+> I found the right pieces, assembled them correctly, and created something much stronger than the individual parts suggest.
+
+Post-battle reports should help players understand which interactions caused a synergy build to succeed or fail.
+
 ## Multiplayer Fleet Operations
 
 Each player owns their fleets. Cooperation can happen through:

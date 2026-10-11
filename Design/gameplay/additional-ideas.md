@@ -163,6 +163,19 @@ The first timeline discovers the possibility. A later timeline turns it into an 
 - The first discovery should explain enough for the player to recognize its future value.
 - The archive should distinguish what was observed from what has been confirmed.
 
+## Ascension Difficulty: Reduced Research Persistence
+
+An optional post-run difficulty system could reduce how much research knowledge carries across rewinds. This increases execution difficulty without simply giving the enemy more health or adding mandatory rewinds.
+
+The player's archive should continue to remember observed facts, discovered weaknesses, blueprint locations, and research leads. Higher Ascension levels reduce the empire's mechanical ability to exploit that knowledge:
+
+- **Normal:** Revealed research branches and completed run-specific technologies remain known across rewinds.
+- **Higher Ascension:** Research branches remain known, but completed technologies require partial reactivation.
+- **Higher still:** Blueprints, prerequisites, and research leads persist, but most specialized technologies must be researched again.
+- **Extreme levels:** Core technologies remain available, while advanced or alien technologies require rediscovery or a full implementation project.
+
+The exact persistence rules should be tuned through playtesting. The goal is to make the player rebuild more of the technological foundation while preserving the satisfaction of having learned the scenario. This should be a shared run modifier in multiplayer so all empires face the same persistence rules.
+
 ## Mid-Campaign Obstacles
 
 These are optional failure modes and pressure systems for Rewinds 2–3 especially. They should not become Rewind 5 and 6.
@@ -245,6 +258,23 @@ An enemy endgame area could become a later expansion, higher-difficulty objectiv
 - A second campaign arc with additional time pressure or rewinds.
 
 This should remain separate from the initial victory condition. Defeating the main fleet should feel like a complete and satisfying win, while pursuing the enemy endgame area can provide a further challenge for players who want it.
+
+## Post-Victory Hook: The True Invasion
+
+After the player's first successful campaign, the game could reveal that the initial invasion was a predictive war simulation or preparation exercise based on incomplete data. Winning proves that the player can solve the modeled invasion, but the real invasion is stronger, less predictable, and operates under harsher rules.
+
+This should not mean that the first campaign was meaningless or that everything the player experienced was fake. The first victory remains a complete ending and a meaningful accomplishment. The reveal instead opens an optional post-game challenge:
+
+- The **True Invasion** or an equivalent high-Ascension campaign.
+- Stronger and more adaptive alien fleets.
+- Less research persistence between rewinds.
+- More hidden technologies and incomplete intelligence.
+- New invasion routes or enemy capabilities.
+- Greater strategic pressure and fewer safe assumptions.
+
+The actual invasion could represent a challenge around Ascension 10. The narrative gives higher Ascension levels a purpose beyond increasing enemy statistics: the player is moving from a controlled preparation scenario toward the real threat.
+
+This should remain a post-victory hook rather than a requirement for the initial campaign. It can become an optional mode, a later campaign arc, or an expansion objective.
 
 ## How These Fit the Rewind Spine
 

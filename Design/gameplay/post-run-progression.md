@@ -57,7 +57,6 @@ Post-run unlocks can add:
 - New ship classes.
 - New weapons and defensive systems.
 - New fleet doctrines.
-- New research branches.
 - New production methods.
 - New ways to interact with alien technology.
 
@@ -87,11 +86,27 @@ Good uses include:
 
 - Unlocking new races, ships, technologies, artifacts, or modifiers.
 - Adding another starting option.
-- Improving access to a research branch.
 - Providing a modest research, scanning, or construction bonus.
 - Expanding the number of available doctrines or starting choices.
 
 Permanent numerical bonuses should remain modest. Power-up points should improve flexibility and consistency without making later runs win automatically.
+
+### Simulation Experience
+
+After the player wins their first run, the game could unlock a more explicit between-simulation upgrade system. Each completed simulation provides experience or upgrade points based on meaningful accomplishments, which can be spent on post-run options.
+
+Possible rewards include:
+
+- New races or civilizations.
+- New ship classes, technologies, or research branches.
+- Artifacts and run modifiers.
+- New starting options or clues.
+- Modest improvements to scanning, research, construction, or starting flexibility.
+- Access to higher Ascension levels or the True Invasion challenge.
+
+This system should reward experience gained through successful execution and meaningful discoveries rather than simply granting power for time played. It should expand the player's available strategies without becoming a mandatory grind before the next run is viable.
+
+The first successful run can serve as the narrative and mechanical transition from learning the initial simulation to deliberately improving future simulations. The exact relationship between simulation experience, power-up points, and post-run unlocks remains open.
 
 ### Difficulty levels
 

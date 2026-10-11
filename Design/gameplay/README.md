@@ -82,6 +82,7 @@ Detailed system design:
 - [Star Systems](star-systems.md)
 - [Planets](planets.md)
 - [Economy and Building](economy-and-building.md)
+- [Research and Technology](research-and-technology.md)
 - [Fleet Combat](fleet-combat.md)
 - [Politics and Diplomacy](politics-and-diplomacy.md)
 - [Roguelike Systems](roguelike-systems.md)
