@@ -11,6 +11,11 @@ namespace EndlessHeros.Core.Run
     /// </summary>
     public sealed class RunStartService
     {
+        /// <summary>
+        /// True while a start-run transition is already in progress.
+        /// </summary>
+        public bool IsStarting => _isStarting;
+
         private readonly RunManager _runManager;
         private readonly SceneFlow _sceneFlow;
         private readonly SimulationClock _simulationClock;
@@ -25,11 +30,6 @@ namespace EndlessHeros.Core.Run
             _sceneFlow = sceneFlow ?? throw new ArgumentNullException(nameof(sceneFlow));
             _simulationClock = simulationClock ?? throw new ArgumentNullException(nameof(simulationClock));
         }
-
-        /// <summary>
-        /// True while a start-run transition is already in progress.
-        /// </summary>
-        public bool IsStarting => _isStarting;
 
         /// <summary>
         /// Creates the active run from configuration and loads Overworld on success.

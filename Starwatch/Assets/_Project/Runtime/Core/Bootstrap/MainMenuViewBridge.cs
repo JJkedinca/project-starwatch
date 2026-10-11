@@ -10,13 +10,6 @@ namespace EndlessHeros.Core.Bootstrap
     /// </summary>
     public sealed class MainMenuViewBridge : MonoBehaviour
     {
-        [SerializeField]
-        private UIDocument _document;
-
-        private TextField _scenarioField;
-        private TextField _seedField;
-        private Button _startRunButton;
-
         public event Action StartRunRequested;
 
         public event Action QuitRequested;
@@ -25,6 +18,13 @@ namespace EndlessHeros.Core.Bootstrap
             _scenarioField != null && !string.IsNullOrWhiteSpace(_scenarioField.value)
                 ? _scenarioField.value
                 : Run.RunStartConfiguration.DefaultScenarioId;
+
+        [SerializeField]
+        private UIDocument _document;
+
+        private TextField _scenarioField;
+        private TextField _seedField;
+        private Button _startRunButton;
 
         /// <summary>
         /// Queries the visual tree and hooks button callbacks to intent events.

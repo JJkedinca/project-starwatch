@@ -9,15 +9,15 @@ namespace EndlessHeros.Core.Bootstrap
     /// </summary>
     public sealed class ProjectSystems : MonoBehaviour
     {
+        public ProjectLifetimeScope ProjectLifetimeScope => _projectLifetimeScope;
+
+        public UpdateManager UpdateManager => _updateManager;
+
         [SerializeField]
         private ProjectLifetimeScope _projectLifetimeScope;
 
         [SerializeField]
         private UpdateManager _updateManager;
-
-        public ProjectLifetimeScope ProjectLifetimeScope => _projectLifetimeScope;
-
-        public UpdateManager UpdateManager => _updateManager;
 
         private void Awake()
         {
