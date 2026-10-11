@@ -32,6 +32,35 @@ Each faction should have:
 - Relationships with other factions.
 - A threshold for cooperation, neutrality, or hostility.
 
+## Minor Factions as City-States
+
+Many neighboring factions should function like city-states rather than full 4X empires. They have a small, fixed territory and a distinct strategic value, but do not continuously expand or develop into major powers.
+
+A minor faction may provide:
+
+- A unique resource or production site.
+- A faction keyword or specialized technology.
+- A rare shipyard, station, or defensive system.
+- Trade, access, intelligence, or limited fleet support.
+- A buffer or staging position against local threats.
+
+The player can:
+
+- Ignore the faction and route around its territory.
+- Trade with it for a modest benefit.
+- Protect or support it for stronger access.
+- Use diplomacy to unlock its specialty.
+- Conquer it for full control of its systems and resources.
+
+Minor factions may be defensive or aggressive:
+
+- **Defensive factions** remain inside their territory and respond when the player settles, mines, builds, or stations fleets near their borders.
+- **Aggressive factions** remain within their starting territory but launch sorties when the player approaches or threatens their interests.
+
+Minor factions should be capable of defending themselves and creating local pressure, but they should not expand into major empires, continuously scale their military, or develop enough to defeat the invasion. The invasion should eventually overwhelm an unprotected minor faction.
+
+Protecting a minor faction can delay its defeat and preserve its benefits, but it should cost the player fleets, time, or resources. The faction's purpose is to provide strategic leverage, shortcuts, and opportunity costs—not to become an alternate solution to the campaign's central threat.
+
 ## Relationship Model
 
 Relationships should combine visible state with hidden or discoverable context.
@@ -143,6 +172,64 @@ Conquest should have costs:
 Diplomacy should often be the cheaper solution, but not always the safer or more reliable one.
 
 Internal empire pressure should remain an aggregate colony-stability system defined in [economy-and-building.md](economy-and-building.md), not a separate internal-politics simulation.
+
+## Trade, Access, and Conquest
+
+Trade and conquest should provide different time horizons for solving a resource or territory problem.
+
+**Conquest** provides stronger long-term control:
+
+- Full access to the faction's systems, buildings, and resource output.
+- Direct control of routes, shipyards, and strategic positions.
+- Freedom from dependence on the faction's continued cooperation.
+
+Conquest also requires a significant short-term commitment:
+
+- Fleet losses, repairs, and supply.
+- Occupation and stability costs.
+- Diplomatic backlash or coalition formation.
+- Time that could have been spent preparing for the invasion.
+- Possible damage to the captured infrastructure.
+
+**Trade** provides a lower-risk but weaker alternative:
+
+- A smaller, steady stream of resources or access.
+- No need to defeat or occupy the faction.
+- Faster access to a needed resource during a critical timeline.
+- An opportunity to preserve fleets for the invasion.
+
+Trade should not provide the same long-term output or control as conquest. It can also be disrupted by war, blockades, faction betrayal, or the loss of a route. Its value is that it avoids the immediate cost of war and may be the correct choice while the player is still preparing.
+
+The intended decision is:
+
+> Trade to stabilize or accelerate the current plan; conquer when the long-term value justifies the war.
+
+A player should usually be capable of defeating a neighboring faction after gaining enough timeline power, but the faction's technology, defenses, and strategic location should make the short-term cost meaningful. Diplomatic play remains worthwhile when the invasion deadline makes conquest inefficient or when the faction provides additional fleet, route, or technology benefits.
+
+## Expansion Strain and Integration
+
+Expansion should create a soft, self-balancing cost rather than a hard empire limit.
+
+Owning more star systems can increase empire-wide logistical and administrative strain:
+
+- Higher global upkeep.
+- More route and relay maintenance.
+- More systems requiring defense and sensor coverage.
+- Greater fleet redeployment demands.
+- More exposure to raids and sabotage.
+- Higher costs for sustaining distant colonies.
+
+Settling additional planets should also become progressively more expensive through colony infrastructure, population support, terraforming, supply, development time, and increasing logistical strain. Habitable planets are common, but each new settlement should still be a meaningful commitment.
+
+Conquered systems may initially be more burdensome than peacefully settled or allied territory because of:
+
+- Damaged infrastructure.
+- Occupation inefficiency.
+- Temporary stability penalties.
+- Increased garrison requirements.
+- Diplomatic backlash and local sabotage risk.
+
+Once integrated, a conquered system can become a normal productive part of the empire. The purpose of these costs is to make the player weigh full control against the short-term military and political commitment, not to make conquest permanently inferior.
 
 ## Diplomacy as Optimization
 
