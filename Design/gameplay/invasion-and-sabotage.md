@@ -63,9 +63,52 @@ Major beats should be stable enough to learn across timelines. Minor attacks, fl
 
 The escalation clock should create urgency without being opaque. Players should understand that delay matters even when they do not yet know exactly where the main fleet will arrive.
 
+## Invasion Waves and Wormholes
+
+The initial invasion can use a primary wormhole and a secondary wormhole. Both locations are fixed once generated for a run. The secondary wormhole exists primarily to split the player's attention and create a second front; its exact activation and reinforcement behavior remains a later tuning question.
+
+The major invasion can arrive in two or three waves:
+
+- Earlier scouts and probes establish the threat and provide intelligence.
+- Major waves emerge as powerful combined forces before dispersing toward player territory.
+- The final wave contains the strongest fleet and a unique boss capital ship mechanic.
+
+The combined force should be too strong to defeat casually at the wormhole. After it begins spreading, the player can use defenses to chip away at the invasion, intercept separated fleets, and choose where to commit the main fleet.
+
+Wormhole territory cannot be conquered or converted into normal player territory. The player may raid staging fleets and attack invasion infrastructure, but cannot settle the region or build permanent defenses there. Permanent defenses must be established along approach routes and in player-controlled systems.
+
+## Repair Fleets and Attrition
+
+Some major invasion fleets can be followed by mobile repair fleets or support groups. When a major fleet is sufficiently damaged, it may withdraw toward a repair fleet or staging area instead of continuing its advance.
+
+This creates an opportunity for the player to:
+
+- Intercept the repair fleet.
+- Attack the damaged main fleet before it recovers.
+- Force the invasion to remain weakened.
+- Use defenses and smaller engagements to accumulate attrition.
+
+Defenses should be able to inflict meaningful but not total damage before being overrun. The player should be able to weaken an invasion over several engagements rather than lose one battle and immediately lose the campaign.
+
+## Frontier Pressure and Invasion
+
+Frontier Pressure is an expansion and logistics pressure that exists alongside the invasion escalation clock. It represents the attention, exposure, and cost created by maintaining a large or distant empire.
+
+Higher Frontier Pressure can make frontier systems more vulnerable to:
+
+- Local raids and sorties.
+- Minor sabotage.
+- Supply disruption.
+- Exploration crises.
+- Colony stability problems.
+
+This pressure should create side threats and opportunity costs rather than changing the invasion's main timing, wormhole location, high-level fleet composition, or overall objective. A player may reduce it by consolidating territory, improving infrastructure, securing routes, negotiating with nearby factions, or using stealth technology.
+
 ## Sabotage and Crisis Pool
 
 Some crises should come from a pool so the player does not know which specific problem will happen in a timeline.
+
+Major sabotage events should usually trigger at a recognizable escalation milestone, campaign year, or Frontier Pressure threshold. Minor strength-targeted sabotage may trigger when the player exposes a specific weakness or relies heavily on one strategy. The event should begin as a crisis with warning and a resolution window rather than applying immediate arbitrary damage.
 
 Possible sabotage categories include:
 
@@ -80,34 +123,29 @@ Possible sabotage categories include:
 
 Each event should have specific prevention or mitigation mechanics that are difficult to know initially but discoverable through clues, scouting, diplomacy, research, or failure.
 
-## The Alien-Aligned Underground
+## Colony Stability and the Alien-Aligned Underground
 
-The invaders are supported by an underground movement within settled space that welcomes, assists, or worships the alien overlords. This is not a conventional diplomatic faction and should not create a separate internal-politics simulation. It is an invasion pressure system represented by organized local cells.
+The invaders are supported by an underground movement within settled space that welcomes, assists, or worships the alien overlords. This is not a conventional diplomatic faction and should not create a separate internal-politics simulation.
 
-The player-facing model should use:
-
-- An empire-level **subversion pressure** meter.
-- Local cells or hotspots that determine where incidents occur.
-- Clues and investigations that reveal what a cell is trying to accomplish.
-
-Subversion pressure can rise through:
+For the initial design, underground activity is one source of **colony stability/internal pressure** rather than a separate empire-level subversion meter. The player manages one local condition that can be caused by:
 
 - Major military defeats or abandoned colonies.
-- Shortages, poor colony stability, or visible overextension.
+- Shortages, poor supply, or visible overextension.
 - Alien propaganda, contact, or cultural influence.
 - Enemy victories nearby.
 - Repeatedly exposing the same strategic weakness.
+- An activated underground cell.
 
-At increasing pressure levels, the underground may cause:
+Low colony stability or internal pressure may cause:
 
 - Reduced output or delayed construction.
 - Intelligence leaks and false sensor reports.
-- Research, shipyard, or logistics sabotage.
+- Research, shipyard, or logistics disruption.
 - Unrest during settlement or expansion.
-- Coordinated attacks on infrastructure.
-- Assistance to the invasion during a major offensive.
+- Local sabotage events.
+- Increased vulnerability to invasion pressure.
 
-Subversion should remain distinct from colony stability. Stability describes whether a colony can function; subversion describes whether an organized movement is actively undermining the empire. Improving stability can reduce the conditions that fuel subversion, but it should not automatically eliminate an established cell.
+An underground cell can remain hidden inside a stable colony. If it activates, it creates an event or stability loss rather than requiring a second visible meter. The source of the problem should determine the appropriate counter: supply and infrastructure for shortages, security and investigation for infiltration, and defenses or fleets for direct invasion pressure.
 
 Counterplay may include counterintelligence, investigations, improved supply and stability, exposing the movement's connection to the invaders, and protecting likely targets. Investigating or surviving a cell should reveal useful information about enemy methods, future targets, infiltration routes, or sabotage weaknesses. A player may even tolerate a low-level cell temporarily to gain intelligence, accepting short-term damage for a long-term advantage.
 
@@ -132,26 +170,50 @@ Avoid destroying a unique required location with no warning or counterplay. A sa
 
 ## Enemy Adaptation
 
-The invaders may adapt to repeated player behavior:
+For the initial version, enemy intelligence should remain simple. The invasion's high-level composition should remain mostly fixed within a run. Each wave should have a learnable identity:
 
-- Concentrating fleets causes the enemy to open a second front.
-- Relying on one weapon type causes countermeasures to appear.
-- Overusing diplomacy causes infiltrators or political pressure.
-- Rushing a relic attracts enemy raids.
-- Ignoring logistics makes supply hubs become priority targets.
+- Ship classes and broad fleet composition.
+- Weapon and defense types.
+- Technology level.
+- Main fleet capabilities.
+- Intended escalation role.
 
-Adaptation should challenge a dominant strategy without invalidating it completely. The player should be able to pivot, combine plans, or exploit the enemy's adaptation.
+The same invasion fleet can still vary its low-level behavior from battle to battle:
+
+- Choose different eligible targets.
+- Split or concentrate its forces.
+- Pursue or retreat.
+- Prioritize carriers, defenses, or logistics.
+- Attempt to regroup.
+- Take different routes within the known invasion structure.
+
+The enemy should not dynamically redesign its fleet to hard-counter the player's composition. A player who learns how to defeat a scout or main fleet should be able to rely on that knowledge across later timelines in the same run.
+
+The invasion does not permanently learn the player's strategy or construct a new counter-composition. Its low-level target selection, splitting, regrouping, and pursuit behavior can vary within the fixed invasion structure.
+
+### Strength-Targeted Minor Sabotage
+
+The invasion may respond to the player's strongest visible strategy through smaller sabotage events rather than fleet redesign:
+
+- A carrier build suffers delayed strike-craft replenishment or damaged carrier logistics.
+- A sniper build has sensors or targeting infrastructure disrupted.
+- A brawler build has repair bases or supply routes attacked.
+- A missile build loses access to ammunition production or industrial capacity.
+- A research-heavy empire has a key lab delayed or temporarily weakened.
+- A single-anchor economy has its supporting route or infrastructure disrupted.
+
+These minor sabotages should be temporary or recoverable, clearly telegraphed, and targeted at supporting systems rather than directly invalidating the player's fleet. They should teach the player how the invasion responds without changing the invasion's core composition or overall objective.
 
 ## Local Hostiles Versus Invaders
 
 Neighboring hostile aliens are distinct from the invasion force.
 
-Local hostiles:
+Minor and local factions:
 
 - Teach the early map and fleet basics.
 - Compete for nearby resources and territory.
 - May be negotiated with, conquered, or manipulated.
-- Can become an indirect invasion target or ally.
+- Can serve as a temporary buffer if the player chooses to protect them.
 
 The invaders:
 
@@ -161,6 +223,24 @@ The invaders:
 - Become the focus of Rewinds 1–4.
 
 The distinction helps Rewind 0 introduce military danger without revealing the full invasion.
+
+### Minor Factions in the Invasion
+
+In the initial design, the invasion treats minor factions as territorial occupants rather than giving them a separate invasion alignment or campaign. Their systems can be invaded and overrun like other strategic territory.
+
+If the player provides no support:
+
+- The faction's finite fleets and defenses are overwhelmed relatively quickly.
+- Its territory, resources, and specialties may be lost.
+- The player learns that the faction cannot solve the invasion independently.
+
+If the player protects the faction:
+
+- It can slowly replenish its forces.
+- It may survive another local invasion wave.
+- It can continue acting as a limited buffer or preserve its strategic benefits.
+
+Protected minor factions should still have a strength ceiling. They can delay or weaken the invasion, but cannot scale indefinitely or hold off the invasion force alone. Invasion-aligned or puppeted minor factions are deferred to a future expansion.
 
 ## Counterplay
 
@@ -205,13 +285,13 @@ The invasion can:
 - Create a crisis that requires fleets from two empires.
 - Spread misinformation between allies.
 - Force one empire to choose between defending itself and supporting another.
-- Exploit a high-subversion empire as an entry point against shared infrastructure.
+- Exploit an empire with high internal pressure as an entry point against shared infrastructure.
 
 Each empire can have its own subversion pressure, while shared intelligence reveals known cells and sabotage patterns to all players. Cooperation comes from assigning counterintelligence, protecting exposed targets, and accepting opportunity costs.
 
 ## Final Offensive
 
-The main invasion fleet should have a vulnerable strategic structure that can be learned over multiple timelines. The initial game's final objective is to intercept and destroy or decisively cripple that fleet.
+The main invasion fleet should have a vulnerable strategic structure that can be learned over multiple timelines. The initial game's final objective is to destroy or decisively cripple the invasion's meaningful fleet capacity and territory-taking force.
 
 The final operation may also involve supporting objectives:
 
@@ -220,16 +300,18 @@ The final operation may also involve supporting objectives:
 - Disabling a defense or staging system.
 - Protecting the approach route.
 
+The final wave should contain the strongest invasion fleet and a unique boss capital ship mechanic. Destroying the boss should weaken enemy coordination, reinforcement, or repair, but should not automatically end the run. The player must complete a finite cleanup operation against the remaining meaningful invasion fleets or force their collapse; hunting every individual straggler is not required.
+
 The final offensive should combine fleet power, discovered weaknesses, route knowledge, diplomacy, and logistics. It should be possible to win through more than one defense plan, even if some plans are more efficient.
 
 ## Open Questions
 
-- What is the invaders' ultimate goal?
+- What exact role and activation pattern should the secondary wormhole have?
 - How much information does the enemy begin with?
+- How much time should exist between major waves?
 - How large should the sabotage event pool be?
 - Which sabotage slots are required by the escalation rules, and which event identities can be randomized?
 - How are warnings communicated without making every crisis obvious?
 - Can the player permanently eliminate an enemy capability?
-- How much should the invasion adapt to repeated player strategies?
-- Can local hostile factions be recruited or manipulated by the invaders?
+- How should repair fleets choose when and where to withdraw?
 - What support objectives make the main fleet battle feel like a strategic operation rather than one isolated engagement?

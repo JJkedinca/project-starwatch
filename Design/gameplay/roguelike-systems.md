@@ -54,10 +54,15 @@ Resets after a rewind:
 - Colonies and territory.
 - Fleets and ship designs.
 - Resources.
-- Current research progress.
+- Incomplete research project progress.
 - Temporary alliances.
 - Fortifications.
 - Current production and logistics.
+- Research buildings and infrastructure.
+- Current Frontier Pressure.
+- Colony stability and internal pressure.
+- Current invasion fleet positions and active crises.
+- Current minor-faction relationship states.
 
 ### Run knowledge
 
@@ -72,17 +77,21 @@ Persists across timelines in the same run:
 - Sabotage points.
 - Anomaly and event triggers.
 - Blueprints and research requirements.
+- Frontier Pressure rules and known escalation triggers.
 
 ### Permanent within-run unlocks
 
-May persist across the run when discovered:
+Persist across the run once discovered or completed:
 
-- Research branches.
+- Completed research and fully understood technologies.
+- Revealed research branches and faction specialties.
 - Ship classes.
 - Doctrines.
 - Defensive structures.
 - Diplomatic options.
 - Ways to interact with anomalies.
+
+These unlocks provide knowledge and access, not physical timeline power. The player must still rebuild the infrastructure, resources, shipyards, and fleets needed to exploit them after a rewind.
 
 ### Post-run progression
 
@@ -96,6 +105,8 @@ Persists between separate runs:
 - Higher difficulty levels.
 
 The exact persistence of run-specific facts between separate runs remains a separate design decision.
+
+For the initial design, no research branches or completed technologies from the current run carry into a separate run. Higher Ascension levels may later reduce how much research remains available between rewinds, while preserving the player's factual knowledge in the archive.
 
 ## Discovery and Synergy Model
 
@@ -205,7 +216,8 @@ In co-op:
 
 - The run and rewind budget are shared.
 - All player empires reset together.
-- Discoveries enter the shared archive immediately.
+- General discoveries enter the shared archive immediately.
+- Blueprints and physical discoveries remain owned by the player who found or recovered them for now.
 - A voluntary rewind should require group confirmation.
 - A player losing an empire should create a crisis before causing automatic elimination.
 

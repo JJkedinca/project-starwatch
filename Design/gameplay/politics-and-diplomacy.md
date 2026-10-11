@@ -32,9 +32,11 @@ Each faction should have:
 - Relationships with other factions.
 - A threshold for cooperation, neutrality, or hostility.
 
-## Minor Factions as City-States
+## Minor Factions
 
-Many neighboring factions should function like city-states rather than full 4X empires. They have a small, fixed territory and a distinct strategic value, but do not continuously expand or develop into major powers.
+Many neighboring factions should function as minor factions rather than full 4X empires. They have a fixed territory and a distinct strategic value, but do not continuously expand or develop into major powers.
+
+Minor factions can range from single-system enclaves to advanced regional powers controlling six to eight systems or more. Larger minor factions should generally have stronger technology, fleets, and rewards, and tend to appear farther from the player's starting position. These are generation tendencies rather than fixed map rules.
 
 A minor faction may provide:
 

@@ -251,6 +251,41 @@ Players can build and repair gates, relays, and other route infrastructure when 
 
 Permanently closing or redirecting a route is not a normal player action. It may be possible through an extremely rare resource, relic, or endgame technology, but it should have major strategic and diplomatic consequences.
 
+## Frontier Pressure
+
+Frontier Pressure represents the broader diseconomies and risks of expanding beyond the empire's established core. It is a soft expansion pressure rather than a hard empire limit.
+
+Frontier Pressure can increase with:
+
+- The number of controlled systems.
+- The number of settled planets.
+- Distance from the established core.
+- Long or poorly supported routes.
+- Rapid expansion.
+- Exposed outposts and frontier colonies.
+- Missing relays, defenses, or logistics infrastructure.
+
+At lower levels, pressure primarily creates economic and logistical costs:
+
+- Higher global upkeep.
+- More expensive reinforcement and repairs.
+- Greater route maintenance.
+- Increased defense and sensor requirements.
+- Reduced efficiency in distant colonies.
+
+At higher levels, it can create external pressure:
+
+- Frontier raids.
+- Minor faction sorties.
+- Exploration crises.
+- More dangerous supply routes.
+- Increased vulnerability to sabotage.
+- Colony stability problems.
+
+Players can manage Frontier Pressure by consolidating territory, building relays and defenses, improving FTL and logistics, negotiating with nearby factions, or using stealth and low-signature technologies. Pressure should be dynamic: an established route and supported colony can become less burdensome than a newly exposed outpost.
+
+Frontier Pressure is separate from the invasion escalation clock, faction-specific threat, and colony stability. It can contribute to local instability and create opportunities for invasion pressure, but it should not rewrite the invasion's learnable timing or high-level composition.
+
 ## Logistics and Supply
 
 Fleets should not operate indefinitely far from friendly infrastructure without consequences. Supply can be represented strategically rather than through detailed fuel simulation.
@@ -275,10 +310,10 @@ The invasion follows a learnable strategic structure:
 2. Scouts identify routes, signals, and the likely location of the invasion wormhole.
 3. Incursions test frontier defenses.
 4. Major fleets exploit weak routes and disrupted logistics.
-5. The main fleet emerges from a wormhole at one specific star system.
+5. The main fleet emerges through a primary wormhole at one specific star system, while a secondary wormhole may create a separate front.
 6. The final offensive intercepts and defeats the main invasion fleet.
 
-The wormhole system is generated for each run and remains consistent across that run's timelines. Players should be able to locate it through enough scouting, radar coverage, and investigation rather than being expected to guess randomly. The invasion's major timing beats remain consistent within a run, while minor movement, fleet composition, and target selection can vary.
+The primary and secondary wormhole locations are generated for each run and remain consistent across that run's timelines. Players should be able to locate them through enough scouting, radar coverage, and investigation rather than being expected to guess randomly. The secondary wormhole exists primarily to divide the player's attention; its activation and reinforcement behavior remain open. The invasion's major timing beats remain consistent within a run, while minor movement, target selection, and low-level behavior can vary.
 
 The invasion may use its dedicated wormhole as an asymmetric movement capability, but it should not receive hidden conventional corridors unavailable to the player. Any other bypass, gate, or route exception should be an explicit discoverable capability with warning signs and counterplay.
 
