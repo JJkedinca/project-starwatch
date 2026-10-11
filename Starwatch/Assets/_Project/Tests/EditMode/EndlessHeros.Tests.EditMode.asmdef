@@ -3,6 +3,7 @@
     "rootNamespace": "EndlessHeros.Tests.EditMode",
     "references": [
         "EndlessHeros.Core",
+        "UniTask",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

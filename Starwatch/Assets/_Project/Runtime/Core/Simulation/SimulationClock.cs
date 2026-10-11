@@ -5,6 +5,7 @@ namespace EndlessHeros.Core.Simulation
     /// <summary>
     /// Authoritative simulation clock. Tracks pause/speed and publishes time
     /// advancement without knowing about planets, fleets, or invasions.
+    /// Starts paused so menu/bootstrap time does not count toward a run.
     /// </summary>
     public sealed class SimulationClock
     {
@@ -12,7 +13,7 @@ namespace EndlessHeros.Core.Simulation
         private const float kFastMultiplier = 2f;
         private const float kFasterMultiplier = 4f;
 
-        private SimulationSpeed _speed = SimulationSpeed.Normal;
+        private SimulationSpeed _speed = SimulationSpeed.Paused;
 
         public GameTime CurrentTime { get; private set; } = GameTime.Zero;
 
@@ -25,6 +26,16 @@ namespace EndlessHeros.Core.Simulation
         public bool IsPaused => _speed == SimulationSpeed.Paused;
 
         public event Action<GameTime, float> TimeAdvanced;
+
+        /// <summary>
+        /// Clears elapsed simulation time and leaves the clock paused. Callers
+        /// resume when gameplay for the new run should begin.
+        /// </summary>
+        public void ResetForRun()
+        {
+            CurrentTime = GameTime.Zero;
+            _speed = SimulationSpeed.Paused;
+        }
 
         /// <summary>
         /// Pauses the clock, or resumes to Normal when currently paused.

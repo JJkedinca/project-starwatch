@@ -15,6 +15,7 @@ namespace EndlessHeros.Core.Bootstrap
 
         private TextField _scenarioField;
         private TextField _seedField;
+        private Button _startRunButton;
 
         public event Action StartRunRequested;
 
@@ -45,10 +46,10 @@ namespace EndlessHeros.Core.Bootstrap
             _scenarioField = root.Q<TextField>("scenario-field");
             _seedField = root.Q<TextField>("seed-field");
 
-            var startButton = root.Q<Button>("start-run-button");
-            if (startButton != null)
+            _startRunButton = root.Q<Button>("start-run-button");
+            if (_startRunButton != null)
             {
-                startButton.clicked += () => StartRunRequested?.Invoke();
+                _startRunButton.clicked += () => StartRunRequested?.Invoke();
             }
             else
             {
@@ -59,6 +60,17 @@ namespace EndlessHeros.Core.Bootstrap
             if (quitButton != null)
             {
                 quitButton.clicked += () => QuitRequested?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// Enables or disables the Start Run button during transitions.
+        /// </summary>
+        public void SetStartRunInteractable(bool interactable)
+        {
+            if (_startRunButton != null)
+            {
+                _startRunButton.SetEnabled(interactable);
             }
         }
 

@@ -32,22 +32,39 @@ namespace EndlessHeros.Core.Bootstrap
 
         private void OnStartRunRequested()
         {
+            if (_runStartService.IsStarting)
+            {
+                return;
+            }
+
             StartRunAsync().Forget();
         }
 
         /// <summary>
         /// Creates a run from the menu fields and transitions into Overworld.
+        /// Disables Start Run while a transition is in flight.
         /// </summary>
         private async UniTaskVoid StartRunAsync()
         {
-            var configuration = new RunStartConfiguration(
-                _viewBridge.ScenarioId,
-                _viewBridge.TryGetSeed(out var seed) ? seed : (int?)null);
+            _viewBridge.SetStartRunInteractable(false);
 
-            var started = await _runStartService.StartRunAsync(configuration);
-            if (!started)
+            try
             {
-                Debug.LogError("MainMenuEntryPoint failed to start a run.");
+                var configuration = new RunStartConfiguration(
+                    _viewBridge.ScenarioId,
+                    _viewBridge.TryGetSeed(out var seed) ? seed : (int?)null);
+
+                var started = await _runStartService.StartRunAsync(configuration);
+                if (!started)
+                {
+                    Debug.LogError("MainMenuEntryPoint failed to start a run.");
+                    _viewBridge.SetStartRunInteractable(true);
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"MainMenuEntryPoint failed to start a run: {exception}");
+                _viewBridge.SetStartRunInteractable(true);
             }
         }
 
