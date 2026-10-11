@@ -287,7 +287,7 @@ The invasion can:
 - Force one empire to choose between defending itself and supporting another.
 - Exploit an empire with high internal pressure as an entry point against shared infrastructure.
 
-Each empire can have its own subversion pressure, while shared intelligence reveals known cells and sabotage patterns to all players. Cooperation comes from assigning counterintelligence, protecting exposed targets, and accepting opportunity costs.
+Each colony can have its own stability/internal-pressure state, while shared intelligence reveals known cells and sabotage patterns to all players. Cooperation comes from assigning counterintelligence, protecting exposed targets, and accepting opportunity costs.
 
 ## Final Offensive
 
