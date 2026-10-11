@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="MainMenu.uss" />
+    <ui:VisualElement name="root" class="root">
+        <ui:Label name="title" text="Starwatch" class="title" />
+        <ui:TextField name="scenario-field" label="Scenario" value="authored-vertical-slice" class="field" />
+        <ui:TextField name="seed-field" label="Seed (optional)" value="" class="field" />
+        <ui:Button name="start-run-button" text="Start Run" class="primary-button" />
+        <ui:Button name="quit-button" text="Quit" class="secondary-button" />
+    </ui:VisualElement>
+</ui:UXML>

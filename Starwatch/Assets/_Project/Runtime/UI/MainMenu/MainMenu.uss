@@ -1,0 +1,36 @@
+.root {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(12, 16, 24);
+    padding: 24px;
+}
+
+.title {
+    font-size: 48px;
+    color: rgb(230, 236, 245);
+    margin-bottom: 32px;
+    -unity-font-style: bold;
+}
+
+.field {
+    width: 360px;
+    margin-bottom: 12px;
+    color: rgb(220, 226, 235);
+}
+
+.primary-button {
+    width: 240px;
+    height: 40px;
+    margin-top: 12px;
+    background-color: rgb(48, 96, 160);
+    color: rgb(245, 248, 252);
+}
+
+.secondary-button {
+    width: 240px;
+    height: 36px;
+    margin-top: 8px;
+    background-color: rgb(36, 44, 58);
+    color: rgb(210, 218, 230);
+}

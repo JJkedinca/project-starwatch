@@ -64,6 +64,7 @@ ScriptableObjects describe authored content:
 - `FactionDefinition`
 - `FactionFleetDefinition`
 - `ModifierDefinition`
+- `PresentationAssetSet`
 - `RunOutcomeRuleDefinition`
 - `SabotageDefinition`
 - `InvasionDefinition`
@@ -144,6 +145,33 @@ MonoBehaviours and UI Toolkit presenters display state and send intents:
 Views must not calculate resource output, resolve combat, or decide whether an
 action is valid.
 
+### Presentation and art strategy
+
+The first implementation is intentionally 2D-first. This is a presentation
+choice, not a simulation constraint:
+
+- Strategic map nodes, planets, fleets, factions, resources, research, and
+  discoveries use authored 2D icons or sprites.
+- Early battles use authored world-space 2D or 2.5D token prefabs with clear
+  silhouettes, health bars, range indicators, and combat effects.
+- Later 3D ship, planet, and station prefabs replace those presentation assets
+  without changing runtime state, combat, economy, or research systems.
+
+Use a shared `PresentationAssetSet` or equivalent asset references on content
+definitions. A definition may provide:
+
+- `IconSprite` for map and UI presentation.
+- `TokenPrefab` for the first battle presentation.
+- Optional `WorldPrefab` or `BattlePrefab` for the later 3D presentation.
+
+Views should request a presentation asset by stable content ID through a
+factory or catalog. They should not know whether the returned asset is a
+sprite, token, or 3D prefab. This keeps the 2D prototype replaceable.
+
+Use authored prefabs and shared materials. Do not create gameplay visuals with
+`GameObject.CreatePrimitive`, `new Material`, or runtime shader lookup. Apply
+per-instance tinting through `MaterialPropertyBlock` when 3D assets are added.
+
 ### Layer 5: Composition
 
 VContainer LifetimeScopes compose the systems:
@@ -219,6 +247,7 @@ The flow is:
 - `ProjectSystems`.
 - MessagePipe or the project event bus.
 - `ContentCatalog` and authored content catalogs.
+- `PresentationCatalog`.
 - `RunManager`.
 - `SceneFlow`.
 - `GameEntryPoint`.
@@ -408,6 +437,7 @@ Required types:
 - `BuildingCatalog`
 - `ProductionCatalog`
 - `FactionCatalog`
+- `PresentationCatalog`
 
 The catalog converts stable IDs into ScriptableObject definitions. Runtime
 systems should not search the AssetDatabase or scene hierarchy.
@@ -505,6 +535,8 @@ defeat.
 - Invalid commands return stable error codes and do not partially mutate state.
 - Losing a battle does not automatically produce a timeline defeat.
 - `TimelineOutcomeEvaluator` emits only one terminal outcome for a timeline.
+- Presentation asset selection does not mutate simulation state.
+- Missing optional 3D assets fall back to the authored 2D or token asset.
 - Bootstrap creates the project container before the main menu loads.
 - Project-scoped services survive scene transitions.
 - Scene scopes receive the project scope and are disposed correctly.
@@ -550,6 +582,20 @@ Create one authored `ScenarioDefinition` containing:
 
 The first scenario should not use procedural generation. A later generator can
 produce the same definitions after the runtime contracts are proven.
+
+### Initial presentation assets
+
+Create a small authored 2D asset set for:
+
+- System and non-system node icons.
+- Planet archetype and local-challenge icons.
+- Player, faction, and invasion fleet markers.
+- Resource, research, relic, and warning icons.
+- A consistent map and main-menu UI style.
+
+The map should use icon references from `PresentationAssetSet` rather than
+hard-coded sprites in views. No final 3D planet or ship models are required
+for Phase 1.
 
 ### Runtime systems
 
@@ -831,6 +877,20 @@ The first slice can use three roles:
 Use a small number of weapons and defenses. Shields, armor, hull, ranges,
 retreat, and one soft counter are enough to validate the combat structure.
 
+### Initial battle presentation assets
+
+Create authored world-space token prefabs for:
+
+- Screen or fast-brawler ships.
+- Heavy line or artillery ships.
+- Carrier and strike-craft representation.
+- Defense stations.
+- Debris.
+
+These can be 2D sprites or simple 2.5D prefabs with consistent silhouettes.
+The same `ShipClassDefinition` and `PresentationAssetSet` should later accept
+3D battle prefabs.
+
 ### Runtime systems
 
 Implement:
@@ -895,9 +955,10 @@ Implement:
 - `BattleResultView`
 - `DebrisView`
 
-The first battle presentation can use simple shapes and health bars. It must
-show enough information to explain targets, damage, retreat, destruction, and
-debris without requiring individual ship micromanagement.
+The first battle presentation can use authored 2D or 2.5D token prefabs and
+health bars. It must show enough information to explain targets, damage,
+retreat, destruction, and debris without requiring individual ship
+micromanagement. Do not generate placeholder meshes in gameplay code.
 
 ### Tests
 
@@ -1202,6 +1263,15 @@ Assets/_Project/
     Overworld/
     Battle/
     UI/
+  Art/
+    Icons/
+    Sprites/
+    Prefabs/
+      Map/
+      BattleTokens/
+      UI/
+    Materials/
+    VFX/
   Tests/
     EditMode/
     PlayMode/
