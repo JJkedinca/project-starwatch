@@ -11,14 +11,38 @@ The player should understand the important shape of the map across a run while s
 The map is organized into:
 
 - Star systems.
-- Routes between systems.
+- Non-system space nodes such as asteroid belts, gas regions, hazards, and anomalies.
+- Routes between nodes.
 - Planets, stations, and other locations within systems.
 - Chokepoints, relays, gates, and frontier corridors.
 - Faction territories and contested regions.
 - Relic, ruin, and anomaly sites.
 - Invasion wormhole and enemy staging area.
 
-Each important system should have a strategic identity. Examples include:
+## Space Node Types
+
+Not every graph node needs to be a star system. The generated map can mix several kinds of nodes while keeping all of them connected through the same FTL corridor graph.
+
+Possible node types include:
+
+- **Star systems:** Contain planets, moons, settlements, stations, and major infrastructure.
+- **Resource regions:** Asteroid belts, gas clouds, debris regions, or other locations that support limited extraction without normal planetary settlement.
+- **Hazard regions:** Nebulae, radiation zones, unstable corridors, or environments that affect travel, sensors, supply, or combat.
+- **Discovery regions:** Derelicts, anomalies, relic sites, ruins, or hidden research opportunities.
+- **Transit nodes:** Mostly empty space that creates junctions, alternate routes, ambush locations, or strategic chokepoints.
+
+Non-system nodes generally do not support population, ordinary buildings, or full settlement. They may still support specialized extraction, temporary staging, salvage, environmental effects, or route infrastructure.
+
+Every important node should provide at least one meaningful strategic property:
+
+- Route value or geographic control.
+- A useful resource or extraction opportunity.
+- An environmental risk or combat modifier.
+- A discovery, relic, blueprint, or intelligence opportunity.
+
+Purely empty transit nodes are acceptable in moderation when they create useful pacing, distance, or route choices, but they should not make travel feel like filler. Node types, locations, and contents remain randomized within the generator's solvability rules.
+
+Important systems can have identities such as:
 
 - Resource-rich but exposed colony.
 - Research station with a unique branch.
@@ -28,7 +52,7 @@ Each important system should have a strategic identity. Examples include:
 - Defensive chokepoint.
 - Invasion relay or sabotage target.
 
-The map should contain enough systems for meaningful expansion and alternate routes, but not so many that players cannot remember what matters across five timelines.
+The map should contain enough systems and non-system nodes for meaningful expansion, travel, and alternate routes, but not so many that players cannot remember what matters across five timelines.
 
 ## Rule-Driven Procedural Content
 
@@ -45,7 +69,7 @@ The game authors the possible content:
 
 The run generator determines which content appears, where it appears, and how it connects:
 
-- Important systems and routes.
+- Important systems, non-system nodes, and routes.
 - Major relics and blueprints.
 - Invasion wormhole system and major fleet beats.
 - Key factions and diplomatic opportunities.
