@@ -20,11 +20,10 @@ post-run progression are outside the first implementation pass.
 The current checkout contains a Unity 6 project under `Starwatch/` with the
 template scene and tutorial scripts, but no gameplay runtime code yet.
 
-The workspace project rules refer to `EndlessHerosUnity/` as the active Unity
-project and specify `EndlessHeros.*` namespaces. Before implementation begins,
-the project location and namespace should be reconciled. This plan uses the
-existing namespace conventions and refers to the gameplay content root as
-`Assets/_Project/`.
+For implementation, `Starwatch/` is the authoritative Unity project root and
+gameplay content belongs under `Starwatch/Assets/_Project/`. The namespace root
+remains `EndlessHeros` to follow the existing project conventions; it should
+not be inferred from the Unity folder name.
 
 ## Engineering Principles
 
@@ -54,11 +53,18 @@ ScriptableObjects describe authored content:
 - `PlanetDefinition`
 - `PlanetArchetypeDefinition`
 - `BuildingDefinition`
+- `ResourceDefinition`
+- `ProductionRecipeDefinition`
+- `ShipyardDefinition`
+- `StartingEmpireDefinition`
 - `ResearchDefinition`
 - `ShipClassDefinition`
 - `WeaponDefinition`
 - `DefenseDefinition`
 - `FactionDefinition`
+- `FactionFleetDefinition`
+- `ModifierDefinition`
+- `RunOutcomeRuleDefinition`
 - `SabotageDefinition`
 - `InvasionDefinition`
 
@@ -78,6 +84,11 @@ Plain C# state represents the current simulation:
 - `ColonyState`
 - `FleetState`
 - `ResearchState`
+- `ProductionQueueState`
+- `ShipyardState`
+- `FactionState`
+- `FactionRelationshipState`
+- `ActiveEngagementState`
 - `CrisisState`
 
 State should use stable content IDs rather than direct scene-object references.
@@ -94,10 +105,17 @@ Services validate commands and mutate authoritative state:
 - `EconomyService`
 - `ResearchService`
 - `FleetService`
+- `ProductionService`
+- `ShipConstructionService`
 - `CombatService`
+- `EngagementService`
+- `FactionService`
 - `InvasionService`
+- `TimelineOutcomeEvaluator`
 - `RewindService`
 - `ArchiveService`
+- `VisibilityService`
+- `EffectRegistry`
 
 Systems perform time-driven work:
 
@@ -132,11 +150,11 @@ VContainer LifetimeScopes compose the systems:
 
 - Bootstrap scope for constructing the project container.
 - Project scope for the simulation clock, event bus, catalogs, scene flow, and
-  run manager.
+-  run manager, active engagements, and effect queries.
 - Main menu scope for the menu view and run-start intents.
 - Overworld scope for map, travel, exploration, economy, research, and
   invasion.
-- Battle scope for battle simulation and battle presentation.
+- Battle scope for battle simulation and battle presentation only.
 
 The project scope must survive scene changes. Scene scopes are created and
 disposed with their scenes and receive the project scope as their parent
@@ -184,8 +202,10 @@ The flow is:
 6. `SceneFlow` loads scene-specific scopes as children of the project scope.
 7. The main menu starts a run through `RunManager`.
 8. `SceneFlow` loads `Overworld.unity` with the active run available.
-9. A battle request loads `Battle.unity`; completing the battle returns to the
-   overworld without recreating the run.
+9. A battle request loads `Battle.unity` additively; the overworld scene and
+   scope remain active.
+10. Completing the battle unloads the battle presentation and returns focus to
+    the overworld without recreating the run.
 
 `SceneFlow` owns scene transitions. Views and feature services must not call
 `SceneManager.LoadScene` directly.
@@ -202,6 +222,11 @@ The flow is:
 - `RunManager`.
 - `SceneFlow`.
 - `GameEntryPoint`.
+- `ArchiveService`.
+- `BattleService`.
+- `EngagementService`.
+- `TimelineOutcomeEvaluator`.
+- `EffectRegistry`.
 - `IRunStateStore` implementation.
 
 It also owns project-wide configuration such as the active scenario catalog
@@ -223,11 +248,13 @@ and application logging.
 
 `BattleLifetimeScope` registers:
 
-- `BattleService`.
 - `BattleSimulation`.
 - Combat policies and resolvers.
 - Battle views and presenters.
 
+`BattleService` and active engagement state remain project-scoped so overworld
+travel can add reinforcements while the battle presentation is loaded.
+`BattleLifetimeScope` owns only battle-specific simulation/presentation objects.
 Scene scopes should not own `RunManager`, the archive, or the simulation clock.
 
 ### Main menu and starting a run
@@ -307,6 +334,7 @@ as:
 
 - `NodeExplored`
 - `PlanetScanned`
+- `MapKnowledgeChanged`
 - `SettlementStarted`
 - `ChallengeRevealed`
 - `ResourceChanged`
@@ -318,6 +346,11 @@ as:
 - `CrisisResolved`
 - `TimelineEnded`
 - `RewindCompleted`
+- `ShipConstructionCompleted`
+- `FactionContacted`
+- `FleetJoinedEngagement`
+- `CombatIntelRecorded`
+- `TimelineOutcomeChanged`
 
 UI intents should be explicit commands or service calls, for example:
 
@@ -331,6 +364,39 @@ UI intents should be explicit commands or service calls, for example:
 - `RetreatFleet`
 - `RewindTimeline`
 
+### Command results
+
+Normal player-command rejection is expected gameplay feedback, not an
+exception. Shared command types should return:
+
+- `CommandResult`
+- `CommandResult<T>`
+- `CommandErrorCode`
+- `CommandError`
+
+Examples include insufficient resources, an invalid route, an occupied
+shipyard, an unmet research prerequisite, or a planet that cannot be settled.
+Presenters map error codes to player-facing explanations.
+
+### Effects and modifiers
+
+Research, relics, species traits, and discoveries must register effects through
+one data-driven interface rather than creating feature-specific research-ID
+checks.
+
+Implement:
+
+- `EffectDefinition`
+- `EffectRegistry`
+- `IEffectQuery`
+- `CapabilityId`
+- `ModifierContext`
+
+`EffectRegistry` is rebuilt from completed run research, current timeline
+assets, and active discoveries. Read-only consumers such as production, travel,
+and damage resolution query capabilities and numeric modifiers through
+`IEffectQuery`.
+
 ### Content lookup
 
 Required types:
@@ -340,9 +406,26 @@ Required types:
 - `ResearchCatalog`
 - `ShipCatalog`
 - `BuildingCatalog`
+- `ProductionCatalog`
+- `FactionCatalog`
 
 The catalog converts stable IDs into ScriptableObject definitions. Runtime
 systems should not search the AssetDatabase or scene hierarchy.
+
+### Knowledge and visibility ownership
+
+Persistent knowledge belongs to `RunArchive`, not to map views or mutable
+timeline visibility:
+
+- `MapKnowledge` stores explored nodes, known routes, and scanned details.
+- `CombatIntel` stores observed enemy classes, weapons, defenses, and
+  weaknesses.
+- `DiscoveryKnowledge` stores leads, blueprints, and known triggers.
+
+`VisibilityService` combines persistent archive knowledge with temporary sensor
+coverage from the current timeline. Fog of war is only a presentation of that
+query. `ArchiveService.RecordObservation` must be called when exploration,
+scanning, or combat reveals information, before a timeline can be reset.
 
 ## Phase 0: Simulation Contracts
 
@@ -366,6 +449,10 @@ Implement:
 - `TimelineState`
 - `RunArchive`
 - `TimelineFactory`
+- `ProductionQueueState`
+- `ShipyardState`
+- `TimelineOutcomeEvaluator`
+- `RunOutcome`
 - `SimulationClock`
 - `EventJournal`
 - `ContentCatalog`
@@ -374,19 +461,34 @@ Implement:
 timeline, archive, and current rewind index. It delegates mutations to
 feature services.
 
-`TimelineFactory` creates a fresh timeline from the stable scenario and the
-current run archive. It must not copy old colonies, fleets, resources, or
-building levels into the new timeline.
+`ScenarioDefinition` contains a `StartingEmpireDefinition` that specifies the
+home system, initial colony, starting buildings, resources, and starter fleet.
+`TimelineFactory` materializes this setup for a new run or rewind, then applies
+the run archive's unlocked capabilities. It must not copy old colonies,
+fleets, resources, production queues, or building levels into the new
+timeline.
 
 ### Data contracts
 
 At minimum:
 
 - `RunState`: seed, scenario, timeline, archive, rewind index.
-- `ScenarioState`: generated map and fixed run-level content.
-- `TimelineState`: mutable empire state.
-- `RunArchive`: discovered facts and within-run unlocks.
+- `ScenarioState`: generated map, fixed run-level content, and starting empire
+  setup.
+- `TimelineState`: mutable empire state, including colonies, fleets,
+  production queues, shipyards, faction relationships, temporary visibility,
+  and active crises.
+- `RunArchive`: map knowledge, combat intel, discovered facts, and within-run
+  unlocks.
 - `EventRecord`: event type, simulation time, source ID, and payload ID.
+- `RunOutcome`: continue, timeline defeat, run victory, or run defeat, with an
+  explicit reason.
+
+`RunOutcomeRuleDefinition` supplies the scenario-specific conditions. The
+initial evaluator can check home-system loss, loss of all viable colonies,
+terminal invasion objectives, and final-timeline completion. A lost battle,
+lost colony, or exhausted rewind budget is not automatically a timeline
+defeat.
 
 ### Tests
 
@@ -394,8 +496,15 @@ At minimum:
 - Archive discoveries survive a timeline reset.
 - Completed within-run research remains available after reset.
 - Incomplete research progress does not survive reset.
+- A new timeline starts with the scenario's defined home system, colony,
+  resources, buildings, and starter fleet.
+- A new timeline does not share mutable lists, dictionaries, queues, or state
+  object references with the previous timeline or scenario state.
 - The simulation clock pauses and advances deterministically.
 - Events are recorded exactly once where required.
+- Invalid commands return stable error codes and do not partially mutate state.
+- Losing a battle does not automatically produce a timeline defeat.
+- `TimelineOutcomeEvaluator` emits only one terminal outcome for a timeline.
 - Bootstrap creates the project container before the main menu loads.
 - Project-scoped services survive scene transitions.
 - Scene scopes receive the project scope and are disposed correctly.
@@ -433,6 +542,10 @@ Create one authored `ScenarioDefinition` containing:
 - Planet definitions and local modifiers.
 - One primary invasion wormhole.
 - One minor faction.
+- One authored faction force definition for its defensive or aggressive
+  response.
+- A `StartingEmpireDefinition` with a home system, initial colony, starter
+  resources, buildings, and a small starter fleet.
 - Fixed discovery, resource, and challenge IDs.
 
 The first scenario should not use procedural generation. A later generator can
@@ -452,6 +565,11 @@ Implement:
 - `TravelService`
 - `TravelSystem`
 - `RouteService`
+- `FactionState`
+- `FactionRelationshipState`
+- `FactionService`
+- `FactionContactService`
+- `FactionThreatService`
 
 Responsibilities:
 
@@ -461,6 +579,15 @@ Responsibilities:
 - Reveal planet details after scanning.
 - Start and complete fleet travel.
 - Record discoveries in the archive.
+- Initialize the minor faction's ownership, identity, and relationship state.
+- Support basic contact, ignore, trade, or hostile-approach decisions.
+- Create a simple faction threat request when the player approaches a hostile
+  faction; Phase 4 converts it into a fleet engagement.
+
+Faction relationship and remaining force state belongs to the timeline. Faction
+identity, incentives, specialty, and authored territory belong to scenario
+state and persistent run knowledge. `FactionState` tracks current ownership,
+remaining forces, contact status, and hostile-response cooldowns.
 
 ### Presentation
 
@@ -474,10 +601,13 @@ Implement:
 - `RouteView`
 - `SystemInspectionView`
 - `PlanetInspectionView`
+- `FactionContactView`
+- `FactionStatusView`
 - `FogOfWarView`
 
-The map view observes state and events. It does not own the graph or reveal
-hidden content on its own.
+The map view observes state and events. It does not own the graph, faction
+behavior, or reveal hidden content on its own. `VisibilityService` supplies
+known map information from the archive and current sensor coverage.
 
 ### Tests
 
@@ -489,11 +619,16 @@ hidden content on its own.
 - Scanning reveals planet details and records the discovery.
 - Travel takes simulation time and arrives at the correct node.
 - Invalid travel and unexplored destinations are rejected.
+- Starting state comes from `StartingEmpireDefinition`, not loader constants.
+- A faction can be contacted, ignored, or approached hostilely.
+- A hostile approach can create a faction sortie without requiring full
+  diplomacy simulation.
 
 ### Deliverable
 
-The player can inspect the map, explore a route, scan planets, and move a
-placeholder fleet to a meaningful expansion choice.
+The player can start from a defined home system and starter fleet, inspect the
+map, explore a route, scan planets, and move toward a meaningful expansion or
+minor-faction choice.
 
 ## Phase 2: Planet and Economy Loop
 
@@ -506,6 +641,7 @@ Create:
 - `BuildingDefinition`
 - `PlanetChallengeDefinition`
 - `ProductionRecipeDefinition`
+- `ShipyardDefinition`
 
 The first slice needs only a small resource set:
 
@@ -525,6 +661,10 @@ Implement:
 - `EconomyService`
 - `EconomyTickSystem`
 - `ProductionService`
+- `ProductionSystem`
+- `ProductionQueueService`
+- `ShipyardService`
+- `ShipConstructionService`
 - `ResourceLedger`
 - `FrontierPressureService`
 - `ColonyStabilityService`
@@ -538,6 +678,12 @@ Responsibilities:
 - Validate building capacity and level upgrades.
 - Calculate archetype multipliers without hard-locking other buildings.
 - Produce and consume resources on simulation ticks.
+- Enqueue ship construction jobs at an active shipyard.
+- Spend industry, energy, strategic material, and build time according to the
+  selected production recipe.
+- Persist active production queues and shipyard state in the timeline.
+- Emit `ShipConstructionCompleted` when a job finishes so fleet systems can
+  receive the completed ships.
 - Apply upkeep, Frontier Pressure, and stability effects.
 - Reveal a deterministic local challenge after commitment.
 - Resolve, delay, abandon, or partially complete the challenge.
@@ -556,6 +702,7 @@ Implement:
 - `SettlementCommitmentView`
 - `PlanetChallengeView`
 - `ColonyStatusView`
+- `ShipyardProductionView`
 
 The challenge view must clearly distinguish known warning signs from the
 unknown exact challenge.
@@ -568,6 +715,9 @@ unknown exact challenge.
 - Archetype multipliers affect output without blocking off-specialization
   buildings.
 - Production and upkeep update correctly over a simulated interval.
+- A shipyard queue spends the configured resources over time.
+- A completed ship construction job emits the expected ship output.
+- Production queues and partially completed jobs reset on rewind.
 - Frontier Pressure changes the intended costs or risks.
 - A challenge is deterministic within a run.
 - Abandoning a challenge applies the documented sunk cost and state.
@@ -575,7 +725,9 @@ unknown exact challenge.
 ### Deliverable
 
 The player must choose between at least two useful planets because settling
-both immediately creates a measurable economic or logistical burden.
+both immediately creates a measurable economic or logistical burden. The player
+can then turn one developed shipyard into actual fleet strength through a
+visible production queue rather than test-only fleet spawning.
 
 ## Phase 3: Research and Discovery Loop
 
@@ -609,6 +761,7 @@ Implement:
 - `DiscoveryService`
 - `BlueprintService`
 - `TechnologyUnlockService`
+- `EffectRegistry`
 
 Responsibilities:
 
@@ -619,6 +772,7 @@ Responsibilities:
 - Add discovered leads with the configured weighting.
 - Record blueprints and requirements in the archive.
 - Make completed research available across rewinds within the run.
+- Register technology capabilities and modifiers through `EffectRegistry`.
 - Leave physical labs, production, and resources in timeline state.
 
 Research effects should be represented as data-driven modifiers or unlock IDs,
@@ -644,6 +798,8 @@ prerequisites or discoveries are missing.
 - A project cannot be started while another project is active in the MVP.
 - Research rate advances progress deterministically.
 - Completing research changes the intended capability.
+- Production, travel, or combat can observe the completed capability through
+  `IEffectQuery` without checking a research ID directly.
 - A discovery reveals the correct path without granting the final technology.
 - Completed research persists across rewinds.
 - Incomplete project progress resets.
@@ -684,6 +840,7 @@ Implement:
 - `FleetMergeService`
 - `FleetMovementService`
 - `BattleService`
+- `EngagementService`
 - `BattleSimulation`
 - `TargetSelectionService`
 - `RangeBandService`
@@ -695,20 +852,37 @@ Implement:
 
 Responsibilities:
 
+- Add completed ship-construction output to fleets or a shipyard reserve.
 - Create and modify fleets from available ships.
+- Convert authored faction threat requests into faction fleets.
 - Require an explicit merge command.
 - Move fleets through the route graph.
 - Create a battle when opposing fleets meet or a defense is attacked.
+- Track an `ActiveEngagementState` containing separate participating fleet IDs.
+- Add an arriving fleet to an active engagement without merging it.
 - Select targets according to ship role.
 - Advance combat in deterministic simulation ticks.
 - Apply shield, armor, hull, penetration, and destruction rules.
 - Allow a retreat order subject to the disengagement rule.
 - Preserve damaged ships and create debris from destroyed ships.
 - Resolve station and planetary defense participation.
+- Record observed enemy composition, weapons, defenses, and wreck information
+  through `ArchiveService` as soon as it becomes known.
+
+`BattleService` and `ActiveEngagementState` are project-scoped. The overworld
+remains loaded while `Battle.unity` is loaded additively as a presentation
+scene. `BattleSimulation` subscribes to the existing project
+`SimulationClock`; it does not create a second galaxy clock. Overworld travel,
+economy, and invasion systems remain registered, so a fleet can arrive during
+an engagement and join as a separate participant.
 
 `BattleSimulation` should be a plain C# resolver driven by a managed tick. A
 battle view can visualize its events, but visual animation must not determine
-the result.
+the result. `BattleLifetimeScope` registers the battle tickable when the
+additive scene loads and unregisters it when the scene unloads. This prevents
+duplicate ticks or dropped registrations across repeated engagements. If the
+player pauses the simulation, both strategic and battle simulation pause
+together.
 
 ### Presentation
 
@@ -728,6 +902,7 @@ debris without requiring individual ship micromanagement.
 ### Tests
 
 - Fleet composition and explicit merge behavior work correctly.
+- Ships produced by a shipyard can enter a fleet without test-only spawning.
 - Targeting prefers the configured role targets.
 - Range bands affect eligible targets and damage opportunities.
 - Shields, armor, hull, and penetration resolve correctly.
@@ -737,6 +912,12 @@ debris without requiring individual ship micromanagement.
 - Destroyed ships produce recoverable debris.
 - Station defenses participate without becoming mobile fleets.
 - Combat results are deterministic for the same inputs and seed.
+- A reinforcement joins an active engagement without merging fleets.
+- Unloading the battle presentation does not destroy active engagement state.
+- Loading and unloading a battle presentation does not double-register its
+  simulation tick.
+- A lost battle reports attrition without automatically ending the timeline.
+- Combat observations are written to persistent run intel.
 
 ### Deliverable
 
@@ -791,6 +972,8 @@ Responsibilities:
 - Withdraw damaged fleets toward repair support.
 - Keep high-level enemy composition fixed while allowing simple target
   selection and regrouping.
+- Report invasion objectives, home-system loss, and other outcome conditions to
+  `TimelineOutcomeEvaluator` rather than ending the timeline directly.
 
 The first implementation should not dynamically redesign the enemy fleet to
 counter the player.
@@ -817,6 +1000,9 @@ remains without revealing every solution automatically.
 - Crisis resolution and expiry apply the correct consequences.
 - Damaged invasion fleets can withdraw and create interception opportunities.
 - Minor target-selection variation does not change the invasion's high-level plan.
+- Losing one battle or colony does not end the timeline unless the configured
+  outcome rules are met.
+- A terminal invasion objective produces one run outcome.
 
 ### Deliverable
 
@@ -839,15 +1025,23 @@ Implement:
 Responsibilities:
 
 - End a timeline through defeat or voluntary rewind.
+- Evaluate timeline and run outcomes from one shared rule set.
 - Record discoveries immediately before reset.
 - Dispose or clear timeline-owned state.
 - Recreate the starting empire from the scenario and archive.
 - Increment the rewind index.
 - Restore completed within-run research and discovered access.
+- Reset colonies, fleets, resources, production queues, shipyards, faction
+  relationships, temporary visibility, and active crises.
 - Keep scenario locations, routes, and event identities stable.
 
 The reset should be explicit and testable. Avoid relying on destroying and
 reloading arbitrary scene objects as the persistence mechanism.
+
+`TimelineEndService` is the only service that finalizes a timeline. Battle,
+invasion, economy, and faction systems report facts or outcome candidates; they
+do not each implement their own game-over logic. The rewind budget prevents
+additional rewinds, but exhausting it is not itself a defeat outcome.
 
 ### Persistence and save boundary
 
@@ -882,8 +1076,13 @@ The rebuild summary should show what was retained and what must be rebuilt.
 - Scenario state remains stable.
 - Archive facts and completed research remain available.
 - Resources, colonies, fleets, buildings, and incomplete projects reset.
+- Production queues, shipyard state, faction relationships, and temporary
+  visibility reset.
+- The recreated timeline uses the scenario's starting empire definition.
 - A new timeline can use archived information immediately.
 - Rewind cannot occur after the run is complete or the rewind budget is spent.
+- A lost battle and a defeated timeline are different recorded outcomes.
+- A terminal run outcome is emitted once.
 
 ### Deliverable
 
@@ -910,6 +1109,7 @@ Useful debug controls include:
 - Reveal the map.
 - Grant resources.
 - Complete research.
+- Enqueue or complete a ship production job.
 - Spawn a test fleet.
 - Trigger a crisis.
 - Force a rewind.
@@ -924,7 +1124,7 @@ Add a small number of PlayMode tests that:
 - Load the authored scenario.
 - Explore and settle a planet.
 - Complete a research project.
-- Spawn and resolve a fleet battle.
+- Build ships through a shipyard queue and resolve a fleet battle.
 - Trigger an invasion event.
 - Rewind and verify persistence boundaries.
 
@@ -939,11 +1139,13 @@ Record enough information to diagnose the slice:
 - Simulation time to first expansion.
 - Settlement cost and output.
 - Research choices and completion times.
+- Shipyard queue time, resource spending, and completed ships.
 - Fleet strength and battle result.
 - Damage, destroyed ships, retreat, and debris.
 - Invasion milestone times.
 - Crisis resolution and consequences.
 - Timeline end reason.
+- Run outcome reason.
 - Rewind count and archive discoveries.
 
 The metrics are for balancing and debugging, not a player-facing progression
@@ -951,7 +1153,7 @@ system.
 
 ## Suggested Unity Content Structure
 
-Subject to resolving the current project-root mismatch:
+Relative to the authoritative Unity project root `Starwatch/`:
 
 ```text
 Assets/_Project/
@@ -967,6 +1169,7 @@ Assets/_Project/
       Simulation/
       Events/
       Content/
+      Effects/
       Persistence/
     Overworld/
       Map/
@@ -975,6 +1178,7 @@ Assets/_Project/
       Planets/
       Economy/
       Research/
+      Factions/
       Invasion/
     Battle/
       Fleets/
