@@ -5,14 +5,14 @@ namespace EndlessHeros.Core.Simulation
     /// </summary>
     public readonly struct GameTime
     {
+        public double Seconds { get; }
+
+        public static GameTime Zero => new GameTime(0d);
+
         public GameTime(double seconds)
         {
             Seconds = seconds;
         }
-
-        public double Seconds { get; }
-
-        public static GameTime Zero => new GameTime(0d);
 
         /// <summary>
         /// Returns a new GameTime advanced by the given delta.

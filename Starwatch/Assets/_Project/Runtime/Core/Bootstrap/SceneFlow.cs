@@ -10,16 +10,16 @@ namespace EndlessHeros.Core.Bootstrap
     /// </summary>
     public sealed class SceneFlow
     {
+        public SceneId ActiveGameplayScene { get; private set; } = SceneId.Bootstrap;
+
+        public bool IsBattlePresentationLoaded => _sceneLoader.IsLoaded(SceneId.Battle);
+
         private readonly ISceneLoader _sceneLoader;
 
         public SceneFlow(ISceneLoader sceneLoader)
         {
             _sceneLoader = sceneLoader ?? throw new ArgumentNullException(nameof(sceneLoader));
         }
-
-        public SceneId ActiveGameplayScene { get; private set; } = SceneId.Bootstrap;
-
-        public bool IsBattlePresentationLoaded => _sceneLoader.IsLoaded(SceneId.Battle);
 
         /// <summary>
         /// Replaces the current scene with MainMenu and clears any battle presentation.

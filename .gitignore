@@ -8,6 +8,7 @@ Thumbs.db
 # Agent / local Unity batch logs
 # -----------------------------------------------------------------------------
 unity-*.log
+TestResults-*.xml
 .vs/
 *.suo
 *.user

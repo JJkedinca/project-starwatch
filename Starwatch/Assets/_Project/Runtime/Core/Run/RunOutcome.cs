@@ -17,15 +17,15 @@ namespace EndlessHeros.Core.Run
     /// </summary>
     public readonly struct RunOutcome
     {
+        public RunOutcomeKind Kind { get; }
+
+        public string Reason { get; }
+
         public RunOutcome(RunOutcomeKind kind, string reason)
         {
             Kind = kind;
             Reason = reason ?? string.Empty;
         }
-
-        public RunOutcomeKind Kind { get; }
-
-        public string Reason { get; }
 
         /// <summary>
         /// Returns a non-terminal continue outcome.

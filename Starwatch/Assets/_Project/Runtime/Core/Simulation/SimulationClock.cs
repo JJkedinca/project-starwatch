@@ -13,8 +13,6 @@ namespace EndlessHeros.Core.Simulation
         private const float kFastMultiplier = 2f;
         private const float kFasterMultiplier = 4f;
 
-        private SimulationSpeed _speed = SimulationSpeed.Paused;
-
         public GameTime CurrentTime { get; private set; } = GameTime.Zero;
 
         public SimulationSpeed Speed
@@ -26,6 +24,8 @@ namespace EndlessHeros.Core.Simulation
         public bool IsPaused => _speed == SimulationSpeed.Paused;
 
         public event Action<GameTime, float> TimeAdvanced;
+
+        private SimulationSpeed _speed = SimulationSpeed.Paused;
 
         /// <summary>
         /// Clears elapsed simulation time and leaves the clock paused. Callers

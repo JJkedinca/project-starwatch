@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using EndlessHeros.Core.Bootstrap;
+using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Core.Simulation;
 using NUnit.Framework;
@@ -59,7 +60,7 @@ namespace EndlessHeros.Tests.EditMode.Core
         private static RunStartService CreateService(SimulationClock clock, FakeSceneLoader loader)
         {
             return new RunStartService(
-                new RunManager(new TimelineFactory()),
+                new RunManager(new TimelineFactory(), new EventJournal()),
                 new SceneFlow(loader),
                 clock);
         }

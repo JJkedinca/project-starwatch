@@ -7,14 +7,14 @@ namespace EndlessHeros.Core.Run
     {
         public const string DefaultScenarioId = "authored-vertical-slice";
 
+        public string ScenarioId { get; }
+
+        public int? Seed { get; }
+
         public RunStartConfiguration(string scenarioId, int? seed)
         {
             ScenarioId = string.IsNullOrWhiteSpace(scenarioId) ? DefaultScenarioId : scenarioId;
             Seed = seed;
         }
-
-        public string ScenarioId { get; }
-
-        public int? Seed { get; }
     }
 }

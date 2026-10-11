@@ -5,12 +5,12 @@ namespace EndlessHeros.Core.Run
     /// </summary>
     public readonly struct RunSeed
     {
+        public int Value { get; }
+
         public RunSeed(int value)
         {
             Value = value;
         }
-
-        public int Value { get; }
 
         /// <summary>
         /// Convenience factory for constructing a seed from an integer value.
