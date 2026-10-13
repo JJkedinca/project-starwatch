@@ -1,14 +1,10 @@
 namespace EndlessHeros.Core.Simulation
 {
     /// <summary>
-    /// Contract for systems driven by the managed simulation clock instead of
-    /// their own Update loops.
+    /// Legacy alias for simulation systems. Prefer ISimulationSystem.
+    /// TODO: Remove once all callers use ISimulationSystem.
     /// </summary>
-    public interface ITickable
+    public interface ITickable : ISimulationSystem
     {
-        /// <summary>
-        /// Advances this system by the provided simulation delta time.
-        /// </summary>
-        void ManagedUpdate(float deltaTime);
     }
 }

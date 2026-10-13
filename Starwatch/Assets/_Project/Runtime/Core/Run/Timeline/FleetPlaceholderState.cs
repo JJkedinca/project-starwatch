@@ -1,11 +1,12 @@
 using System;
 using EndlessHeros.Core.Identifiers;
 
-namespace EndlessHeros.Core.Run
+namespace EndlessHeros.Core.Run.Timeline
 {
     /// <summary>
     /// Minimal timeline-owned fleet placeholder until the fleet slice lands.
     /// Immutable after construction; TimelineState validates before insert.
+    /// TODO: Replace with full fleet/runtime ship state when Phase 4 fleets land.
     /// </summary>
     public sealed class FleetPlaceholderState
     {

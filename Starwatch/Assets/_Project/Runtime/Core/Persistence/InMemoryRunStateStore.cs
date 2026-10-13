@@ -4,6 +4,8 @@ namespace EndlessHeros.Core.Persistence
 {
     /// <summary>
     /// First-slice IRunStateStore that keeps run state in process memory only.
+    /// TODO: Replace with a disk-backed IRunStateStore adapter when save/load lands;
+    /// keep this type for EditMode/tests if useful.
     /// </summary>
     public sealed class InMemoryRunStateStore : IRunStateStore
     {

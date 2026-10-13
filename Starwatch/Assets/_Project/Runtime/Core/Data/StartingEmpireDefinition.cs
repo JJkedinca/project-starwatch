@@ -33,7 +33,7 @@ namespace EndlessHeros.Core.Data
         }
 
         /// <summary>
-        /// Development default used until Phase 1 loads authored scenario assets.
+        /// Development default aligned with VerticalSliceScenarioFactory home.
         /// </summary>
         public static StartingEmpireDefinition CreateDefault()
         {

@@ -19,21 +19,24 @@ namespace EndlessHeros.Core.Run
         private readonly RunManager _runManager;
         private readonly SceneFlow _sceneFlow;
         private readonly SimulationClock _simulationClock;
+        private readonly SimulationLoop _simulationLoop;
         private bool _isStarting;
 
         public RunStartService(
             RunManager runManager,
             SceneFlow sceneFlow,
-            SimulationClock simulationClock)
+            SimulationClock simulationClock,
+            SimulationLoop simulationLoop)
         {
             _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
             _sceneFlow = sceneFlow ?? throw new ArgumentNullException(nameof(sceneFlow));
             _simulationClock = simulationClock ?? throw new ArgumentNullException(nameof(simulationClock));
+            _simulationLoop = simulationLoop ?? throw new ArgumentNullException(nameof(simulationLoop));
         }
 
         /// <summary>
         /// Creates the active run from configuration and loads Overworld on success.
-        /// Resets simulation time at run creation and resumes the clock after load.
+        /// Resets simulation time only after CreateRun succeeds, then resumes after load.
         /// Rejects overlapping start requests.
         /// </summary>
         public async UniTask<bool> StartRunAsync(RunStartConfiguration configuration)
@@ -53,14 +56,15 @@ namespace EndlessHeros.Core.Run
             _isStarting = true;
             try
             {
-                _simulationClock.ResetForRun();
-
                 var seedValue = configuration.Seed ?? Environment.TickCount;
                 var run = _runManager.CreateRun(configuration.ScenarioId, RunSeed.FromValue(seedValue));
                 if (run == null)
                 {
                     return false;
                 }
+
+                _simulationClock.ResetForRun();
+                _simulationLoop.ResetAccumulator();
 
                 await _sceneFlow.LoadOverworldAsync();
                 _simulationClock.SetPaused(false);

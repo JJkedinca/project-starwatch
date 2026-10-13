@@ -1,17 +1,19 @@
 using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
+using EndlessHeros.Core.Run.Archive;
+using EndlessHeros.Core.Run.Timeline;
 
 namespace EndlessHeros.Core.Commands
 {
     /// <summary>
     /// Tiny command helpers used to prove CommandResult and timeline isolation in Phase 0.
-    /// Feature phases replace these with real services.
+    /// TODO: Remove once Phase 1+ services fully own fleet/archive mutations in production paths;
+    /// keep only if tests still need a thin CommandResult sample.
     /// </summary>
     public static class TimelineMutationCommands
     {
         /// <summary>
         /// Adds a placeholder fleet to timeline-owned state only.
-        /// Location comes from the caller (typically scenario home), not a timeline copy.
+        /// Location comes from the caller (typically universe home), not a timeline copy.
         /// </summary>
         public static CommandResult<EntityId> AddPlaceholderFleet(
             TimelineState timeline,
@@ -67,11 +69,12 @@ namespace EndlessHeros.Core.Commands
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Archive is required.");
             }
 
-            if (!archive.TryAddExploredNode(nodeId))
+            if (nodeId.IsEmpty)
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Node id is required.");
             }
 
+            archive.TryAddExploredNode(nodeId);
             return CommandResult.Ok();
         }
     }

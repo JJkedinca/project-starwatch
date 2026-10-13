@@ -3,16 +3,12 @@ using System;
 namespace EndlessHeros.Core.Simulation
 {
     /// <summary>
-    /// Authoritative simulation clock. Tracks pause/speed and publishes time
-    /// advancement without knowing about planets, fleets, or invasions.
+    /// Authoritative simulation clock. Tracks pause/speed and simulation time.
+    /// Time advances only through AdvanceSimulation (normally via SimulationLoop).
     /// Starts paused so menu/bootstrap time does not count toward a run.
     /// </summary>
     public sealed class SimulationClock
     {
-        private const float kNormalMultiplier = 1f;
-        private const float kFastMultiplier = 2f;
-        private const float kFasterMultiplier = 4f;
-
         public GameTime CurrentTime { get; private set; } = GameTime.Zero;
 
         public SimulationSpeed Speed
@@ -55,24 +51,36 @@ namespace EndlessHeros.Core.Simulation
         }
 
         /// <summary>
-        /// Advances simulation time from a real-time delta using the current speed.
-        /// Returns the simulation delta actually applied.
+        /// Advances simulation time by an already-scaled simulation delta.
+        /// Used by SimulationLoop fixed ticks and EditMode tests.
         /// </summary>
-        public float Advance(float realDeltaTime)
+        public float AdvanceSimulation(float simulationDeltaSeconds)
         {
-            if (IsPaused || realDeltaTime <= 0f)
+            if (simulationDeltaSeconds <= 0f)
             {
                 return 0f;
             }
 
-            var simulationDelta = realDeltaTime * GetSpeedMultiplier(_speed);
-            CurrentTime = CurrentTime.Add(simulationDelta);
-            TimeAdvanced?.Invoke(CurrentTime, simulationDelta);
-            return simulationDelta;
+            CurrentTime = CurrentTime.Add(simulationDeltaSeconds);
+            TimeAdvanced?.Invoke(CurrentTime, simulationDeltaSeconds);
+            return simulationDeltaSeconds;
         }
 
         /// <summary>
-        /// Forces one tick of advancement for tests/debug, preserving prior pause state.
+        /// Advances simulation time when not paused. Prefer SimulationLoop.Pump in gameplay.
+        /// </summary>
+        public float Advance(float simulationDeltaSeconds)
+        {
+            if (IsPaused)
+            {
+                return 0f;
+            }
+
+            return AdvanceSimulation(simulationDeltaSeconds);
+        }
+
+        /// <summary>
+        /// Forces one advancement for tests/debug, preserving prior pause state.
         /// </summary>
         public float AdvanceOneTick(float tickDeltaTime)
         {
@@ -81,26 +89,7 @@ namespace EndlessHeros.Core.Simulation
                 return 0f;
             }
 
-            var previousSpeed = _speed;
-            _speed = SimulationSpeed.Normal;
-            var advanced = Advance(tickDeltaTime);
-            _speed = previousSpeed;
-            return advanced;
-        }
-
-        private static float GetSpeedMultiplier(SimulationSpeed speed)
-        {
-            switch (speed)
-            {
-                case SimulationSpeed.Normal:
-                    return kNormalMultiplier;
-                case SimulationSpeed.Fast:
-                    return kFastMultiplier;
-                case SimulationSpeed.Faster:
-                    return kFasterMultiplier;
-                default:
-                    return 0f;
-            }
+            return AdvanceSimulation(tickDeltaTime);
         }
     }
 }

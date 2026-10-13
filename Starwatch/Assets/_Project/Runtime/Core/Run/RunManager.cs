@@ -1,14 +1,17 @@
 using System;
+using EndlessHeros.Core.Content;
 using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Identifiers;
+using EndlessHeros.Core.Run.Timeline;
+using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Core.Simulation;
 using UnityEngine;
 
 namespace EndlessHeros.Core.Run
 {
     /// <summary>
-    /// Owns the active run and exposes read-only access to scenario, timeline,
+    /// Owns the active run and exposes read-only access to universe, timeline,
     /// archive, and rewind index. Feature services mutate through dedicated APIs.
     /// </summary>
     public sealed class RunManager
@@ -18,23 +21,30 @@ namespace EndlessHeros.Core.Run
         public RunState CurrentRun => _currentRun;
 
         private readonly TimelineFactory _timelineFactory;
+        private readonly UniverseLoader _universeLoader;
+        private readonly ContentCatalog _contentCatalog;
         private readonly EventJournal _eventJournal;
         private RunState _currentRun;
 
-        public RunManager(TimelineFactory timelineFactory, EventJournal eventJournal)
+        public RunManager(
+            TimelineFactory timelineFactory,
+            UniverseLoader universeLoader,
+            ContentCatalog contentCatalog,
+            EventJournal eventJournal)
         {
             _timelineFactory = timelineFactory ?? throw new ArgumentNullException(nameof(timelineFactory));
+            _universeLoader = universeLoader ?? throw new ArgumentNullException(nameof(universeLoader));
+            _contentCatalog = contentCatalog ?? throw new ArgumentNullException(nameof(contentCatalog));
             _eventJournal = eventJournal ?? throw new ArgumentNullException(nameof(eventJournal));
         }
 
         /// <summary>
-        /// Creates a new run with fresh scenario, timeline, archive, and seeded random.
-        /// Clears the project journal so records belong only to the active run.
+        /// Creates a new run from the catalog scenario, clearing the project journal.
         /// </summary>
         public RunState CreateRun(
             string scenarioId,
             RunSeed seed,
-            StartingEmpireDefinition startingEmpire = null)
+            StartingEmpireDefinition startingEmpireOverride = null)
         {
             if (string.IsNullOrWhiteSpace(scenarioId))
             {
@@ -42,21 +52,32 @@ namespace EndlessHeros.Core.Run
                 return null;
             }
 
-            _eventJournal.Clear();
+            if (!_contentCatalog.TryGetScenario(scenarioId, out var definition))
+            {
+                Debug.LogError($"RunManager.CreateRun could not find scenario '{scenarioId}'.");
+                return null;
+            }
 
-            var empire = startingEmpire ?? StartingEmpireDefinition.CreateDefault();
-            var scenario = new ScenarioState(scenarioId, empire);
-            var archive = new RunArchive();
             var entityIds = new EntityIdFactory();
-            var timeline = _timelineFactory.Create(scenario, archive, entityIds);
+            if (!_universeLoader.TryLoad(
+                    definition,
+                    entityIds,
+                    out var universe,
+                    out var archive,
+                    out var timeline,
+                    startingEmpireOverride))
+            {
+                return null;
+            }
+
+            _eventJournal.Clear();
             var random = new DeterministicRandom(seed.Value);
-            _currentRun = new RunState(seed, scenario, timeline, archive, rewindIndex: 0, random, entityIds);
+            _currentRun = new RunState(seed, universe, timeline, archive, rewindIndex: 0, random, entityIds);
             return _currentRun;
         }
 
         /// <summary>
-        /// Replaces the current timeline using the factory without mutating scenario/archive.
-        /// Used by tests now and rewind later.
+        /// Replaces the current timeline using the factory without mutating universe/archive.
         /// </summary>
         public TimelineState RecreateTimeline(int rewindIndex)
         {
@@ -73,7 +94,7 @@ namespace EndlessHeros.Core.Run
             }
 
             var timeline = _timelineFactory.Create(
-                _currentRun.Scenario,
+                _currentRun.Universe,
                 _currentRun.Archive,
                 _currentRun.EntityIds);
             if (!_currentRun.ReplaceTimeline(timeline, rewindIndex))

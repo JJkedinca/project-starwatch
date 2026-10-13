@@ -10,11 +10,10 @@ namespace EndlessHeros.Tests.EditMode.Core
     /// </summary>
     public sealed class FakeSceneLoader : ISceneLoader
     {
-        private readonly HashSet<SceneId> _loaded = new HashSet<SceneId>();
-        private readonly TaskCompletionSource<bool> _overworldGate =
-            new TaskCompletionSource<bool>();
+        private readonly HashSet<SceneId> _loaded = new();
+        private readonly TaskCompletionSource<bool> _overworldGate = new();
 
-        public List<SceneId> SingleLoads { get; } = new List<SceneId>();
+        public List<SceneId> SingleLoads { get; } = new();
 
         public int LoadOverworldCount { get; private set; }
 

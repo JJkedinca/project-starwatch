@@ -12,7 +12,7 @@ namespace EndlessHeros.Core.Events
     {
         public IReadOnlyList<EventRecord> Records => _records;
 
-        private readonly List<EventRecord> _records = new List<EventRecord>();
+        private readonly List<EventRecord> _records = new();
 
         /// <summary>
         /// Appends a structured event record when the event type is not None.

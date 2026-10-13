@@ -1,18 +1,21 @@
 using System;
 using EndlessHeros.Core.Identifiers;
+using EndlessHeros.Core.Run.Archive;
+using EndlessHeros.Core.Run.Timeline;
+using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Core.Simulation;
 
 namespace EndlessHeros.Core.Run
 {
     /// <summary>
     /// Aggregate root for one campaign attempt. Holds seed plus the three
-    /// persistence layers: scenario, timeline, and archive.
+    /// persistence layers: universe, timeline, and archive.
     /// </summary>
     public sealed class RunState
     {
         public RunSeed Seed { get; }
 
-        public ScenarioState Scenario { get; }
+        public UniverseState Universe { get; }
 
         public TimelineState Timeline { get; private set; }
 
@@ -30,7 +33,7 @@ namespace EndlessHeros.Core.Run
 
         public RunState(
             RunSeed seed,
-            ScenarioState scenario,
+            UniverseState universe,
             TimelineState timeline,
             RunArchive archive,
             int rewindIndex,
@@ -43,7 +46,7 @@ namespace EndlessHeros.Core.Run
             }
 
             Seed = seed;
-            Scenario = scenario ?? throw new ArgumentNullException(nameof(scenario));
+            Universe = universe ?? throw new ArgumentNullException(nameof(universe));
             Timeline = timeline ?? throw new ArgumentNullException(nameof(timeline));
             Archive = archive ?? throw new ArgumentNullException(nameof(archive));
             RewindIndex = rewindIndex;

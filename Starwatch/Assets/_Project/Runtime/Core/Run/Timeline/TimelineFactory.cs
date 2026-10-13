@@ -1,11 +1,13 @@
 using System;
 using EndlessHeros.Core.Identifiers;
+using EndlessHeros.Core.Run.Archive;
+using EndlessHeros.Core.Run.Universe;
 
-namespace EndlessHeros.Core.Run
+namespace EndlessHeros.Core.Run.Timeline
 {
     /// <summary>
-    /// Builds a fresh timeline from scenario setup and archive unlocks without
-    /// copying previous timeline power or aliasing scenario/archive collections.
+    /// Builds a fresh timeline from universe setup and archive unlocks without
+    /// copying previous timeline power or aliasing universe/archive collections.
     /// </summary>
     public sealed class TimelineFactory
     {
@@ -14,13 +16,13 @@ namespace EndlessHeros.Core.Run
         /// Uses the run-scoped entity id factory so ids stay unique across rewinds.
         /// </summary>
         public TimelineState Create(
-            ScenarioState scenario,
+            UniverseState universe,
             RunArchive archive,
             EntityIdFactory entityIds)
         {
-            if (scenario == null)
+            if (universe == null)
             {
-                throw new ArgumentNullException(nameof(scenario));
+                throw new ArgumentNullException(nameof(universe));
             }
 
             if (entityIds == null)
@@ -31,7 +33,7 @@ namespace EndlessHeros.Core.Run
             _ = archive;
 
             var timeline = new TimelineState(entityIds);
-            var startingEmpire = scenario.StartingEmpire;
+            var startingEmpire = universe.StartingEmpire;
             if (startingEmpire.CanPlaceStarterFleet)
             {
                 timeline.TryAddFleet(
