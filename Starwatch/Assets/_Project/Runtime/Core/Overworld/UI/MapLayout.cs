@@ -11,6 +11,18 @@ namespace EndlessHeros.Overworld.UI
         internal const float kDefaultScale = 72f;
 
         /// <summary>
+        /// Map-node width and height. Applied on the element so route centers
+        /// stay aligned if USS visuals change.
+        /// </summary>
+        internal const float kNodeSize = 56f;
+
+        internal const float kRoutePad = 4f;
+
+        internal const float kRouteLineWidth = 3f;
+
+        internal static readonly Color kRouteColor = new Color(0.43f, 0.59f, 0.75f, 0.9f);
+
+        /// <summary>
         /// Padding from the map-surface top-left to the first fitted node edge.
         /// </summary>
         internal static readonly Vector2 kDefaultPadding = new Vector2(48f, 48f);
@@ -62,6 +74,19 @@ namespace EndlessHeros.Overworld.UI
             return new Vector2(
                 padding.x - (minX * scale),
                 padding.y + (maxY * scale));
+        }
+
+        /// <summary>
+        /// Returns the center of a map-node element for route endpoints.
+        /// </summary>
+        internal static Vector2 ToNodeCenter(
+            Vector2 mapPosition,
+            float scale,
+            Vector2 originOffset)
+        {
+            var topLeft = ToLocalPosition(mapPosition, scale, originOffset);
+            var half = kNodeSize * 0.5f;
+            return new Vector2(topLeft.x + half, topLeft.y + half);
         }
     }
 }

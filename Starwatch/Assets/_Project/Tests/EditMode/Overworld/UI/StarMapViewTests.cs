@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 namespace EndlessHeros.Tests.EditMode.Overworld.UI
 {
     /// <summary>
-    /// EditMode coverage for StarMapView node lifecycle and fog labels.
+    /// EditMode coverage for StarMapView node lifecycle and fog state.
     /// </summary>
     public sealed class StarMapViewTests
     {
@@ -29,11 +29,12 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
 
             Assert.That(map.NodeCount, Is.EqualTo(2));
             Assert.That(map.HasNode(ContentId.From("home-system")), Is.True);
-            Assert.That(surface.childCount, Is.EqualTo(2));
+            // Route layer + two node elements.
+            Assert.That(surface.childCount, Is.EqualTo(3));
         }
 
         [Test]
-        public void SetNodeState_HidesLabelWhenFogged()
+        public void SetNodeState_MarksHiddenWhenFogged()
         {
             var surface = new VisualElement();
             var map = new StarMapView();
@@ -51,15 +52,16 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
                     isExplorable: false,
                     isSelected: false,
                     hasFleet: false,
-                    revealedLabel: "Forge"));
+                    revealedLabel: string.Empty));
 
-            var button = surface[0] as Button;
+            var button = surface.Q<Button>("node-forge-system");
             Assert.That(button, Is.Not.Null);
-            Assert.That(button.text, Is.EqualTo(string.Empty));
+            Assert.That(button.ClassListContains("map-node--hidden"), Is.True);
+            Assert.That(button.ClassListContains("map-node--explorable"), Is.False);
         }
 
         [Test]
-        public void SetNodeState_ShowsQuestionMarkWhenExplorableHidden()
+        public void SetNodeState_MarksExplorableWhenHiddenAndReachable()
         {
             var surface = new VisualElement();
             var map = new StarMapView();
@@ -77,11 +79,12 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
                     isExplorable: true,
                     isSelected: false,
                     hasFleet: false,
-                    revealedLabel: "Forge"));
+                    revealedLabel: string.Empty));
 
-            var button = surface[0] as Button;
+            var button = surface.Q<Button>("node-forge-system");
             Assert.That(button, Is.Not.Null);
-            Assert.That(button.text, Is.EqualTo("?"));
+            Assert.That(button.ClassListContains("map-node--hidden"), Is.True);
+            Assert.That(button.ClassListContains("map-node--explorable"), Is.True);
         }
     }
 }

@@ -28,17 +28,20 @@ namespace EndlessHeros.Core.Data
             var anomaly = ContentId.From("anomaly-rift");
 
             var homePlanet = ContentId.From("home-prime");
+            var homeMoon = ContentId.From("home-moon");
             var forgePlanet = ContentId.From("forge-world");
+            var forgeBelt = ContentId.From("forge-inner-belt");
             var frontierPlanet = ContentId.From("frontier-world");
             var relicPlanet = ContentId.From("relic-world");
+            var relicOutpost = ContentId.From("relic-outpost");
 
             List<MapNodeDefinition> nodes = new()
             {
-                new MapNodeDefinition(home, MapNodeKind.System, new Vector2(0f, 0f), new[] { homePlanet }),
-                new MapNodeDefinition(forge, MapNodeKind.System, new Vector2(2f, 1f), new[] { forgePlanet }),
+                new MapNodeDefinition(home, MapNodeKind.System, new Vector2(0f, 0f), new[] { homePlanet, homeMoon }),
+                new MapNodeDefinition(forge, MapNodeKind.System, new Vector2(2f, 1f), new[] { forgePlanet, forgeBelt }),
                 new MapNodeDefinition(choke, MapNodeKind.System, new Vector2(4f, 0f), System.Array.Empty<ContentId>()),
                 new MapNodeDefinition(frontier, MapNodeKind.System, new Vector2(6f, 0f), new[] { frontierPlanet }),
-                new MapNodeDefinition(relic, MapNodeKind.System, new Vector2(4f, 2f), new[] { relicPlanet }),
+                new MapNodeDefinition(relic, MapNodeKind.System, new Vector2(4f, 2f), new[] { relicPlanet, relicOutpost }),
                 new MapNodeDefinition(belt, MapNodeKind.NonSystem, new Vector2(2f, -1f)),
                 new MapNodeDefinition(anomaly, MapNodeKind.NonSystem, new Vector2(5f, 1f)),
             };
@@ -57,9 +60,12 @@ namespace EndlessHeros.Core.Data
             List<PlanetDefinition> planets = new()
             {
                 new PlanetDefinition(homePlanet, home, "Home Prime", "Temperate starter world."),
+                new PlanetDefinition(homeMoon, home, "Home Moon", "Barren moon with sensor coverage."),
                 new PlanetDefinition(forgePlanet, forge, "Forge World", "Industrial crust with rich metals."),
+                new PlanetDefinition(forgeBelt, forge, "Inner Belt", "Dense ore field near the forge star."),
                 new PlanetDefinition(frontierPlanet, frontier, "Frontier World", "Sparse but expandable rim colony site."),
                 new PlanetDefinition(relicPlanet, relic, "Relic World", "Ruined surface with scan-worthy anomalies."),
+                new PlanetDefinition(relicOutpost, relic, "Relic Outpost", "Derelict station in high orbit."),
             };
 
             var startingEmpire = new StartingEmpireDefinition(

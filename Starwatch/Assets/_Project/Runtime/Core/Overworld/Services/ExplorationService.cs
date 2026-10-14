@@ -2,7 +2,6 @@ using EndlessHeros.Core.Commands;
 using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Archive;
 using EndlessHeros.Core.Simulation;
 
 namespace EndlessHeros.Overworld.Services
@@ -68,7 +67,7 @@ namespace EndlessHeros.Overworld.Services
             }
 
             _archiveService.TryRecordExploredNode(run.Archive, observerId, nodeId);
-            RevealRoutesToExploredNeighbors(run, observerId, knowledge, nodeId);
+            RevealIncidentRoutes(run, observerId, nodeId);
 
             _eventJournal?.Record(
                 GameEventType.NodeExplored,
@@ -113,22 +112,12 @@ namespace EndlessHeros.Overworld.Services
             return false;
         }
 
-        private void RevealRoutesToExploredNeighbors(
-            RunState run,
-            ObserverId observerId,
-            MapKnowledge knowledge,
-            ContentId nodeId)
+        private void RevealIncidentRoutes(RunState run, ObserverId observerId, ContentId nodeId)
         {
             var neighbors = _routeService.GetNeighbors(run.Universe.MapGraph, nodeId);
             for (var i = 0; i < neighbors.Count; i++)
             {
-                var neighbor = neighbors[i];
-                if (!knowledge.HasExploredNode(neighbor))
-                {
-                    continue;
-                }
-
-                var key = RouteService.MakeRouteKey(nodeId, neighbor);
+                var key = RouteService.MakeRouteKey(nodeId, neighbors[i]);
                 _archiveService.TryRecordKnownRoute(run.Archive, observerId, key);
             }
         }

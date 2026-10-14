@@ -72,6 +72,7 @@ namespace EndlessHeros.Core.Run.Universe
             universe = new UniverseState(definition.ScenarioId, startingEmpire, graph);
             archive = new RunArchive();
             archive.PlayerMapKnowledge.TryAddExploredNode(startingEmpire.HomeSystemId);
+            SeedKnownRoutes(graph, archive.PlayerMapKnowledge, startingEmpire.HomeSystemId);
             timeline = _timelineFactory.Create(universe, archive, entityIds);
             return true;
         }
@@ -137,6 +138,15 @@ namespace EndlessHeros.Core.Run.Universe
             }
 
             return true;
+        }
+
+        private static void SeedKnownRoutes(MapGraph graph, MapKnowledge knowledge, ContentId exploredNodeId)
+        {
+            var neighbors = graph.GetNeighbors(exploredNodeId);
+            for (var i = 0; i < neighbors.Count; i++)
+            {
+                knowledge.TryAddKnownRoute(MapRoute.MakeKnowledgeKey(exploredNodeId, neighbors[i]));
+            }
         }
     }
 }

@@ -28,6 +28,17 @@ namespace EndlessHeros.Overworld.UI
                 Root.AddToClassList("map-node--system");
             }
 
+            Root.style.width = MapLayout.kNodeSize;
+            Root.style.height = MapLayout.kNodeSize;
+            if (kind != MapNodeKind.System)
+            {
+                var radius = MapLayout.kNodeSize * 0.5f;
+                Root.style.borderTopLeftRadius = radius;
+                Root.style.borderTopRightRadius = radius;
+                Root.style.borderBottomLeftRadius = radius;
+                Root.style.borderBottomRightRadius = radius;
+            }
+
             Root.clicked += () => Clicked?.Invoke(_nodeId);
         }
 

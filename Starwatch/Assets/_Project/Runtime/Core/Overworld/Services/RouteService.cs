@@ -50,21 +50,7 @@ namespace EndlessHeros.Overworld.Services
         /// </summary>
         public static ContentId MakeRouteKey(ContentId left, ContentId right)
         {
-            if (left.IsEmpty || right.IsEmpty)
-            {
-                return default;
-            }
-
-            var a = left.Value;
-            var b = right.Value;
-            if (string.CompareOrdinal(a, b) > 0)
-            {
-                var tmp = a;
-                a = b;
-                b = tmp;
-            }
-
-            return ContentId.From(a + "|" + b);
+            return MapRoute.MakeKnowledgeKey(left, right);
         }
     }
 }

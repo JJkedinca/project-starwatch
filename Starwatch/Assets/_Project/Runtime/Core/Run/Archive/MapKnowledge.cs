@@ -58,6 +58,14 @@ namespace EndlessHeros.Core.Run.Archive
         }
 
         /// <summary>
+        /// Returns whether the undirected route key is known.
+        /// </summary>
+        public bool HasKnownRoute(ContentId routeKey)
+        {
+            return !routeKey.IsEmpty && _knownRouteKeys.Contains(routeKey);
+        }
+
+        /// <summary>
         /// Returns whether the planet has been scanned.
         /// </summary>
         public bool HasScannedPlanet(ContentId planetId)

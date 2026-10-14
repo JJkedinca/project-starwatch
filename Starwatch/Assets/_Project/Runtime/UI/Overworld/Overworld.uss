@@ -27,14 +27,108 @@
     flex-direction: row;
 }
 
-.map-surface {
+.map-panel {
     flex-grow: 1;
     position: relative;
+    margin-right: 12px;
+    min-height: 480px;
+}
+
+.map-surface {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
     background-color: rgb(16, 22, 32);
     border-width: 1px;
     border-color: rgb(40, 52, 70);
-    margin-right: 12px;
-    min-height: 480px;
+    overflow: hidden;
+}
+
+.map-route-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.map-route {
+    position: absolute;
+    /* Stroke width and color come from MapLayout so they stay with node size. */
+}
+
+.system-view {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(14, 20, 30);
+    border-width: 1px;
+    border-color: rgb(40, 52, 70);
+    padding: 16px;
+    display: none;
+}
+
+.system-view-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.system-back-button {
+    width: 120px;
+    margin-right: 16px;
+    margin-bottom: 0;
+}
+
+.system-view-title {
+    font-size: 22px;
+    color: rgb(230, 236, 245);
+    -unity-font-style: bold;
+}
+
+.planet-strip {
+    flex-grow: 1;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.planet-icon {
+    align-items: center;
+    margin-left: 16px;
+    margin-right: 16px;
+}
+
+.planet-icon__glyph {
+    width: 72px;
+    height: 72px;
+    border-radius: 36px;
+    border-width: 3px;
+    border-color: rgb(90, 110, 140);
+    background-color: rgb(48, 62, 84);
+    margin-bottom: 8px;
+}
+
+.planet-icon__glyph--scanned {
+    background-color: rgb(70, 110, 150);
+    border-color: rgb(140, 180, 220);
+}
+
+.planet-icon__glyph--selected,
+.planet-icon--selected .planet-icon__glyph {
+    border-color: rgb(240, 200, 90);
+}
+
+.planet-icon__label {
+    color: rgb(200, 210, 225);
+    font-size: 12px;
+    unity-text-align: middle-center;
+    white-space: normal;
+    max-width: 96px;
 }
 
 .inspection-panel {
@@ -70,34 +164,31 @@
     color: rgb(120, 130, 145);
 }
 
-.planet-list {
-    margin-top: 8px;
-}
-
-.planet-row {
-    flex-direction: column;
-    background-color: rgb(24, 32, 44);
-    padding: 8px;
-    margin-bottom: 8px;
-}
-
-.planet-name {
-    color: rgb(220, 228, 240);
-    margin-bottom: 4px;
-}
-
 .planet-detail {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top-width: 1px;
+    border-top-color: rgb(40, 52, 70);
+    display: none;
+}
+
+.planet-detail-name {
+    color: rgb(220, 228, 240);
+    font-size: 16px;
+    margin-bottom: 6px;
+    -unity-font-style: bold;
+}
+
+.planet-detail-summary {
     white-space: normal;
     color: rgb(150, 164, 184);
     font-size: 12px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .map-node {
     position: absolute;
-    width: 56px;
-    height: 56px;
-    border-radius: 28px;
+    /* Width, height, and non-system radius come from MapLayout.kNodeSize. */
     /* Keep border-width fixed; changing it on select shifts absolute layout. */
     border-width: 3px;
     border-color: rgb(70, 88, 112);
