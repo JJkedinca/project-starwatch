@@ -85,7 +85,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
         [Test]
         public void ScanPlanet_RejectsPlanetNotOnActiveUniverseGraph()
         {
-            var catalog = RunTestFixture.CreateCatalog();
+            var objectDatabase = RunTestFixture.CreateObjectDatabase();
             var foreignPlanet = ContentId.From("foreign-world");
             var foreign = ScriptableObject.CreateInstance<ScenarioDefinition>();
             foreign.Configure(
@@ -101,13 +101,13 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
                         "Foreign World",
                         "Registered elsewhere."),
                 });
-            catalog.RegisterScenario(foreign);
+            objectDatabase.RegisterScenario(foreign);
 
             var stack = RunTestFixture.CreateOverworldStack();
-            // Rebuild sensor against the shared catalog that includes the foreign planet.
+            // Rebuild sensor against the database that includes the foreign planet.
             var sensor = new SensorService(
                 new ArchiveService(),
-                catalog,
+                objectDatabase,
                 stack.Journal,
                 stack.Clock);
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(3));

@@ -23,7 +23,7 @@ namespace EndlessHeros.Overworld.UI
         private readonly VisibilityService _visibility;
         private readonly ExplorationService _exploration;
         private readonly SensorService _sensor;
-        private readonly ContentCatalog _contentCatalog;
+        private readonly ObjectDatabaseSO _objectDatabase;
 
         private ContentId _selectedNodeId;
         private ContentId _selectedPlanetId;
@@ -35,14 +35,14 @@ namespace EndlessHeros.Overworld.UI
             VisibilityService visibility,
             ExplorationService exploration,
             SensorService sensor,
-            ContentCatalog contentCatalog)
+            ObjectDatabaseSO objectDatabase)
         {
             _viewBridge = viewBridge ?? throw new ArgumentNullException(nameof(viewBridge));
             _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
             _visibility = visibility ?? throw new ArgumentNullException(nameof(visibility));
             _exploration = exploration ?? throw new ArgumentNullException(nameof(exploration));
             _sensor = sensor ?? throw new ArgumentNullException(nameof(sensor));
-            _contentCatalog = contentCatalog ?? throw new ArgumentNullException(nameof(contentCatalog));
+            _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
         }
 
         /// <summary>
@@ -280,7 +280,7 @@ namespace EndlessHeros.Overworld.UI
                     node.Id,
                     planetId);
                 var displayName = planetId.Value;
-                if (_contentCatalog.TryGetPlanet(planetId.Value, out var definition))
+                if (_objectDatabase.TryGetPlanet(planetId.Value, out var definition))
                 {
                     displayName = definition.DisplayName;
                 }
@@ -429,7 +429,7 @@ namespace EndlessHeros.Overworld.UI
             var detail = "Ready to scan.";
             var canScan = planetVisibility == PlanetVisibility.SystemExplored;
 
-            if (_contentCatalog.TryGetPlanet(_selectedPlanetId.Value, out var definition))
+            if (_objectDatabase.TryGetPlanet(_selectedPlanetId.Value, out var definition))
             {
                 displayName = definition.DisplayName;
                 if (planetVisibility == PlanetVisibility.Scanned)

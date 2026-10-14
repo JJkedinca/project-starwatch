@@ -1,4 +1,5 @@
 using EndlessHeros.Core.Content;
+using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Core.Run.Timeline;
@@ -6,6 +7,7 @@ using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Core.Simulation;
 using EndlessHeros.Overworld.Services;
 using EndlessHeros.Overworld.Systems;
+using UnityEngine;
 
 namespace EndlessHeros.Tests.EditMode.Core
 {
@@ -14,18 +16,24 @@ namespace EndlessHeros.Tests.EditMode.Core
     /// </summary>
     public static class RunTestFixture
     {
-        public static ContentCatalog CreateCatalog()
+        public static ObjectDatabaseSO CreateObjectDatabase()
         {
-            return new ContentCatalog();
+            var spaceNodes = UnityEditor.AssetDatabase.LoadAssetAtPath<SpaceNodeDatabaseSO>(
+                "Assets/_Project/Runtime/Content/SpaceNodeDatabase.asset");
+            var planets = UnityEditor.AssetDatabase.LoadAssetAtPath<PlanetDatabaseSO>(
+                "Assets/_Project/Runtime/Content/PlanetDatabase.asset");
+            var database = ScriptableObject.CreateInstance<ObjectDatabaseSO>();
+            database.AssignDatabases(spaceNodes, planets);
+            return database;
         }
 
-        public static RunManager CreateRunManager(ContentCatalog catalog = null, EventJournal journal = null)
+        public static RunManager CreateRunManager(ObjectDatabaseSO objectDatabase = null, EventJournal journal = null)
         {
-            catalog = catalog ?? CreateCatalog();
+            objectDatabase = objectDatabase ?? CreateObjectDatabase();
             journal = journal ?? new EventJournal();
             var timelineFactory = new TimelineFactory();
             var loader = new UniverseLoader(timelineFactory);
-            return new RunManager(timelineFactory, loader, catalog, journal);
+            return new RunManager(timelineFactory, loader, objectDatabase, journal);
         }
 
         public static (
@@ -39,17 +47,17 @@ namespace EndlessHeros.Tests.EditMode.Core
             SimulationClock Clock,
             EventJournal Journal) CreateOverworldStack()
         {
-            var catalog = CreateCatalog();
+            var objectDatabase = CreateObjectDatabase();
             var journal = new EventJournal();
             var clock = new SimulationClock();
             var loop = new SimulationLoop(clock);
             var timelineFactory = new TimelineFactory();
             var loader = new UniverseLoader(timelineFactory);
-            var manager = new RunManager(timelineFactory, loader, catalog, journal);
+            var manager = new RunManager(timelineFactory, loader, objectDatabase, journal);
             var route = new RouteService();
             var archive = new ArchiveService();
             var exploration = new ExplorationService(archive, route, journal, clock);
-            var sensor = new SensorService(archive, catalog, journal, clock);
+            var sensor = new SensorService(archive, objectDatabase, journal, clock);
             var travel = new TravelService(route, clock);
             var visibility = new VisibilityService();
             var travelSystem = new TravelSystem(manager, journal);

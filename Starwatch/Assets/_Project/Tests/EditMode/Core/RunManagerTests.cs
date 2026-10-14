@@ -89,7 +89,7 @@ namespace EndlessHeros.Tests.EditMode.Core
         [Test]
         public void CreateRun_RejectsScenarioWithNegativeRouteDuration()
         {
-            var catalog = RunTestFixture.CreateCatalog();
+            var objectDatabase = RunTestFixture.CreateObjectDatabase();
             var home = ContentId.From("bad-home");
             var other = ContentId.From("bad-other");
             var definition = ScriptableObject.CreateInstance<ScenarioDefinition>();
@@ -103,8 +103,8 @@ namespace EndlessHeros.Tests.EditMode.Core
                 },
                 new[] { new MapRouteDefinition(home, other, -2f) },
                 System.Array.Empty<PlanetDefinition>());
-            catalog.RegisterScenario(definition);
-            var manager = RunTestFixture.CreateRunManager(catalog);
+            objectDatabase.RegisterScenario(definition);
+            var manager = RunTestFixture.CreateRunManager(objectDatabase);
             LogAssert.Expect(
                 LogType.Error,
                 "UniverseLoader.TryLoad map route at index 0 has a negative or invalid duration.");

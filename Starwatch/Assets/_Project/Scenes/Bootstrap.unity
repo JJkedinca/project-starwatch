@@ -128,9 +128,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1196728962}
+  - component: {fileID: 1196728963}
   - component: {fileID: 1196728961}
   m_Layer: 0
-  m_Name: Bootstrap
+  m_Name: Project
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -145,9 +146,27 @@ MonoBehaviour:
   m_GameObject: {fileID: 1196728960}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07a9ae709c3b2df4baf91e31226444ca, type: 3}
+  m_Script: {fileID: 11500000, guid: 20dff888551755f419f6f1a4350e984a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Bootstrap.BootstrapLoader
+  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Bootstrap.ProjectLifetimeScope
+  parentReference:
+    TypeName: 
+  autoRun: 1
+  autoInjectGameObjects: []
+  _updateManager: {fileID: 1196728963}
+  _objectDatabase: {fileID: 11400000, guid: f3c8a1d25e6b4790a1b2c3d4e5f60718, type: 2}
+--- !u!114 &1196728963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196728960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 424e636694f8c4f4a860b07ae9f84d0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Simulation.UpdateManager
 --- !u!4 &1196728962
 Transform:
   m_ObjectHideFlags: 0

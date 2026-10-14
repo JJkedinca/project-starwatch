@@ -31,7 +31,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
                     stack.Visibility,
                     stack.Exploration,
                     stack.Sensor,
-                    new ContentCatalog());
+                    RunTestFixture.CreateObjectDatabase());
                 presenter.Start();
 
                 Assert.That(bridge.SystemView.IsVisible, Is.False);

@@ -17,6 +17,7 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 - Single responsibility — each class does one job.
 - Favor composition: interfaces, small components, injected services.
 - Prefer ScriptableObjects for content data; avoid hard-coding balance numbers in MonoBehaviours.
+- Static definitions and scene setup belong on assets, not in startup code. Author content as ScriptableObjects. Author known components on prefabs or scenes and assign them with `[SerializeField]`. Use `AddComponent`, `CreateInstance`, or factory construction only when the object must exist at runtime and cannot be authored ahead of time. Tests may still construct stand-ins.
 - Do not abuse `Update` / `FixedUpdate`. Prefer `UpdateManager` + `ITickable.ManagedUpdate`, MessagePipe events, or UniTask delays/timers.
 - Log unexpected edge cases and silent failures (`Debug.LogWarning` / `LogError`) that would break gameplay.
 - Comments explain purpose when non-obvious — not line-by-line narration.
@@ -46,12 +47,12 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 
 ## Content / “Data Tables”
 
-- No UE-style DataTables. Use ScriptableObject definitions for units (`UnitDefinition`) plus a `ContentCatalog` for id lookup. Embed small combat data (e.g. `AttackData`) on those definitions rather than separate attack assets.
+- No UE-style DataTables. Use ScriptableObject definitions for units (`UnitDefinition`) plus an `ObjectDatabaseSO` for id lookup. Embed small combat data (e.g. `AttackData`) on those definitions rather than separate attack assets.
 - Unit variety: MaterialPropertyBlock tints first; masked recolor shader later. Shared materials — do not create unique materials per unit (see Art / Presentation prefab rule).
 
 ## Architecture
 
-- Bootstrap scene (`Assets/_Project/Scenes/Bootstrap.unity`, build index 0) runs `BootstrapLoader`, which creates DontDestroyOnLoad `ProjectSystems` (`UpdateManager` + `ProjectLifetimeScope`).
+- Bootstrap scene (`Assets/_Project/Scenes/Bootstrap.unity`, build index 0) contains DontDestroyOnLoad `ProjectLifetimeScope` and `UpdateManager`. The scope is assigned the `ObjectDatabaseSO`.
 - `GameEntryPoint` (`IStartable`) loads MainMenu after the project container builds.
 - `SceneFlow` switches MainMenu ↔ Overworld ↔ Battle and carries `EncounterSetup`. Overworld/Battle loads enqueue `ProjectLifetimeScope` as VContainer parent.
 - Overworld owns the node/run loop; Battle owns continuous auto-battle simulation on NavMesh.

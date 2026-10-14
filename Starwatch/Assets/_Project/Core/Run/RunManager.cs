@@ -22,24 +22,24 @@ namespace EndlessHeros.Core.Run
 
         private readonly TimelineFactory _timelineFactory;
         private readonly UniverseLoader _universeLoader;
-        private readonly ContentCatalog _contentCatalog;
+        private readonly ObjectDatabaseSO _objectDatabase;
         private readonly EventJournal _eventJournal;
         private RunState _currentRun;
 
         public RunManager(
             TimelineFactory timelineFactory,
             UniverseLoader universeLoader,
-            ContentCatalog contentCatalog,
+            ObjectDatabaseSO objectDatabase,
             EventJournal eventJournal)
         {
             _timelineFactory = timelineFactory ?? throw new ArgumentNullException(nameof(timelineFactory));
             _universeLoader = universeLoader ?? throw new ArgumentNullException(nameof(universeLoader));
-            _contentCatalog = contentCatalog ?? throw new ArgumentNullException(nameof(contentCatalog));
+            _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
             _eventJournal = eventJournal ?? throw new ArgumentNullException(nameof(eventJournal));
         }
 
         /// <summary>
-        /// Creates a new run from the catalog scenario, clearing the project journal.
+        /// Creates a new run from the object database scenario, clearing the project journal.
         /// </summary>
         public RunState CreateRun(
             string scenarioId,
@@ -52,7 +52,7 @@ namespace EndlessHeros.Core.Run
                 return null;
             }
 
-            if (!_contentCatalog.TryGetScenario(scenarioId, out var definition))
+            if (!_objectDatabase.TryGetScenario(scenarioId, out var definition))
             {
                 Debug.LogError($"RunManager.CreateRun could not find scenario '{scenarioId}'.");
                 return null;

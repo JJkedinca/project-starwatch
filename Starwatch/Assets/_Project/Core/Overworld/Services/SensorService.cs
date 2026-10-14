@@ -13,18 +13,18 @@ namespace EndlessHeros.Overworld.Services
     public sealed class SensorService
     {
         private readonly ArchiveService _archiveService;
-        private readonly ContentCatalog _contentCatalog;
+        private readonly ObjectDatabaseSO _objectDatabase;
         private readonly EventJournal _eventJournal;
         private readonly SimulationClock _clock;
 
         public SensorService(
             ArchiveService archiveService,
-            ContentCatalog contentCatalog,
+            ObjectDatabaseSO objectDatabase,
             EventJournal eventJournal,
             SimulationClock clock)
         {
             _archiveService = archiveService;
-            _contentCatalog = contentCatalog;
+            _objectDatabase = objectDatabase;
             _eventJournal = eventJournal;
             _clock = clock;
         }
@@ -51,7 +51,7 @@ namespace EndlessHeros.Overworld.Services
                     "Planet is not part of this universe.");
             }
 
-            if (_contentCatalog == null || !_contentCatalog.TryGetPlanet(planetId.Value, out var planet))
+            if (_objectDatabase == null || !_objectDatabase.TryGetPlanet(planetId.Value, out var planet))
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Unknown planet.");
             }
