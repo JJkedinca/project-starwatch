@@ -60,7 +60,7 @@ namespace EndlessHeros.Overworld.Services
                 return CommandResult.Ok();
             }
 
-            if (!CanExplore(run, knowledge, nodeId))
+            if (!CanExplore(run, observerId, nodeId))
             {
                 return CommandResult.Fail(
                     CommandErrorCode.PrerequisiteNotMet,
@@ -79,8 +79,20 @@ namespace EndlessHeros.Overworld.Services
             return CommandResult.Ok();
         }
 
-        private bool CanExplore(RunState run, MapKnowledge knowledge, ContentId nodeId)
+        /// <summary>
+        /// Returns whether the observer may explore the node from current knowledge/presence.
+        /// </summary>
+        public bool CanExplore(RunState run, ObserverId observerId, ContentId nodeId)
         {
+            if (run == null
+                || nodeId.IsEmpty
+                || !run.Universe.MapGraph.TryGetNode(nodeId, out _)
+                || !run.Archive.TryGetMapKnowledge(observerId, out var knowledge)
+                || knowledge.HasExploredNode(nodeId))
+            {
+                return false;
+            }
+
             for (var i = 0; i < run.Timeline.Fleets.Count; i++)
             {
                 if (run.Timeline.Fleets[i].LocationSystemId == nodeId)

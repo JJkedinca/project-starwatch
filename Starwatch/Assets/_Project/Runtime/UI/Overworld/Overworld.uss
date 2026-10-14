@@ -1,0 +1,144 @@
+.root {
+    flex-grow: 1;
+    background-color: rgb(10, 14, 20);
+    padding: 12px;
+}
+
+.header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.title {
+    font-size: 28px;
+    color: rgb(230, 236, 245);
+    -unity-font-style: bold;
+}
+
+.status-label {
+    font-size: 14px;
+    color: rgb(160, 176, 196);
+}
+
+.content {
+    flex-grow: 1;
+    flex-direction: row;
+}
+
+.map-surface {
+    flex-grow: 1;
+    position: relative;
+    background-color: rgb(16, 22, 32);
+    border-width: 1px;
+    border-color: rgb(40, 52, 70);
+    margin-right: 12px;
+    min-height: 480px;
+}
+
+.inspection-panel {
+    width: 280px;
+    background-color: rgb(18, 24, 34);
+    border-width: 1px;
+    border-color: rgb(40, 52, 70);
+    padding: 12px;
+}
+
+.inspection-title {
+    font-size: 18px;
+    color: rgb(230, 236, 245);
+    margin-bottom: 8px;
+    -unity-font-style: bold;
+}
+
+.inspection-summary {
+    white-space: normal;
+    color: rgb(180, 192, 210);
+    margin-bottom: 12px;
+}
+
+.action-button {
+    height: 32px;
+    margin-bottom: 8px;
+    background-color: rgb(48, 96, 160);
+    color: rgb(245, 248, 252);
+}
+
+.action-button:disabled {
+    background-color: rgb(36, 44, 58);
+    color: rgb(120, 130, 145);
+}
+
+.planet-list {
+    margin-top: 8px;
+}
+
+.planet-row {
+    flex-direction: column;
+    background-color: rgb(24, 32, 44);
+    padding: 8px;
+    margin-bottom: 8px;
+}
+
+.planet-name {
+    color: rgb(220, 228, 240);
+    margin-bottom: 4px;
+}
+
+.planet-detail {
+    white-space: normal;
+    color: rgb(150, 164, 184);
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.map-node {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    border-width: 2px;
+    border-color: rgb(70, 88, 112);
+    background-color: rgb(42, 54, 72);
+    justify-content: center;
+    align-items: center;
+    unity-text-align: middle-center;
+    color: rgb(220, 228, 240);
+    font-size: 10px;
+    white-space: normal;
+}
+
+.map-node--system {
+    border-radius: 8px;
+}
+
+.map-node--hidden {
+    background-color: rgb(28, 34, 44);
+    border-color: rgb(48, 56, 68);
+    color: rgba(0, 0, 0, 0);
+}
+
+.map-node--explorable {
+    border-color: rgb(120, 170, 220);
+    background-color: rgb(36, 48, 66);
+}
+
+.map-node--hidden.map-node--explorable {
+    color: rgb(180, 200, 220);
+}
+
+.map-node--explored {
+    background-color: rgb(52, 78, 108);
+    border-color: rgb(110, 150, 190);
+}
+
+.map-node--present {
+    background-color: rgb(56, 110, 74);
+    border-color: rgb(140, 210, 150);
+}
+
+.map-node--selected {
+    border-color: rgb(240, 200, 90);
+    border-width: 3px;
+}

@@ -23,7 +23,7 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 - Extract a small options/params struct when a method grows past ~5 parameters.
 - Prefer enums or option structs over ambiguous boolean parameters.
 - [SerializeField] or other attributes should appear on their own line above the member. Prefer `[field: SerializeField] public T Name { get; private set; }` for Inspector-editable, externally read-only data.
-- All function or variable should have access level defined
+- Every type member must declare an access level. Prefer the narrowest that works: `private` by default, `internal` for same-assembly collaborators (tests via `InternalsVisibleTo`), `public` only for intentional cross-boundary API. Do not default new helpers, constants, or view fields to `public`.
 
 ## Code Organization Guardrails
 

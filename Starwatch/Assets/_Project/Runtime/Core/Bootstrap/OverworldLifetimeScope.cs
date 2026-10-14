@@ -1,20 +1,22 @@
+using EndlessHeros.Overworld.UI;
 using VContainer;
+using VContainer.Unity;
 
 namespace EndlessHeros.Core.Bootstrap
 {
     /// <summary>
-    /// Scene scope for Overworld. Will host map, travel, economy, research, and
-    /// invasion registrations as those systems come online.
-    /// TODO: Replace empty Configure with overworld presenters/views when the UI pass lands;
-    /// project-scoped map services already live in ProjectLifetimeScope.
+    /// Scene scope for Overworld. Registers map presentation for Phase 1 Step 1.
     /// </summary>
     public sealed class OverworldLifetimeScope : SceneLifetimeScope
     {
         /// <summary>
-        /// Placeholder configuration until overworld feature services are added.
+        /// Wires the overworld view bridge and map presenter entry point.
+        /// Project-scoped map services already live in ProjectLifetimeScope.
         /// </summary>
         protected override void Configure(IContainerBuilder builder)
         {
+            builder.RegisterComponentInHierarchy<OverworldViewBridge>();
+            builder.RegisterEntryPoint<OverworldMapPresenter>();
         }
     }
 }
