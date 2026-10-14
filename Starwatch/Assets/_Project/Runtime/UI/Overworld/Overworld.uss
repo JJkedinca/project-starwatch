@@ -98,7 +98,8 @@
     width: 56px;
     height: 56px;
     border-radius: 28px;
-    border-width: 2px;
+    /* Keep border-width fixed; changing it on select shifts absolute layout. */
+    border-width: 3px;
     border-color: rgb(70, 88, 112);
     background-color: rgb(42, 54, 72);
     justify-content: center;
@@ -140,5 +141,4 @@
 
 .map-node--selected {
     border-color: rgb(240, 200, 90);
-    border-width: 3px;
 }
