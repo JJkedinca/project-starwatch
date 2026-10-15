@@ -17,13 +17,14 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 - Single responsibility — each class does one job.
 - Favor composition: interfaces, small components, injected services.
 - Prefer ScriptableObjects for content data; avoid hard-coding balance numbers in MonoBehaviours.
+- Static definitions and scene setup belong on assets, not in startup code. Author content as ScriptableObjects. Author known components on prefabs or scenes and assign them with `[SerializeField]`. Use `AddComponent`, `CreateInstance`, or factory construction only when the object must exist at runtime and cannot be authored ahead of time. Tests may still construct stand-ins.
 - Do not abuse `Update` / `FixedUpdate`. Prefer `UpdateManager` + `ITickable.ManagedUpdate`, MessagePipe events, or UniTask delays/timers.
 - Log unexpected edge cases and silent failures (`Debug.LogWarning` / `LogError`) that would break gameplay.
 - Comments explain purpose when non-obvious — not line-by-line narration.
 - Extract a small options/params struct when a method grows past ~5 parameters.
 - Prefer enums or option structs over ambiguous boolean parameters.
 - [SerializeField] or other attributes should appear on their own line above the member. Prefer `[field: SerializeField] public T Name { get; private set; }` for Inspector-editable, externally read-only data.
-- All function or variable should have access level defined
+- Every type member must declare an access level. Prefer the narrowest that works: `private` by default, `internal` for same-assembly collaborators (tests via `InternalsVisibleTo`), `public` only for intentional cross-boundary API. Do not default new helpers, constants, or view fields to `public`.
 
 ## Code Organization Guardrails
 
@@ -39,19 +40,21 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 - **VContainer** LifetimeScopes: project scope (Bootstrap / DontDestroyOnLoad) for core managers; scene scopes for Overworld and Battle.
 - **MVP for UI only** — Presenters call services; Views stay thin. Do not wrap units/combat in Presenters.
 - **UI:** UI Toolkit (UXML + USS + `UIDocument`). Do not build UGUI Canvas/Button hierarchies in code.
+- The screen UXML is the `UIDocument` source. It owns layout (where regions sit) and instances view templates. A view class that owns a fixed set of controls has its own UXML template; `Bind` takes that template root. Regions code fills at runtime (map nodes, planet icons) stay empty hosts on the screen UXML. Tests may build a stand-in tree with the same element names.
 - **Gameplay:** systems + MonoBehaviour views (`BattleSimulation`, `CombatService`, `Unit` as squad). Squads (per-member HP summed on the squad, shared energy, member placeholders), not one independent agent per sprite.
-- **MessagePipe** for typed cross-system events/intents.
+- **DomainEventBus** is the domain event bus. After a service commits state (travel, fleets, exploration, buildings, enemy actions), it publishes a typed event from `DomainEvents`. The bus appends the journal and notifies subscribers on that call. Subscribers react. Do not poll the simulation tick to discover those changes.
 - **UniTask** for async (scene flow, saves, delays).
 - **No Unity DOTS/ECS** unless profiling later demands it. Optional plain C# buffers for hot sim state are fine.
+- **Prefer No Ticking**: Use events when possible instead of lazy refreshing/checks.
 
 ## Content / “Data Tables”
 
-- No UE-style DataTables. Use ScriptableObject definitions for units (`UnitDefinition`) plus a `ContentCatalog` for id lookup. Embed small combat data (e.g. `AttackData`) on those definitions rather than separate attack assets.
+- No UE-style DataTables. Use ScriptableObject definitions for units (`UnitDefinition`) plus an `ObjectDatabaseSO` for id lookup. Embed small combat data (e.g. `AttackData`) on those definitions rather than separate attack assets.
 - Unit variety: MaterialPropertyBlock tints first; masked recolor shader later. Shared materials — do not create unique materials per unit (see Art / Presentation prefab rule).
 
 ## Architecture
 
-- Bootstrap scene (`Assets/_Project/Scenes/Bootstrap.unity`, build index 0) runs `BootstrapLoader`, which creates DontDestroyOnLoad `ProjectSystems` (`UpdateManager` + `ProjectLifetimeScope`).
+- Bootstrap scene (`Assets/_Project/Scenes/Bootstrap.unity`, build index 0) contains DontDestroyOnLoad `ProjectLifetimeScope` and `UpdateManager`. The scope is assigned the `ObjectDatabaseSO`.
 - `GameEntryPoint` (`IStartable`) loads MainMenu after the project container builds.
 - `SceneFlow` switches MainMenu ↔ Overworld ↔ Battle and carries `EncounterSetup`. Overworld/Battle loads enqueue `ProjectLifetimeScope` as VContainer parent.
 - Overworld owns the node/run loop; Battle owns continuous auto-battle simulation on NavMesh.

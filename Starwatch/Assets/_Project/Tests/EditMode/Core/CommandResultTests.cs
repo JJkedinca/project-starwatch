@@ -1,6 +1,7 @@
 using EndlessHeros.Core.Commands;
 using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
+using EndlessHeros.Core.Run.Archive;
+using EndlessHeros.Core.Run.Timeline;
 using NUnit.Framework;
 
 namespace EndlessHeros.Tests.EditMode.Core
@@ -36,7 +37,7 @@ namespace EndlessHeros.Tests.EditMode.Core
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.Error.Code, Is.EqualTo(CommandErrorCode.InvalidArgument));
-            Assert.That(archive.ExploredNodeIds, Is.Empty);
+            Assert.That(archive.PlayerMapKnowledge.ExploredNodeIds, Is.Empty);
         }
     }
 }

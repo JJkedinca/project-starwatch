@@ -1,10 +1,11 @@
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using EndlessHeros.Core.Bootstrap;
-using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Core.Simulation;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace EndlessHeros.Tests.EditMode.Core
 {
@@ -57,12 +58,34 @@ namespace EndlessHeros.Tests.EditMode.Core
             Assert.That(loader.LoadOverworldCount, Is.EqualTo(1));
         }
 
+        [Test]
+        public async Task StartRunAsync_DoesNotResetClockWhenCreateFails()
+        {
+            var clock = new SimulationClock();
+            clock.SetPaused(false);
+            clock.Advance(3f);
+            var loader = new FakeSceneLoader();
+            var service = CreateService(clock, loader);
+            LogAssert.Expect(
+                LogType.Error,
+                "RunManager.CreateRun could not find scenario 'missing-scenario'.");
+
+            var started = await service.StartRunAsync(
+                new RunStartConfiguration("missing-scenario", 1));
+
+            Assert.That(started, Is.False);
+            Assert.That(clock.CurrentTime.Seconds, Is.EqualTo(3d));
+            Assert.That(clock.IsPaused, Is.False);
+            Assert.That(loader.LoadOverworldCount, Is.EqualTo(0));
+        }
+
         private static RunStartService CreateService(SimulationClock clock, FakeSceneLoader loader)
         {
             return new RunStartService(
-                new RunManager(new TimelineFactory(), new EventJournal()),
+                RunTestFixture.CreateRunManager(),
                 new SceneFlow(loader),
-                clock);
+                clock,
+                new SimulationLoop(clock));
         }
     }
 }

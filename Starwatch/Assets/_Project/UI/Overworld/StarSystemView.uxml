@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="star-system" class="star-system">
+        <ui:VisualElement name="star-system-header" class="star-system-header">
+            <ui:Button name="star-system-back" text="Back to map" class="action-button star-system-back" />
+            <ui:Label name="star-system-title" text="Star System" class="star-system-title" />
+        </ui:VisualElement>
+        <ui:VisualElement name="planet-strip" class="planet-strip" />
+    </ui:VisualElement>
+</ui:UXML>

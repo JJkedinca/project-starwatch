@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="planet-detail" class="planet-detail">
+        <ui:Label name="planet-detail-name" text="" class="planet-detail-name" />
+        <ui:Label name="planet-detail-summary" text="" class="planet-detail-summary" />
+        <ui:Button name="scan-button" text="Scan" class="action-button" />
+    </ui:VisualElement>
+</ui:UXML>

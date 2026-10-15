@@ -1,9 +1,10 @@
 using System;
 using EndlessHeros.Core.Commands;
-using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run;
+using EndlessHeros.Core.Run.Archive;
+using EndlessHeros.Core.Run.Timeline;
 using EndlessHeros.Core.Simulation;
 using NUnit.Framework;
 using UnityEngine;
@@ -13,54 +14,53 @@ using EntityId = EndlessHeros.Core.Identifiers.EntityId;
 namespace EndlessHeros.Tests.EditMode.Core
 {
     /// <summary>
-    /// EditMode coverage for scenario / timeline / archive isolation.
+    /// EditMode coverage for universe / timeline / archive isolation.
     /// </summary>
     public sealed class PersistenceLayerTests
     {
         [Test]
-        public void MutatingTimeline_DoesNotChangeScenarioOrArchive()
+        public void MutatingTimeline_DoesNotChangeUniverseOrArchive()
         {
             var run = CreateRun();
-            var scenarioSystemCount = run.Scenario.SystemIds.Count;
-            var archiveExploreCount = run.Archive.ExploredNodeIds.Count;
+            var universeNodeCount = run.Universe.NodeIds.Count;
+            var archiveExploreCount = run.Archive.PlayerMapKnowledge.ExploredNodeIds.Count;
 
             var result = TimelineMutationCommands.AddPlaceholderFleet(
                 run.Timeline,
                 ContentId.From("extra-fleet"),
                 shipCount: 1,
-                run.Scenario.StartingEmpire.HomeSystemId);
+                run.Universe.StartingEmpire.HomeSystemId);
 
             Assert.That(result.Success, Is.True);
             Assert.That(run.Timeline.Fleets, Has.Count.EqualTo(2));
-            Assert.That(run.Scenario.SystemIds, Has.Count.EqualTo(scenarioSystemCount));
-            Assert.That(run.Archive.ExploredNodeIds, Has.Count.EqualTo(archiveExploreCount));
+            Assert.That(run.Universe.NodeIds, Has.Count.EqualTo(universeNodeCount));
+            Assert.That(run.Archive.PlayerMapKnowledge.ExploredNodeIds, Has.Count.EqualTo(archiveExploreCount));
         }
 
         [Test]
-        public void MutatingArchive_DoesNotChangeTimelineOrScenario()
+        public void MutatingArchive_DoesNotChangeTimelineOrUniverse()
         {
             var run = CreateRun();
             var fleetCount = run.Timeline.Fleets.Count;
-            var systemCount = run.Scenario.SystemIds.Count;
+            var nodeCount = run.Universe.NodeIds.Count;
 
             var result = TimelineMutationCommands.RecordExploredNode(
                 run.Archive,
                 ContentId.From("node-b"));
 
             Assert.That(result.Success, Is.True);
-            Assert.That(run.Archive.ExploredNodeIds, Has.Count.EqualTo(1));
+            Assert.That(run.Archive.PlayerMapKnowledge.ExploredNodeIds, Has.Count.EqualTo(2));
             Assert.That(run.Timeline.Fleets, Has.Count.EqualTo(fleetCount));
-            Assert.That(run.Scenario.SystemIds, Has.Count.EqualTo(systemCount));
+            Assert.That(run.Universe.NodeIds, Has.Count.EqualTo(nodeCount));
         }
 
         [Test]
-        public void RecreateTimeline_DoesNotAliasCollectionsWithPreviousTimelineOrScenario()
+        public void RecreateTimeline_DoesNotAliasCollectionsWithPreviousTimelineOrUniverse()
         {
-            var manager = new RunManager(new TimelineFactory(), new EventJournal());
+            var manager = RunTestFixture.CreateRunManager();
             var run = manager.CreateRun(
                 "authored-vertical-slice",
-                RunSeed.FromValue(9),
-                StartingEmpireDefinition.CreateDefault());
+                RunSeed.FromValue(9));
 
             var oldTimeline = run.Timeline;
             var oldFleets = oldTimeline.Fleets;
@@ -68,7 +68,7 @@ namespace EndlessHeros.Tests.EditMode.Core
                 oldTimeline,
                 ContentId.From("old-only"),
                 shipCount: 1,
-                run.Scenario.StartingEmpire.HomeSystemId);
+                run.Universe.StartingEmpire.HomeSystemId);
 
             var firstStarterId = oldTimeline.Fleets[0].Id;
             var addedFleetId = oldTimeline.Fleets[1].Id;
@@ -76,12 +76,12 @@ namespace EndlessHeros.Tests.EditMode.Core
 
             Assert.That(newTimeline, Is.Not.SameAs(oldTimeline));
             Assert.That(newTimeline.Fleets, Is.Not.SameAs(oldFleets));
-            Assert.That(newTimeline.Fleets, Is.Not.SameAs(run.Scenario.SystemIds));
-            Assert.That(newTimeline.Fleets, Is.Not.SameAs(run.Archive.ExploredNodeIds));
+            Assert.That(newTimeline.Fleets, Is.Not.SameAs(run.Universe.NodeIds));
+            Assert.That(newTimeline.Fleets, Is.Not.SameAs(run.Archive.PlayerMapKnowledge.ExploredNodeIds));
             Assert.That(run.RewindIndex, Is.EqualTo(1));
             Assert.That(newTimeline.Fleets, Has.Count.EqualTo(1));
             Assert.That(oldTimeline.Fleets, Has.Count.EqualTo(2));
-            Assert.That(run.Scenario.SystemIds, Has.Count.EqualTo(1));
+            Assert.That(run.Universe.NodeIds.Count, Is.GreaterThanOrEqualTo(7));
             Assert.That(run.Timeline.EntityIds, Is.SameAs(run.EntityIds));
             Assert.That(newTimeline.Fleets[0].Id.Value, Is.GreaterThan(addedFleetId.Value));
             Assert.That(newTimeline.Fleets[0].Id, Is.Not.EqualTo(firstStarterId));
@@ -90,11 +90,10 @@ namespace EndlessHeros.Tests.EditMode.Core
         [Test]
         public void RecreateTimeline_RejectsNegativeRewindIndex()
         {
-            var manager = new RunManager(new TimelineFactory(), new EventJournal());
+            var manager = RunTestFixture.CreateRunManager();
             var run = manager.CreateRun(
                 "authored-vertical-slice",
-                RunSeed.FromValue(3),
-                StartingEmpireDefinition.CreateDefault());
+                RunSeed.FromValue(3));
             var timelineBefore = run.Timeline;
 
             LogAssert.Expect(
@@ -147,7 +146,18 @@ namespace EndlessHeros.Tests.EditMode.Core
             var archive = new RunArchive();
 
             Assert.That(archive.TryAddExploredNode(ContentId.From(" ")), Is.False);
-            Assert.That(archive.ExploredNodeIds, Is.Empty);
+            Assert.That(archive.PlayerMapKnowledge.ExploredNodeIds, Is.Empty);
+        }
+
+        [Test]
+        public void TryAddExploredNode_ReturnsFalseForDuplicates()
+        {
+            var archive = new RunArchive();
+            var node = ContentId.From("home-system");
+
+            Assert.That(archive.TryAddExploredNode(node), Is.True);
+            Assert.That(archive.TryAddExploredNode(node), Is.False);
+            Assert.That(archive.PlayerMapKnowledge.ExploredNodeIds, Has.Count.EqualTo(1));
         }
 
         [Test]
@@ -172,11 +182,9 @@ namespace EndlessHeros.Tests.EditMode.Core
 
         private static RunState CreateRun()
         {
-            var manager = new RunManager(new TimelineFactory(), new EventJournal());
-            return manager.CreateRun(
+            return RunTestFixture.CreateRunManager().CreateRun(
                 "authored-vertical-slice",
-                RunSeed.FromValue(1),
-                StartingEmpireDefinition.CreateDefault());
+                RunSeed.FromValue(1));
         }
     }
 }

@@ -1,0 +1,22 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:Template name="StarSystemView" src="StarSystemView.uxml" />
+    <ui:Template name="StarSystemInspection" src="StarSystemInspection.uxml" />
+    <ui:Template name="PlanetInspection" src="PlanetInspection.uxml" />
+    <ui:VisualElement name="root" class="root">
+        <ui:VisualElement name="header" class="header">
+            <ui:Label name="title" text="Star Map" class="title" />
+            <ui:Label name="status-label" text="" class="status-label" />
+        </ui:VisualElement>
+        <ui:VisualElement name="content" class="content">
+            <ui:VisualElement name="map-panel" class="map-panel">
+                <ui:VisualElement name="map-surface" class="map-surface" />
+                <ui:Instance template="StarSystemView" class="star-system-host" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement name="inspection-panel" class="inspection-panel">
+                <ui:Instance template="StarSystemInspection" />
+                <ui:Instance template="PlanetInspection" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

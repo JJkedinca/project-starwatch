@@ -67,7 +67,7 @@ ScriptableObjects describe authored content:
 
 - `ScenarioDefinition`
 - `MapNodeDefinition`
-- `SystemDefinition`
+- `StarSystemDefinition`
 - `PlanetDefinition`
 - `PlanetArchetypeDefinition`
 - `BuildingDefinition`
@@ -229,9 +229,8 @@ must not be the production entry point.
 
 Implement:
 
-- `BootstrapLoader`
-- `ProjectSystems`
 - `ProjectLifetimeScope`
+- `UpdateManager`
 - `GameEntryPoint`
 - `SceneFlow`
 - `SceneId`
@@ -240,18 +239,18 @@ Implement:
 The flow is:
 
 1. Unity loads `Bootstrap.unity`.
-2. `BootstrapLoader` ensures `ProjectSystems` exists and is marked
-   `DontDestroyOnLoad`.
-3. `ProjectSystems` owns `UpdateManager` and `ProjectLifetimeScope`.
-4. `ProjectLifetimeScope` builds the project container.
-5. `GameEntryPoint` loads `MainMenu.unity` after the container is ready.
-6. `SceneFlow` loads scene-specific scopes as children of the project scope.
-7. The main menu starts a run through `RunManager`.
-8. `SceneFlow` loads `Overworld.unity` with the active run available.
-9. A battle request loads `Battle.unity` additively; the overworld scene and
+2. The Bootstrap scene contains `ProjectLifetimeScope` and `UpdateManager`.
+   The scope marks its GameObject `DontDestroyOnLoad` and is assigned
+   `ObjectDatabaseSO`.
+3. `ProjectLifetimeScope` builds the project container.
+4. `GameEntryPoint` loads `MainMenu.unity` after the container is ready.
+5. `SceneFlow` loads scene-specific scopes as children of the project scope.
+6. The main menu starts a run through `RunManager`.
+7. `SceneFlow` loads `Overworld.unity` with the active run available.
+8. A battle request loads `Battle.unity` additively; the overworld scene and
    scope remain active.
-10. Completing the battle unloads the battle presentation and returns focus to
-    the overworld without recreating the run.
+9. Completing the battle unloads the battle presentation and returns focus to
+   the overworld without recreating the run.
 
 `SceneFlow` owns scene transitions. Views and feature services must not call
 `SceneManager.LoadScene` directly.
@@ -262,9 +261,8 @@ The flow is:
 
 - `SimulationClock`
 - `UpdateManager`
-- `ProjectSystems`
 - MessagePipe or the project event bus
-- `ContentCatalog` (and feature catalogs as those phases land)
+- `ObjectDatabaseSO` (and feature catalogs as those phases land)
 - `RunManager`
 - `SceneFlow`
 - `GameEntryPoint`
@@ -451,7 +449,7 @@ and damage resolution query capabilities and numeric modifiers through
 
 Required types:
 
-- `ContentCatalog`
+- `ObjectDatabaseSO`
 - `ScenarioCatalog`
 - `ResearchCatalog`
 - `ShipCatalog`
@@ -460,7 +458,7 @@ Required types:
 - `FactionCatalog`
 - `PresentationCatalog`
 
-The catalog converts stable IDs into ScriptableObject definitions. Runtime
+The object database converts stable IDs into ScriptableObject definitions. Runtime
 systems should not search the AssetDatabase or scene hierarchy.
 
 ### Knowledge and visibility ownership
@@ -487,13 +485,13 @@ presentation catalogs, or shipyards.
 
 ### Already in place from the shell
 
-- `BootstrapLoader`, `ProjectSystems`, lifetime scopes, `SceneFlow`,
+- Lifetime scopes, `SceneFlow`,
   `GameEntryPoint`
 - `RunManager`, `RunState`, stub scenario/timeline/archive types
 - `SimulationClock`, `UpdateManager`, run-start pause/reset boundary
 - `RunStartService` with overlapping-start guard
 - `IRunStateStore` / `InMemoryRunStateStore`
-- `EventJournal` (string stub), empty `ContentCatalog`
+- `EventJournal` (string stub), empty `ObjectDatabaseSO`
 
 ### Implement in Phase 0
 
@@ -649,15 +647,15 @@ hidden content on its own.
 - Exploration reveals only the intended information.
 - Scanning reveals planet details and records archive map knowledge.
 - Travel takes simulation time and arrives at the correct node.
-- Invalid travel and unexplored destinations return command errors.
+- Invalid travel returns a command error. A fleet can travel a known route into an unexplored node; arrival explores that node. Planet scans stay a separate manual action.
 - Starting placement comes from `StartingEmpireDefinition`, not loader
   constants.
 
 ### Deliverable
 
-The player can start from a defined home system, inspect the map, explore a
-route, scan planets, and move a starter fleet toward a meaningful expansion
-choice.
+The player can start from a defined home system, inspect the map, travel a
+known route (arrival explores the destination), scan planets, and move a
+starter fleet toward a meaningful expansion choice.
 
 ## Phase 2: Settlement and Economy
 

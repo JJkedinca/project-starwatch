@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="star-system-inspection" class="star-system-inspection">
+        <ui:Label name="inspection-title" text="Select a star system" class="inspection-title" />
+        <ui:Label name="inspection-summary" text="" class="inspection-summary" />
+        <ui:Button name="travel-button" text="Travel" class="action-button" />
+    </ui:VisualElement>
+</ui:UXML>
