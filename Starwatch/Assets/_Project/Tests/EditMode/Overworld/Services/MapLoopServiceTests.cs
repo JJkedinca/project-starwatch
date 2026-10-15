@@ -1,6 +1,7 @@
 using EndlessHeros.Core.Commands;
 using EndlessHeros.Core.Content;
 using EndlessHeros.Core.Data;
+using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Overworld;
@@ -120,7 +121,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
             var sensor = new SensorService(
                 new ArchiveService(),
                 objectDatabase,
-                stack.Journal,
+                stack.Events,
                 stack.Clock);
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(3));
 
@@ -159,6 +160,12 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
             Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(forge));
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.True);
             Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.False);
+            Assert.That(
+                stack.Journal.Records[stack.Journal.Records.Count - 2].EventType,
+                Is.EqualTo(GameEventType.FleetArrived));
+            Assert.That(
+                stack.Journal.Records[stack.Journal.Records.Count - 1].EventType,
+                Is.EqualTo(GameEventType.NodeExplored));
             Assert.That(
                 stack.Visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, forge),
                 Is.EqualTo(MapNodeVisibility.Present));

@@ -42,9 +42,10 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 - **UI:** UI Toolkit (UXML + USS + `UIDocument`). Do not build UGUI Canvas/Button hierarchies in code.
 - The screen UXML is the `UIDocument` source. It owns layout (where regions sit) and instances view templates. A view class that owns a fixed set of controls has its own UXML template; `Bind` takes that template root. Regions code fills at runtime (map nodes, planet icons) stay empty hosts on the screen UXML. Tests may build a stand-in tree with the same element names.
 - **Gameplay:** systems + MonoBehaviour views (`BattleSimulation`, `CombatService`, `Unit` as squad). Squads (per-member HP summed on the squad, shared energy, member placeholders), not one independent agent per sprite.
-- **MessagePipe** for typed cross-system events/intents.
+- **DomainEventBus** is the domain event bus. After a service commits state (travel, fleets, exploration, buildings, enemy actions), it publishes a typed event from `DomainEvents`. The bus appends the journal and notifies subscribers on that call. Subscribers react. Do not poll the simulation tick to discover those changes.
 - **UniTask** for async (scene flow, saves, delays).
 - **No Unity DOTS/ECS** unless profiling later demands it. Optional plain C# buffers for hot sim state are fine.
+- **Prefer No Ticking**: Use events when possible instead of lazy refreshing/checks.
 
 ## Content / “Data Tables”
 

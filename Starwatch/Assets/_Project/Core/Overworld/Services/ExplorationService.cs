@@ -13,18 +13,18 @@ namespace EndlessHeros.Overworld.Services
     {
         private readonly ArchiveService _archiveService;
         private readonly RouteService _routeService;
-        private readonly EventJournal _eventJournal;
+        private readonly DomainEventBus _events;
         private readonly SimulationClock _clock;
 
         public ExplorationService(
             ArchiveService archiveService,
             RouteService routeService,
-            EventJournal eventJournal,
+            DomainEventBus events,
             SimulationClock clock)
         {
             _archiveService = archiveService;
             _routeService = routeService;
-            _eventJournal = eventJournal;
+            _events = events ?? throw new System.ArgumentNullException(nameof(events));
             _clock = clock;
         }
 
@@ -69,11 +69,11 @@ namespace EndlessHeros.Overworld.Services
             _archiveService.TryRecordExploredNode(run.Archive, observerId, nodeId);
             RevealIncidentRoutes(run, observerId, nodeId);
 
-            _eventJournal?.Record(
-                GameEventType.NodeExplored,
+            _events.Publish(new MapKnowledgeChangedEvent(
                 _clock != null ? _clock.CurrentTime : GameTime.Zero,
-                EntityId.None,
-                nodeId);
+                observerId,
+                nodeId,
+                MapKnowledgeKind.NodeExplored));
 
             return CommandResult.Ok();
         }

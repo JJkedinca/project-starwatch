@@ -2,7 +2,7 @@ namespace EndlessHeros.Core.Identifiers
 {
     /// <summary>
     /// Issues monotonically increasing EntityIds for the lifetime of a run.
-    /// Shared across timeline recreations so journal SourceIds stay unambiguous.
+    /// Shared across timeline recreations so the same fleet keeps the same id.
     /// </summary>
     public sealed class EntityIdFactory
     {

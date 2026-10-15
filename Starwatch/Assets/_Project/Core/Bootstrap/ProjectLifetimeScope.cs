@@ -7,7 +7,6 @@ using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Core.Simulation;
 using EndlessHeros.Overworld.Services;
 using EndlessHeros.Overworld.Systems;
-using MessagePipe;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -62,6 +61,7 @@ namespace EndlessHeros.Core.Bootstrap
             builder.Register<SceneFlow>(Lifetime.Singleton);
             builder.Register<TimelineFactory>(Lifetime.Singleton);
             builder.Register<EventJournal>(Lifetime.Singleton);
+            builder.Register<DomainEventBus>(Lifetime.Singleton);
             builder.Register<UniverseLoader>(Lifetime.Singleton);
             builder.Register<RouteService>(Lifetime.Singleton);
             builder.Register<ArchiveService>(Lifetime.Singleton);
@@ -73,7 +73,6 @@ namespace EndlessHeros.Core.Bootstrap
             builder.Register<RunManager>(Lifetime.Singleton);
             builder.Register<IRunStateStore, InMemoryRunStateStore>(Lifetime.Singleton);
 
-            builder.RegisterMessagePipe();
             builder.RegisterEntryPoint<GameEntryPoint>();
             builder.RegisterBuildCallback(container =>
             {

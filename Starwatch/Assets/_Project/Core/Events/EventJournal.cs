@@ -1,11 +1,9 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Simulation;
 
 namespace EndlessHeros.Core.Events
 {
     /// <summary>
-    /// Lightweight ordered log of domain events for the active run.
+    /// Ordered log of domain events for the active run.
     /// Project-scoped for DI; RunManager clears it on CreateRun and ClearRun.
     /// </summary>
     public sealed class EventJournal
@@ -15,20 +13,17 @@ namespace EndlessHeros.Core.Events
         private readonly List<EventRecord> _records = new();
 
         /// <summary>
-        /// Appends a structured event record when the event type is not None.
+        /// Appends the domain event when its type is not None.
         /// </summary>
-        public void Record(
-            GameEventType eventType,
-            GameTime simulationTime,
-            EntityId sourceId,
-            ContentId payloadId)
+        public void Record<T>(T domainEvent)
+            where T : struct, IDomainEvent
         {
-            if (eventType == GameEventType.None)
+            if (domainEvent.EventType == GameEventType.None)
             {
                 return;
             }
 
-            _records.Add(new EventRecord(eventType, simulationTime, sourceId, payloadId));
+            _records.Add(new EventRecord(domainEvent));
         }
 
         /// <summary>

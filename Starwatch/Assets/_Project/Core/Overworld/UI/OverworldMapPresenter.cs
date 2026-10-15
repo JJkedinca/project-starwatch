@@ -1,53 +1,47 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Content;
-using EndlessHeros.Core.Data;
+using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Run.Universe;
-using EndlessHeros.Core.Simulation;
 using EndlessHeros.Overworld.Services;
+using VContainer;
 using VContainer.Unity;
 
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Overworld map presenter. Binds UI intents to travel and scan, then refreshes views.
-    /// Registered on the simulation loop after travel resolution so fleet markers follow arrivals.
-    /// TODO: Extract OverworldMapQuery (read-model/labels/planet rows) if this type keeps growing.
+    /// Overworld map presenter. Binds UI intents to travel and scan, then refreshes views
+    /// from domain events published after those actions commit.
     /// </summary>
-    public sealed class OverworldMapPresenter : IStartable, IDisposable, ISimulationSystem
+    public sealed class OverworldMapPresenter : IStartable, IDisposable
     {
         private readonly OverworldViewBridge _viewBridge;
         private readonly RunManager _runManager;
-        private readonly VisibilityService _visibility;
         private readonly SensorService _sensor;
         private readonly TravelService _travel;
-        private readonly SimulationLoop _simulationLoop;
-        private readonly ObjectDatabaseSO _objectDatabase;
+        private readonly OverworldMapQuery _query;
+        private readonly DomainEventBus _events;
+        private readonly List<IDisposable> _subscriptions = new();
 
         private ContentId _selectedNodeId;
         private ContentId _selectedPlanetId;
         private bool _inStarSystemView;
-        private int _fleetRevision;
 
-        public OverworldMapPresenter(
+        [Inject]
+        internal OverworldMapPresenter(
             OverworldViewBridge viewBridge,
             RunManager runManager,
-            VisibilityService visibility,
             SensorService sensor,
             TravelService travel,
-            SimulationLoop simulationLoop,
-            ObjectDatabaseSO objectDatabase)
+            OverworldMapQuery query,
+            DomainEventBus events)
         {
             _viewBridge = viewBridge ?? throw new ArgumentNullException(nameof(viewBridge));
             _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
-            _visibility = visibility ?? throw new ArgumentNullException(nameof(visibility));
             _sensor = sensor ?? throw new ArgumentNullException(nameof(sensor));
             _travel = travel ?? throw new ArgumentNullException(nameof(travel));
-            _simulationLoop = simulationLoop ?? throw new ArgumentNullException(nameof(simulationLoop));
-            _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
+            _query = query ?? throw new ArgumentNullException(nameof(query));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
         }
 
         /// <summary>
@@ -61,40 +55,28 @@ namespace EndlessHeros.Overworld.UI
             _viewBridge.StarSystemBackRequested += OnStarSystemBackRequested;
             _viewBridge.PlanetSelected += OnPlanetSelected;
             _viewBridge.Bind();
-            _simulationLoop.Register(this);
+            _subscriptions.Add(_events.Subscribe<FleetTravelEvent>(OnFleetTravel));
+            _subscriptions.Add(_events.Subscribe<MapKnowledgeChangedEvent>(OnMapKnowledgeChanged));
             RefreshAll();
         }
 
         /// <summary>
-        /// Refreshes fleet markers after TravelSystem resolves arrivals on this tick.
-        /// </summary>
-        public void OnSimulationTick(GameTime time, float tickDeltaSeconds)
-        {
-            _ = time;
-            _ = tickDeltaSeconds;
-            if (!_runManager.HasActiveRun)
-            {
-                return;
-            }
-
-            var run = _runManager.CurrentRun;
-            var revision = ComputeFleetRevision(run.Timeline);
-            if (revision == _fleetRevision)
-            {
-                return;
-            }
-
-            _fleetRevision = revision;
-            RefreshNodeStates(run);
-            RefreshInspection(run);
-        }
-
-        /// <summary>
-        /// Drops the simulation registration when the overworld scope ends.
+        /// Drops event subscriptions when the overworld scope ends.
         /// </summary>
         public void Dispose()
         {
-            _simulationLoop.Unregister(this);
+            _viewBridge.NodeSelected -= OnNodeSelected;
+            _viewBridge.TravelRequested -= OnTravelRequested;
+            _viewBridge.ScanPlanetRequested -= OnScanPlanetRequested;
+            _viewBridge.StarSystemBackRequested -= OnStarSystemBackRequested;
+            _viewBridge.PlanetSelected -= OnPlanetSelected;
+
+            for (var i = 0; i < _subscriptions.Count; i++)
+            {
+                _subscriptions[i].Dispose();
+            }
+
+            _subscriptions.Clear();
         }
 
         /// <summary>
@@ -122,18 +104,12 @@ namespace EndlessHeros.Overworld.UI
             if (_inStarSystemView)
             {
                 EnterStarSystemView(run, keepSelectedPlanet: true);
-            }
-            else
-            {
-                _viewBridge.ShowStarMap();
-                RefreshInspection(run);
+                return;
             }
 
-            _fleetRevision = ComputeFleetRevision(run.Timeline);
-            _viewBridge.SetStatus(
-                _inStarSystemView
-                    ? "Select a planet to inspect or scan."
-                    : "Travel a known route to enter a star system, then scan its planets.");
+            _viewBridge.ShowStarMap();
+            RefreshInspection(run);
+            _viewBridge.SetStatus("Travel a known route to enter a star system, then scan its planets.");
         }
 
         private void OnNodeSelected(ContentId nodeId)
@@ -148,7 +124,7 @@ namespace EndlessHeros.Overworld.UI
             var run = _runManager.CurrentRun;
             RefreshNodeStates(run);
 
-            if (CanEnterStarSystemView(run, nodeId))
+            if (_query.CanEnter(run, nodeId))
             {
                 EnterStarSystemView(run, keepSelectedPlanet: false);
                 return;
@@ -195,7 +171,7 @@ namespace EndlessHeros.Overworld.UI
             }
 
             var run = _runManager.CurrentRun;
-            if (!TryFindFleetForDestination(run, _selectedNodeId, out var fleetId))
+            if (!_query.TryFindFleetForDestination(run, _selectedNodeId, out var fleetId))
             {
                 _viewBridge.SetStatus("Travel is not available.");
                 return;
@@ -207,11 +183,6 @@ namespace EndlessHeros.Overworld.UI
                 _viewBridge.SetStatus(result.Error.Message);
                 return;
             }
-
-            _fleetRevision = ComputeFleetRevision(run.Timeline);
-            RefreshNodeStates(run);
-            RefreshInspection(run);
-            _viewBridge.SetStatus("Fleet is traveling.");
         }
 
         private void OnScanPlanetRequested(ContentId planetId)
@@ -232,7 +203,6 @@ namespace EndlessHeros.Overworld.UI
             }
 
             _selectedPlanetId = planetId;
-            RefreshAll();
             _viewBridge.SetStatus("Scanned " + planetId.Value + ".");
         }
 
@@ -246,7 +216,7 @@ namespace EndlessHeros.Overworld.UI
                 return;
             }
 
-            var visiblePlanets = CollectVisiblePlanets(run, node);
+            var visiblePlanets = _query.VisiblePlanets(run, node);
             if (!keepSelectedPlanet
                 || _selectedPlanetId.IsEmpty
                 || !ContainsPlanet(visiblePlanets, _selectedPlanetId))
@@ -255,48 +225,10 @@ namespace EndlessHeros.Overworld.UI
             }
 
             _inStarSystemView = true;
-            _viewBridge.ShowStarSystemView(FormatNodeLabel(node), visiblePlanets);
+            _viewBridge.ShowStarSystemView(_query.NodeLabel(node), visiblePlanets);
             RefreshSystemPlanetStates(run);
             RefreshInspection(run);
-            _viewBridge.SetStatus("Select a planet to inspect or scan.");
-        }
-
-        private static bool CanEnterStarSystemView(RunState run, ContentId nodeId)
-        {
-            if (nodeId.IsEmpty || !run.Universe.MapGraph.TryGetNode(nodeId, out var node))
-            {
-                return false;
-            }
-
-            if (node.Kind != MapNodeKind.System)
-            {
-                return false;
-            }
-
-            return run.Archive.TryGetMapKnowledge(ObserverId.Player, out var knowledge)
-                && knowledge.HasExploredNode(nodeId);
-        }
-
-        private List<ContentId> CollectVisiblePlanets(RunState run, MapNode node)
-        {
-            List<ContentId> planets = new();
-            for (var i = 0; i < node.PlanetIds.Count; i++)
-            {
-                var planetId = node.PlanetIds[i];
-                var visibility = _visibility.GetPlanetVisibility(
-                    run.Archive,
-                    ObserverId.Player,
-                    node.Id,
-                    planetId);
-                if (visibility == PlanetVisibility.Hidden)
-                {
-                    continue;
-                }
-
-                planets.Add(planetId);
-            }
-
-            return planets;
+            _viewBridge.SetStatus(_query.StarSystemStatus(visiblePlanets.Count));
         }
 
         private void RefreshSystemPlanetStates(RunState run)
@@ -314,60 +246,15 @@ namespace EndlessHeros.Overworld.UI
                     continue;
                 }
 
-                var visibility = _visibility.GetPlanetVisibility(
-                    run.Archive,
-                    ObserverId.Player,
-                    node.Id,
-                    planetId);
-                var displayName = planetId.Value;
-                if (_objectDatabase.TryGetPlanet(planetId.Value, out var definition))
-                {
-                    displayName = definition.DisplayName;
-                }
-
                 _viewBridge.StarSystemView.SetPlanetState(
                     planetId,
-                    new PlanetPresentationState(
-                        visibility,
-                        isSelected: planetId == _selectedPlanetId,
-                        displayName));
+                    _query.PlanetState(run, node, planetId, _selectedPlanetId));
             }
         }
 
         private void RefreshRoutes(RunState run)
         {
-            if (!run.Archive.TryGetMapKnowledge(ObserverId.Player, out var knowledge))
-            {
-                _viewBridge.StarMap.SetRoutes(Array.Empty<MapRouteSegment>());
-                return;
-            }
-
-            var graph = run.Universe.MapGraph;
-            List<MapRouteSegment> segments = new();
-            for (var i = 0; i < graph.Routes.Count; i++)
-            {
-                var route = graph.Routes[i];
-                if (route == null)
-                {
-                    continue;
-                }
-
-                var key = RouteService.MakeRouteKey(route.NodeAId, route.NodeBId);
-                if (!knowledge.HasKnownRoute(key))
-                {
-                    continue;
-                }
-
-                if (!graph.TryGetNode(route.NodeAId, out var nodeA)
-                    || !graph.TryGetNode(route.NodeBId, out var nodeB))
-                {
-                    continue;
-                }
-
-                segments.Add(new MapRouteSegment(nodeA.MapPosition, nodeB.MapPosition));
-            }
-
-            _viewBridge.StarMap.SetRoutes(segments);
+            _viewBridge.StarMap.SetRoutes(_query.KnownRoutes(run));
         }
 
         private void RefreshNodeStates(RunState run)
@@ -379,174 +266,78 @@ namespace EndlessHeros.Overworld.UI
                     continue;
                 }
 
-                var visibility = _visibility.GetNodeVisibility(
-                    run.Archive,
-                    run.Timeline,
-                    ObserverId.Player,
-                    node.Id);
-                var hasFleet = visibility != MapNodeVisibility.Hidden
-                    && NodeHasFleet(run.Timeline, node.Id);
-                var state = new MapNodePresentationState(
-                    visibility,
-                    isExplorable: CanTravelTo(run, node.Id),
-                    isSelected: node.Id == _selectedNodeId,
-                    hasFleet,
-                    isFleetTraveling: hasFleet && NodeFleetIsTraveling(run.Timeline, node.Id),
-                    revealedLabel: visibility == MapNodeVisibility.Hidden
-                        ? string.Empty
-                        : FormatNodeLabel(node));
-
-                _viewBridge.StarMap.SetNodeState(node.Id, state);
+                _viewBridge.StarMap.SetNodeState(node.Id, _query.NodeState(run, node, _selectedNodeId));
             }
         }
 
         private void RefreshInspection(RunState run)
         {
-            if (_selectedNodeId.IsEmpty
-                || !run.Universe.MapGraph.TryGetNode(_selectedNodeId, out var node))
+            var inspection = _query.DescribeSelection(run, _selectedNodeId, _selectedPlanetId, _inStarSystemView);
+            if (!inspection.HasSelection)
             {
                 _viewBridge.StarSystemInspection.ShowEmpty();
                 _viewBridge.PlanetInspection.Clear();
                 return;
             }
 
-            var visibility = _visibility.GetNodeVisibility(
-                run.Archive,
-                run.Timeline,
-                ObserverId.Player,
-                node.Id);
-            var canTravel = CanTravelTo(run, node.Id);
-
-            if (visibility == MapNodeVisibility.Hidden)
-            {
-                _viewBridge.StarSystemInspection.ShowNode(
-                    "Uncharted space",
-                    canTravel
-                        ? "Known route. Travel here to enter."
-                        : "Hidden until a fleet arrives by a known route.",
-                    canTravel);
-                _viewBridge.PlanetInspection.Clear();
-                return;
-            }
-
-            var kindLabel = node.Kind == MapNodeKind.System ? "Star system" : "Non-system node";
-            var summary = kindLabel + " · " + node.Id.Value;
-            if (visibility == MapNodeVisibility.Present)
-            {
-                summary += "\nFleet present.";
-            }
-
-            if (node.Kind == MapNodeKind.System && !_inStarSystemView)
-            {
-                summary += "\nOpen to inspect planets.";
-            }
-
             _viewBridge.StarSystemInspection.ShowNode(
-                FormatNodeLabel(node),
-                summary,
-                canTravel);
-            RefreshSelectedPlanetDetail(run, node);
-        }
-
-        private void RefreshSelectedPlanetDetail(RunState run, MapNode node)
-        {
-            if (!_inStarSystemView || _selectedPlanetId.IsEmpty)
+                inspection.Title,
+                inspection.Summary,
+                inspection.CanTravel);
+            if (inspection.ShowPlanetDetail)
+            {
+                _viewBridge.PlanetInspection.ShowPlanet(inspection.PlanetDetail);
+            }
+            else
             {
                 _viewBridge.PlanetInspection.Clear();
+            }
+        }
+
+        private void OnFleetTravel(FleetTravelEvent domainEvent)
+        {
+            RefreshFleetPresence();
+            _viewBridge.SetStatus(
+                domainEvent.Kind == FleetTravelKind.Arrived
+                    ? "Fleet arrived."
+                    : "Fleet is traveling.");
+        }
+
+        private void OnMapKnowledgeChanged(MapKnowledgeChangedEvent domainEvent)
+        {
+            if (!_runManager.HasActiveRun)
+            {
                 return;
             }
 
-            var planetVisibility = _visibility.GetPlanetVisibility(
-                run.Archive,
-                ObserverId.Player,
-                node.Id,
-                _selectedPlanetId);
-            if (planetVisibility == PlanetVisibility.Hidden)
+            var run = _runManager.CurrentRun;
+            if (domainEvent.Kind == MapKnowledgeKind.PlanetScanned)
             {
-                _viewBridge.PlanetInspection.Clear();
+                if (!_inStarSystemView)
+                {
+                    return;
+                }
+
+                RefreshSystemPlanetStates(run);
+                RefreshInspection(run);
                 return;
             }
 
-            var displayName = _selectedPlanetId.Value;
-            var detail = "Ready to scan.";
-            var canScan = planetVisibility == PlanetVisibility.SystemExplored;
-
-            if (_objectDatabase.TryGetPlanet(_selectedPlanetId.Value, out var definition))
-            {
-                displayName = definition.DisplayName;
-                if (planetVisibility == PlanetVisibility.Scanned)
-                {
-                    detail = definition.Summary;
-                }
-            }
-            else if (planetVisibility == PlanetVisibility.Scanned)
-            {
-                detail = "Scanned.";
-            }
-
-            _viewBridge.PlanetInspection.ShowPlanet(
-                new PlanetDetailModel(_selectedPlanetId, displayName, detail, canScan));
+            RefreshRoutes(run);
+            RefreshNodeStates(run);
+            RefreshInspection(run);
         }
 
-        private bool CanTravelTo(RunState run, ContentId destinationNodeId)
+        private void RefreshFleetPresence()
         {
-            return TryFindFleetForDestination(run, destinationNodeId, out _);
-        }
-
-        private bool TryFindFleetForDestination(RunState run, ContentId destinationNodeId, out EntityId fleetId)
-        {
-            fleetId = EntityId.None;
-            var fleets = run.Timeline.Fleets;
-            for (var i = 0; i < fleets.Count; i++)
+            if (!_runManager.HasActiveRun)
             {
-                if (_travel.CanStartTravel(run, ObserverId.Player, fleets[i].Id, destinationNodeId))
-                {
-                    fleetId = fleets[i].Id;
-                    return true;
-                }
+                return;
             }
 
-            return false;
-        }
-
-        private static bool NodeHasFleet(TimelineState timeline, ContentId nodeId)
-        {
-            for (var i = 0; i < timeline.Fleets.Count; i++)
-            {
-                if (timeline.Fleets[i].LocationSystemId == nodeId)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool NodeFleetIsTraveling(TimelineState timeline, ContentId nodeId)
-        {
-            for (var i = 0; i < timeline.Fleets.Count; i++)
-            {
-                var fleet = timeline.Fleets[i];
-                if (fleet.LocationSystemId == nodeId && timeline.IsFleetTraveling(fleet.Id))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static int ComputeFleetRevision(TimelineState timeline)
-        {
-            var revision = timeline.ActiveTravels.Count;
-            for (var i = 0; i < timeline.Fleets.Count; i++)
-            {
-                var fleet = timeline.Fleets[i];
-                revision = unchecked(revision * 397) ^ fleet.LocationSystemId.GetHashCode();
-                revision = unchecked(revision * 397) ^ (timeline.IsFleetTraveling(fleet.Id) ? 1 : 0);
-            }
-
-            return revision;
+            var run = _runManager.CurrentRun;
+            RefreshNodeStates(run);
+            RefreshInspection(run);
         }
 
         private static bool ContainsPlanet(IReadOnlyList<ContentId> planets, ContentId planetId)
@@ -560,11 +351,6 @@ namespace EndlessHeros.Overworld.UI
             }
 
             return false;
-        }
-
-        private static string FormatNodeLabel(MapNode node)
-        {
-            return node.Id.Value;
         }
     }
 }

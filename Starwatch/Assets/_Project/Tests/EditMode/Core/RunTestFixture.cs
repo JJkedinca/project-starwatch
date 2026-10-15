@@ -45,10 +45,12 @@ namespace EndlessHeros.Tests.EditMode.Core
             TravelSystem TravelSystem,
             SimulationLoop Loop,
             SimulationClock Clock,
-            EventJournal Journal) CreateOverworldStack()
+            EventJournal Journal,
+            DomainEventBus Events) CreateOverworldStack()
         {
             var objectDatabase = CreateObjectDatabase();
             var journal = new EventJournal();
+            var events = new DomainEventBus(journal);
             var clock = new SimulationClock();
             var loop = new SimulationLoop(clock);
             var timelineFactory = new TimelineFactory();
@@ -56,13 +58,13 @@ namespace EndlessHeros.Tests.EditMode.Core
             var manager = new RunManager(timelineFactory, loader, objectDatabase, journal);
             var route = new RouteService();
             var archive = new ArchiveService();
-            var exploration = new ExplorationService(archive, route, journal, clock);
-            var sensor = new SensorService(archive, objectDatabase, journal, clock);
-            var travel = new TravelService(route, clock);
+            var exploration = new ExplorationService(archive, route, events, clock);
+            var sensor = new SensorService(archive, objectDatabase, events, clock);
+            var travel = new TravelService(route, clock, events);
             var visibility = new VisibilityService();
-            var travelSystem = new TravelSystem(manager, exploration, journal);
+            var travelSystem = new TravelSystem(manager, exploration, events);
             loop.Register(travelSystem);
-            return (manager, exploration, sensor, travel, visibility, travelSystem, loop, clock, journal);
+            return (manager, exploration, sensor, travel, visibility, travelSystem, loop, clock, journal, events);
         }
     }
 }

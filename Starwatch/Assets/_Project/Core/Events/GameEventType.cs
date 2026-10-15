@@ -25,5 +25,6 @@ namespace EndlessHeros.Core.Events
         FleetJoinedEngagement = 17,
         CombatIntelRecorded = 18,
         TimelineOutcomeChanged = 19,
+        FleetTravelStarted = 20,
     }
 }

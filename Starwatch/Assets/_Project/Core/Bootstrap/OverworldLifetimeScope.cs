@@ -16,6 +16,7 @@ namespace EndlessHeros.Core.Bootstrap
         protected override void Configure(IContainerBuilder builder)
         {
             builder.RegisterComponentInHierarchy<OverworldViewBridge>();
+            builder.Register<OverworldMapQuery>(Lifetime.Scoped);
             builder.RegisterEntryPoint<OverworldMapPresenter>();
         }
     }

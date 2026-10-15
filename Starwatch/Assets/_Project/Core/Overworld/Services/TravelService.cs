@@ -1,4 +1,5 @@
 using EndlessHeros.Core.Commands;
+using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Core.Run.Timeline;
@@ -13,11 +14,13 @@ namespace EndlessHeros.Overworld.Services
     {
         private readonly RouteService _routeService;
         private readonly SimulationClock _clock;
+        private readonly DomainEventBus _events;
 
-        public TravelService(RouteService routeService, SimulationClock clock)
+        public TravelService(RouteService routeService, SimulationClock clock, DomainEventBus events)
         {
             _routeService = routeService;
             _clock = clock;
+            _events = events ?? throw new System.ArgumentNullException(nameof(events));
         }
 
         /// <summary>
@@ -55,7 +58,37 @@ namespace EndlessHeros.Overworld.Services
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "Travel could not start.");
             }
 
+            _events.Publish(new FleetTravelEvent(
+                depart,
+                fleetId,
+                fleet.LocationSystemId,
+                destinationNodeId,
+                FleetTravelKind.Started));
             return CommandResult.Ok();
+        }
+
+        /// <summary>
+        /// Returns whether a known route links these adjacent nodes.
+        /// Ignores whether a fleet is already traveling.
+        /// </summary>
+        public bool IsKnownAdjacentDestination(
+            RunState run,
+            ObserverId observerId,
+            ContentId fromNodeId,
+            ContentId destinationNodeId)
+        {
+            if (run == null || fromNodeId.IsEmpty || destinationNodeId.IsEmpty)
+            {
+                return false;
+            }
+
+            if (!_routeService.AreAdjacent(run.Universe.MapGraph, fromNodeId, destinationNodeId))
+            {
+                return false;
+            }
+
+            return run.Archive.TryGetMapKnowledge(observerId, out var knowledge)
+                && knowledge.HasKnownRoute(RouteService.MakeRouteKey(fromNodeId, destinationNodeId));
         }
 
         /// <summary>

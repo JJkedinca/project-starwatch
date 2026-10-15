@@ -6,7 +6,6 @@ using EndlessHeros.Core.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using EntityId = EndlessHeros.Core.Identifiers.EntityId;
 
 namespace EndlessHeros.Tests.EditMode.Core
 {
@@ -119,11 +118,7 @@ namespace EndlessHeros.Tests.EditMode.Core
         {
             var journal = new EventJournal();
             var manager = RunTestFixture.CreateRunManager(journal: journal);
-            journal.Record(
-                GameEventType.NodeExplored,
-                GameTime.Zero,
-                new EntityId(1),
-                ContentId.From("old-node"));
+            journal.Record(Explored("old-node"));
 
             manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(1));
 
@@ -136,11 +131,7 @@ namespace EndlessHeros.Tests.EditMode.Core
             var journal = new EventJournal();
             var manager = RunTestFixture.CreateRunManager(journal: journal);
             manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(1));
-            journal.Record(
-                GameEventType.NodeExplored,
-                GameTime.Zero,
-                new EntityId(1),
-                ContentId.From("node-a"));
+            journal.Record(Explored("node-a"));
 
             manager.ClearRun();
 
@@ -153,11 +144,7 @@ namespace EndlessHeros.Tests.EditMode.Core
         {
             var journal = new EventJournal();
             var manager = RunTestFixture.CreateRunManager(journal: journal);
-            journal.Record(
-                GameEventType.NodeExplored,
-                GameTime.Zero,
-                new EntityId(1),
-                ContentId.From("keep-me"));
+            journal.Record(Explored("keep-me"));
             LogAssert.Expect(LogType.Error, "RunManager.CreateRun requires a scenario id.");
 
             manager.CreateRun(" ", RunSeed.FromValue(1));
@@ -171,11 +158,7 @@ namespace EndlessHeros.Tests.EditMode.Core
             var journal = new EventJournal();
             var manager = RunTestFixture.CreateRunManager(journal: journal);
             manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(1));
-            journal.Record(
-                GameEventType.NodeExplored,
-                GameTime.Zero,
-                new EntityId(1),
-                ContentId.From("keep-me"));
+            journal.Record(Explored("keep-me"));
 
             var empire = new StartingEmpireDefinition(
                 ContentId.From("missing-home"),
@@ -190,7 +173,18 @@ namespace EndlessHeros.Tests.EditMode.Core
             Assert.That(failed, Is.Null);
             Assert.That(manager.HasActiveRun, Is.True);
             Assert.That(journal.Records, Has.Count.EqualTo(1));
-            Assert.That(journal.Records[0].PayloadId, Is.EqualTo(ContentId.From("keep-me")));
+            Assert.That(journal.Records[0].TryGet<MapKnowledgeChangedEvent>(out var stored), Is.True);
+            Assert.That(stored.SubjectId, Is.EqualTo(ContentId.From("keep-me")));
+            Assert.That(stored.ObserverId, Is.EqualTo(ObserverId.Player));
+        }
+
+        private static MapKnowledgeChangedEvent Explored(string nodeId)
+        {
+            return new MapKnowledgeChangedEvent(
+                GameTime.Zero,
+                ObserverId.Player,
+                ContentId.From(nodeId),
+                MapKnowledgeKind.NodeExplored);
         }
     }
 }

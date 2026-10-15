@@ -28,11 +28,13 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
                 var presenter = new OverworldMapPresenter(
                     bridge,
                     stack.Manager,
-                    stack.Visibility,
                     stack.Sensor,
                     stack.Travel,
-                    stack.Loop,
-                    RunTestFixture.CreateObjectDatabase());
+                    new OverworldMapQuery(
+                        stack.Visibility,
+                        stack.Travel,
+                        RunTestFixture.CreateObjectDatabase()),
+                    stack.Events);
                 presenter.Start();
 
                 Assert.That(bridge.StarSystemView.IsVisible, Is.False);
@@ -109,6 +111,52 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         }
 
         [Test]
+        public void Navigation_EntersExploredLocationWithNoPlanets()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(33));
+            var root = BuildTree();
+            var host = new GameObject("overworld-empty-system-test");
+            try
+            {
+                var bridge = host.AddComponent<OverworldViewBridge>();
+                bridge.Bind(root);
+                var presenter = new OverworldMapPresenter(
+                    bridge,
+                    stack.Manager,
+                    stack.Sensor,
+                    stack.Travel,
+                    new OverworldMapQuery(
+                        stack.Visibility,
+                        stack.Travel,
+                        RunTestFixture.CreateObjectDatabase()),
+                    stack.Events);
+                presenter.Start();
+
+                var belt = ContentId.From("asteroid-belt");
+                bridge.NotifyNodeSelected(belt);
+                Assert.That(bridge.StarSystemView.IsVisible, Is.False);
+
+                run.Timeline.TrySetFleetLocation(run.Timeline.Fleets[0].Id, belt);
+                stack.Exploration.Explore(run, ObserverId.Player, belt);
+                bridge.NotifyNodeSelected(belt);
+
+                Assert.That(bridge.StarSystemView.IsVisible, Is.True);
+                Assert.That(bridge.StarSystemView.PlanetCount, Is.EqualTo(0));
+                Assert.That(root.Q<Label>("status-label").text, Is.EqualTo("No planets in this system."));
+
+                presenter.Dispose();
+                presenter.Start();
+
+                Assert.That(root.Q<Label>("status-label").text, Is.EqualTo("No planets in this system."));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
         public void Travel_MovesFleetMarkerToExploredNeighbor()
         {
             var stack = RunTestFixture.CreateOverworldStack();
@@ -122,11 +170,13 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
                 var presenter = new OverworldMapPresenter(
                     bridge,
                     stack.Manager,
-                    stack.Visibility,
                     stack.Sensor,
                     stack.Travel,
-                    stack.Loop,
-                    RunTestFixture.CreateObjectDatabase());
+                    new OverworldMapQuery(
+                        stack.Visibility,
+                        stack.Travel,
+                        RunTestFixture.CreateObjectDatabase()),
+                    stack.Events);
                 presenter.Start();
 
                 var home = ContentId.From("home-system");
@@ -134,6 +184,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
                 Assert.That(FleetMarkerVisible(root, home), Is.True);
                 Assert.That(FleetMarkerTraveling(root, home), Is.False);
                 Assert.That(FleetMarkerVisible(root, forge), Is.False);
+                var routesBeforeTravel = bridge.StarMap.RouteCount;
 
                 bridge.NotifyNodeSelected(forge);
                 Assert.That(root.Q<Button>("travel-button").enabledSelf, Is.True);
@@ -143,14 +194,27 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
                     Is.True);
                 Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.False);
 
+                presenter.Dispose();
+                presenter.Start();
+
                 bridge.NotifyTravelRequested();
 
                 Assert.That(run.Timeline.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.True);
+                Assert.That(root.Q<Label>("status-label").text, Is.EqualTo("Fleet is traveling."));
                 Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(home));
                 Assert.That(FleetMarkerVisible(root, home), Is.True);
                 Assert.That(FleetMarkerTraveling(root, home), Is.True);
                 Assert.That(FleetMarkerVisible(root, forge), Is.False);
                 Assert.That(root.Q<Button>("travel-button").enabledSelf, Is.False);
+                Assert.That(bridge.StarMap.RouteCount, Is.EqualTo(routesBeforeTravel));
+                Assert.That(
+                    root.Q<Button>("node-forge-system").ClassListContains("map-node--explorable"),
+                    Is.True);
+                Assert.That(root.Q<Button>("node-forge-system").text, Is.EqualTo("?"));
+                Assert.That(
+                    root.Q<Button>("node-asteroid-belt").ClassListContains("map-node--explorable"),
+                    Is.True);
+                Assert.That(root.Q<Button>("node-asteroid-belt").text, Is.EqualTo("?"));
 
                 stack.Clock.SetPaused(false);
                 var ticks = 0;
@@ -161,10 +225,12 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
                 }
 
                 Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(forge));
+                Assert.That(root.Q<Label>("status-label").text, Is.EqualTo("Fleet arrived."));
                 Assert.That(FleetMarkerVisible(root, home), Is.False);
                 Assert.That(FleetMarkerTraveling(root, home), Is.False);
                 Assert.That(FleetMarkerVisible(root, forge), Is.True);
                 Assert.That(FleetMarkerTraveling(root, forge), Is.False);
+                Assert.That(bridge.StarMap.RouteCount, Is.EqualTo(routesBeforeTravel + 1));
                 Assert.That(
                     root.Q<Button>("node-forge-system").ClassListContains("map-node--explorable"),
                     Is.False);
