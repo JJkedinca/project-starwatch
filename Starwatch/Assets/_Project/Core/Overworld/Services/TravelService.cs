@@ -21,7 +21,7 @@ namespace EndlessHeros.Overworld.Services
         }
 
         /// <summary>
-        /// Begins travel for a fleet to an adjacent explored destination.
+        /// Begins travel for a fleet along a known adjacent route. Arrival explores the destination.
         /// </summary>
         public CommandResult StartTravel(
             RunState run,
@@ -29,6 +29,63 @@ namespace EndlessHeros.Overworld.Services
             EntityId fleetId,
             ContentId destinationNodeId)
         {
+            var evaluation = EvaluateTravel(
+                run,
+                observerId,
+                fleetId,
+                destinationNodeId,
+                out var fleet,
+                out var duration);
+            if (!evaluation.Success)
+            {
+                return evaluation;
+            }
+
+            var depart = _clock != null ? _clock.CurrentTime : GameTime.Zero;
+            var arrive = depart.Add(duration);
+            var travel = new ActiveTravel(
+                fleetId,
+                fleet.LocationSystemId,
+                destinationNodeId,
+                depart,
+                arrive);
+
+            if (!run.Timeline.TryStartTravel(travel))
+            {
+                return CommandResult.Fail(CommandErrorCode.NotAllowed, "Travel could not start.");
+            }
+
+            return CommandResult.Ok();
+        }
+
+        /// <summary>
+        /// Returns whether StartTravel would accept this leg.
+        /// </summary>
+        public bool CanStartTravel(
+            RunState run,
+            ObserverId observerId,
+            EntityId fleetId,
+            ContentId destinationNodeId)
+        {
+            return EvaluateTravel(
+                run,
+                observerId,
+                fleetId,
+                destinationNodeId,
+                out _,
+                out _).Success;
+        }
+
+        private CommandResult EvaluateTravel(
+            RunState run,
+            ObserverId observerId,
+            EntityId fleetId,
+            ContentId destinationNodeId,
+            out FleetPlaceholderState fleet,
+            out float duration)
+        {
+            fleet = null;
+            duration = 0f;
             if (run == null)
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Run is required.");
@@ -39,7 +96,7 @@ namespace EndlessHeros.Overworld.Services
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Destination is required.");
             }
 
-            if (!run.Timeline.TryGetFleet(fleetId, out var fleet))
+            if (!run.Timeline.TryGetFleet(fleetId, out fleet))
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Unknown fleet.");
             }
@@ -55,34 +112,21 @@ namespace EndlessHeros.Overworld.Services
             }
 
             if (!run.Archive.TryGetMapKnowledge(observerId, out var knowledge)
-                || !knowledge.HasExploredNode(destinationNodeId))
+                || !knowledge.HasKnownRoute(
+                    RouteService.MakeRouteKey(fleet.LocationSystemId, destinationNodeId)))
             {
                 return CommandResult.Fail(
                     CommandErrorCode.PrerequisiteNotMet,
-                    "Destination must be explored before travel.");
+                    "Route is not known.");
             }
 
             if (!_routeService.TryGetTravelDuration(
                     run.Universe.MapGraph,
                     fleet.LocationSystemId,
                     destinationNodeId,
-                    out var duration))
+                    out duration))
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidRoute, "Route duration missing.");
-            }
-
-            var depart = _clock != null ? _clock.CurrentTime : GameTime.Zero;
-            var arrive = depart.Add(duration);
-            var travel = new ActiveTravel(
-                fleetId,
-                fleet.LocationSystemId,
-                destinationNodeId,
-                depart,
-                arrive);
-
-            if (!run.Timeline.TryStartTravel(travel))
-            {
-                return CommandResult.Fail(CommandErrorCode.NotAllowed, "Travel could not start.");
             }
 
             return CommandResult.Ok();

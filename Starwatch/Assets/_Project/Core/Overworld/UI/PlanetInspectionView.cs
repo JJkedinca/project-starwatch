@@ -17,19 +17,19 @@ namespace EndlessHeros.Overworld.UI
         private ContentId _planetId;
 
         /// <summary>
-        /// Binds to planet-detail controls from Overworld UXML.
+        /// Binds the PlanetInspection.uxml root.
         /// </summary>
-        public void Bind(VisualElement inspectionPanel)
+        public void Bind(VisualElement root)
         {
-            if (inspectionPanel == null)
+            if (root == null)
             {
                 return;
             }
 
-            _root = inspectionPanel.Q<VisualElement>("planet-detail");
-            _name = inspectionPanel.Q<Label>("planet-detail-name");
-            _detail = inspectionPanel.Q<Label>("planet-detail-summary");
-            _scanButton = inspectionPanel.Q<Button>("scan-button");
+            _root = root;
+            _name = root.Q<Label>("planet-detail-name");
+            _detail = root.Q<Label>("planet-detail-summary");
+            _scanButton = root.Q<Button>("scan-button");
             if (_scanButton != null)
             {
                 _scanButton.clicked += () =>

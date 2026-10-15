@@ -121,6 +121,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
 
             Assert.That(run.Archive.PlayerMapKnowledge.HasKnownRoute(key), Is.False);
 
+            run.Timeline.TrySetFleetLocation(run.Timeline.Fleets[0].Id, forge);
             var explored = stack.Exploration.Explore(run, ObserverId.Player, forge);
 
             Assert.That(explored.Success, Is.True);

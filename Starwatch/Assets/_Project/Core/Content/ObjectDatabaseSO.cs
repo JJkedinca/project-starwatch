@@ -12,7 +12,7 @@ namespace EndlessHeros.Core.Content
     public sealed class ObjectDatabaseSO : ScriptableObject
     {
         [SerializeField]
-        private SpaceNodeDatabaseSO _spaceNodeDatabase;
+        private StarSystemDatabaseSO _starSystemDatabase;
 
         [SerializeField]
         private PlanetDatabaseSO _planetDatabase;
@@ -26,9 +26,9 @@ namespace EndlessHeros.Core.Content
         /// <summary>
         /// Points a runtime instance at the authored databases. Used by EditMode tests.
         /// </summary>
-        internal void AssignDatabases(SpaceNodeDatabaseSO spaceNodeDatabase, PlanetDatabaseSO planetDatabase)
+        internal void AssignDatabases(StarSystemDatabaseSO starSystemDatabase, PlanetDatabaseSO planetDatabase)
         {
-            _spaceNodeDatabase = spaceNodeDatabase;
+            _starSystemDatabase = starSystemDatabase;
             _planetDatabase = planetDatabase;
         }
 
@@ -53,7 +53,7 @@ namespace EndlessHeros.Core.Content
                 return false;
             }
 
-            return _scenarios.TryGetValue(scenarioId, out definition);
+            return _scenarios.TryGetValue(scenarioId, out definition) && definition != null;
         }
 
         /// <summary>
@@ -73,19 +73,36 @@ namespace EndlessHeros.Core.Content
 
         private void EnsureIndexed()
         {
-            if (_indexed)
+            if (_indexed && !CachedScenarioWasDestroyed())
             {
                 return;
             }
 
+            // Exit play mode destroys the runtime ScenarioDefinition. This asset outlives
+            // that object when the editor keeps its memory, so rebuild a destroyed entry.
+            _scenarios.Clear();
+            _planets.Clear();
             _indexed = true;
-            if (_spaceNodeDatabase == null || _planetDatabase == null)
+            if (_starSystemDatabase == null || _planetDatabase == null)
             {
-                Debug.LogError("ObjectDatabaseSO requires an assigned SpaceNodeDatabaseSO and PlanetDatabaseSO.");
+                Debug.LogError("ObjectDatabaseSO requires an assigned StarSystemDatabaseSO and PlanetDatabaseSO.");
                 return;
             }
 
-            AddScenario(VerticalSliceScenarioFactory.Create(_spaceNodeDatabase, _planetDatabase));
+            AddScenario(VerticalSliceScenarioFactory.Create(_starSystemDatabase, _planetDatabase));
+        }
+
+        private bool CachedScenarioWasDestroyed()
+        {
+            foreach (var pair in _scenarios)
+            {
+                if (pair.Value == null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void AddScenario(ScenarioDefinition definition)

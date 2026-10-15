@@ -11,7 +11,7 @@ The player should understand the important shape of the map across a run while s
 The map is organized into:
 
 - Star systems.
-- Non-system space nodes such as asteroid belts, gas regions, hazards, and anomalies.
+- Other star-map locations such as asteroid belts, gas regions, hazards, and anomalies.
 - Routes between nodes.
 - Planets, stations, and other locations within systems.
 - Chokepoints, relays, gates, and frontier corridors.
@@ -19,7 +19,7 @@ The map is organized into:
 - Relic, ruin, and anomaly sites.
 - Invasion wormhole and enemy staging area.
 
-## Space Node Types
+## Star Map Location Kinds
 
 Not every graph node needs to be a star system. The generated map can mix several kinds of nodes while keeping all of them connected through the same FTL corridor graph.
 

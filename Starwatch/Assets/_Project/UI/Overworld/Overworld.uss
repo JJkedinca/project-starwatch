@@ -59,12 +59,21 @@
     /* Stroke width and color come from MapLayout so they stay with node size. */
 }
 
-.system-view {
+.star-system-host {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
     bottom: 0;
+}
+
+.star-system {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column;
     background-color: rgb(14, 20, 30);
     border-width: 1px;
     border-color: rgb(40, 52, 70);
@@ -72,19 +81,19 @@
     display: none;
 }
 
-.system-view-header {
+.star-system-header {
     flex-direction: row;
     align-items: center;
     margin-bottom: 24px;
 }
 
-.system-back-button {
+.star-system-back {
     width: 120px;
     margin-right: 16px;
     margin-bottom: 0;
 }
 
-.system-view-title {
+.star-system-title {
     font-size: 22px;
     color: rgb(230, 236, 245);
     -unity-font-style: bold;
@@ -232,4 +241,37 @@
 
 .map-node--selected {
     border-color: rgb(240, 200, 90);
+}
+
+.map-node__orbit {
+    position: absolute;
+    display: none;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.map-node__orbit--visible {
+    display: flex;
+    border-color: rgb(240, 210, 80);
+}
+
+.map-node__orbit--traveling {
+    border-color: rgb(240, 140, 60);
+}
+
+.map-node__fleet {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.map-node__fleet--visible {
+    background-color: rgb(240, 210, 80);
+}
+
+.map-node__fleet--traveling {
+    background-color: rgb(240, 140, 60);
 }

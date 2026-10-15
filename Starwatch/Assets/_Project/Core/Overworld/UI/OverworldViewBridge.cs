@@ -7,25 +7,27 @@ using UnityEngine.UIElements;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Thin UI Toolkit bridge for the overworld map. Raises intents and hosts views.
+    /// UI Toolkit host for the overworld screen. Owns the star map, the star-system
+    /// planet strip, star-system inspection, and planet inspection, and raises the
+    /// select, travel, scan, and back intents those views produce.
     /// </summary>
     public sealed class OverworldViewBridge : MonoBehaviour
     {
         internal event Action<ContentId> NodeSelected;
 
-        internal event Action ExploreRequested;
+        internal event Action TravelRequested;
 
         internal event Action<ContentId> ScanPlanetRequested;
 
-        internal event Action SystemBackRequested;
+        internal event Action StarSystemBackRequested;
 
         internal event Action<ContentId> PlanetSelected;
 
         internal StarMapView StarMap { get; } = new();
 
-        internal SystemView SystemView { get; } = new();
+        internal StarSystemView StarSystemView { get; } = new();
 
-        internal SystemInspectionView SystemInspection { get; } = new();
+        internal StarSystemInspectionView StarSystemInspection { get; } = new();
 
         internal PlanetInspectionView PlanetInspection { get; } = new();
 
@@ -81,25 +83,30 @@ namespace EndlessHeros.Overworld.UI
             _titleLabel = root.Q<Label>("title");
 
             _mapSurface = root.Q<VisualElement>("map-surface");
-            var systemView = root.Q<VisualElement>("system-view");
-            if (_mapSurface == null || systemView == null)
+            var starSystem = root.Q<VisualElement>("star-system");
+            var starSystemInspection = root.Q<VisualElement>("star-system-inspection");
+            var planetInspection = root.Q<VisualElement>("planet-detail");
+            if (_mapSurface == null
+                || starSystem == null
+                || starSystemInspection == null
+                || planetInspection == null)
             {
-                Debug.LogError("OverworldViewBridge could not find map-surface and system-view.");
+                Debug.LogError(
+                    "OverworldViewBridge could not find map-surface, star-system, star-system-inspection, and planet-detail.");
                 return;
             }
 
             StarMap.Bind(_mapSurface);
             StarMap.NodeClicked += id => NodeSelected?.Invoke(id);
 
-            SystemView.Bind(systemView);
-            SystemView.BackClicked += () => SystemBackRequested?.Invoke();
-            SystemView.PlanetClicked += id => PlanetSelected?.Invoke(id);
+            StarSystemView.Bind(starSystem);
+            StarSystemView.BackClicked += () => StarSystemBackRequested?.Invoke();
+            StarSystemView.PlanetClicked += id => PlanetSelected?.Invoke(id);
 
-            var inspection = root.Q<VisualElement>("inspection-panel");
-            SystemInspection.Bind(inspection);
-            SystemInspection.ExploreClicked += () => ExploreRequested?.Invoke();
+            StarSystemInspection.Bind(starSystemInspection);
+            StarSystemInspection.TravelClicked += () => TravelRequested?.Invoke();
 
-            PlanetInspection.Bind(inspection);
+            PlanetInspection.Bind(planetInspection);
             PlanetInspection.ScanClicked += id => ScanPlanetRequested?.Invoke(id);
 
             _isBound = true;
@@ -111,9 +118,9 @@ namespace EndlessHeros.Overworld.UI
             NodeSelected?.Invoke(nodeId);
         }
 
-        internal void NotifyExploreRequested()
+        internal void NotifyTravelRequested()
         {
-            ExploreRequested?.Invoke();
+            TravelRequested?.Invoke();
         }
 
         internal void NotifyPlanetSelected(ContentId planetId)
@@ -126,17 +133,17 @@ namespace EndlessHeros.Overworld.UI
             ScanPlanetRequested?.Invoke(planetId);
         }
 
-        internal void NotifySystemBackRequested()
+        internal void NotifyStarSystemBackRequested()
         {
-            SystemBackRequested?.Invoke();
+            StarSystemBackRequested?.Invoke();
         }
 
         /// <summary>
-        /// Shows the star map and hides the system view.
+        /// Shows the star map and hides the star system.
         /// </summary>
         internal void ShowStarMap()
         {
-            SystemView.Hide();
+            StarSystemView.Hide();
             if (_mapSurface != null)
             {
                 _mapSurface.style.display = DisplayStyle.Flex;
@@ -149,19 +156,19 @@ namespace EndlessHeros.Overworld.UI
         }
 
         /// <summary>
-        /// Shows the system view over the map panel.
+        /// Shows the star system over the map panel.
         /// </summary>
-        internal void ShowSystemView(string title, IReadOnlyList<ContentId> planetIds)
+        internal void ShowStarSystemView(string title, IReadOnlyList<ContentId> planetIds)
         {
             if (_mapSurface != null)
             {
                 _mapSurface.style.display = DisplayStyle.None;
             }
 
-            SystemView.Show(title, planetIds);
+            StarSystemView.Show(title, planetIds);
             if (_titleLabel != null)
             {
-                _titleLabel.text = "System";
+                _titleLabel.text = "Star System";
             }
         }
 

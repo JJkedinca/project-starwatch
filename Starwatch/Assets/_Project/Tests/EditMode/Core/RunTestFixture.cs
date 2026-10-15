@@ -18,12 +18,12 @@ namespace EndlessHeros.Tests.EditMode.Core
     {
         public static ObjectDatabaseSO CreateObjectDatabase()
         {
-            var spaceNodes = UnityEditor.AssetDatabase.LoadAssetAtPath<SpaceNodeDatabaseSO>(
-                "Assets/_Project/Runtime/Content/SpaceNodeDatabase.asset");
+            var starSystems = UnityEditor.AssetDatabase.LoadAssetAtPath<StarSystemDatabaseSO>(
+                "Assets/_Project/ScriptableObjects/StarSystemDatabase.asset");
             var planets = UnityEditor.AssetDatabase.LoadAssetAtPath<PlanetDatabaseSO>(
-                "Assets/_Project/Runtime/Content/PlanetDatabase.asset");
+                "Assets/_Project/ScriptableObjects/PlanetDatabase.asset");
             var database = ScriptableObject.CreateInstance<ObjectDatabaseSO>();
-            database.AssignDatabases(spaceNodes, planets);
+            database.AssignDatabases(starSystems, planets);
             return database;
         }
 
@@ -60,7 +60,7 @@ namespace EndlessHeros.Tests.EditMode.Core
             var sensor = new SensorService(archive, objectDatabase, journal, clock);
             var travel = new TravelService(route, clock);
             var visibility = new VisibilityService();
-            var travelSystem = new TravelSystem(manager, journal);
+            var travelSystem = new TravelSystem(manager, exploration, journal);
             loop.Register(travelSystem);
             return (manager, exploration, sensor, travel, visibility, travelSystem, loop, clock, journal);
         }

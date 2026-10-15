@@ -6,7 +6,7 @@ namespace EndlessHeros.Core.Data
 {
     /// <summary>
     /// Builds the deterministic authored-vertical-slice scenario for Phase 1.
-    /// Map nodes come from SpaceNodeDatabaseSO and planets from PlanetDatabaseSO.
+    /// Star systems come from StarSystemDatabaseSO and planets from PlanetDatabaseSO.
     /// Routes and the starting empire stay here until the scenario itself is an asset.
     /// </summary>
     public static class VerticalSliceScenarioFactory
@@ -18,7 +18,7 @@ namespace EndlessHeros.Core.Data
         /// routes, and a chokepoint corridor.
         /// </summary>
         public static ScenarioDefinition Create(
-            SpaceNodeDatabaseSO spaceNodeDatabase,
+            StarSystemDatabaseSO starSystemDatabase,
             PlanetDatabaseSO planetDatabase)
         {
             var home = ContentId.From("home-system");
@@ -53,35 +53,35 @@ namespace EndlessHeros.Core.Data
             definition.Configure(
                 ScenarioId,
                 startingEmpire,
-                BuildNodes(spaceNodeDatabase, planetDatabase),
+                BuildNodes(starSystemDatabase, planetDatabase),
                 routes,
                 planets);
             return definition;
         }
 
         private static List<MapNodeDefinition> BuildNodes(
-            SpaceNodeDatabaseSO spaceNodeDatabase,
+            StarSystemDatabaseSO starSystemDatabase,
             PlanetDatabaseSO planetDatabase)
         {
             List<MapNodeDefinition> nodes = new();
-            if (spaceNodeDatabase == null || spaceNodeDatabase.Nodes == null)
+            if (starSystemDatabase == null || starSystemDatabase.StarSystems == null)
             {
                 return nodes;
             }
 
-            var spaceNodes = spaceNodeDatabase.Nodes;
-            for (var i = 0; i < spaceNodes.Count; i++)
+            var starSystems = starSystemDatabase.StarSystems;
+            for (var i = 0; i < starSystems.Count; i++)
             {
-                var spaceNode = spaceNodes[i];
-                if (spaceNode == null || spaceNode.Id.IsEmpty)
+                var starSystem = starSystems[i];
+                if (starSystem == null || starSystem.Id.IsEmpty)
                 {
                     continue;
                 }
 
-                var planetIds = spaceNode.Kind == MapNodeKind.System
-                    ? PlanetsInSystem(planetDatabase, spaceNode.Id)
+                var planetIds = starSystem.Kind == MapNodeKind.System
+                    ? PlanetsInSystem(planetDatabase, starSystem.Id)
                     : System.Array.Empty<ContentId>();
-                nodes.Add(new MapNodeDefinition(spaceNode.Id, spaceNode.Kind, spaceNode.MapPosition, planetIds));
+                nodes.Add(new MapNodeDefinition(starSystem.Id, starSystem.Kind, starSystem.MapPosition, planetIds));
             }
 
             return nodes;

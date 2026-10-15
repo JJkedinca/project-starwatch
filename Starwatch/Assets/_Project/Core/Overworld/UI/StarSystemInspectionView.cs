@@ -4,32 +4,32 @@ using UnityEngine.UIElements;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Side panel for the selected map node: summary and explore action.
+    /// Side panel for the selected star system: summary and travel.
     /// </summary>
-    internal sealed class SystemInspectionView
+    internal sealed class StarSystemInspectionView
     {
-        public event Action ExploreClicked;
+        public event Action TravelClicked;
 
         private Label _title;
         private Label _summary;
-        private Button _exploreButton;
+        private Button _travelButton;
 
         /// <summary>
-        /// Binds to inspection controls from Overworld UXML.
+        /// Binds the StarSystemInspection.uxml root.
         /// </summary>
-        public void Bind(VisualElement inspectionPanel)
+        public void Bind(VisualElement root)
         {
-            if (inspectionPanel == null)
+            if (root == null)
             {
                 return;
             }
 
-            _title = inspectionPanel.Q<Label>("inspection-title");
-            _summary = inspectionPanel.Q<Label>("inspection-summary");
-            _exploreButton = inspectionPanel.Q<Button>("explore-button");
-            if (_exploreButton != null)
+            _title = root.Q<Label>("inspection-title");
+            _summary = root.Q<Label>("inspection-summary");
+            _travelButton = root.Q<Button>("travel-button");
+            if (_travelButton != null)
             {
-                _exploreButton.clicked += () => ExploreClicked?.Invoke();
+                _travelButton.clicked += () => TravelClicked?.Invoke();
             }
         }
 
@@ -40,7 +40,7 @@ namespace EndlessHeros.Overworld.UI
         {
             if (_title != null)
             {
-                _title.text = "Select a node";
+                _title.text = "Select a star system";
             }
 
             if (_summary != null)
@@ -48,13 +48,13 @@ namespace EndlessHeros.Overworld.UI
                 _summary.text = string.Empty;
             }
 
-            SetExploreEnabled(false);
+            SetTravelEnabled(false);
         }
 
         /// <summary>
         /// Updates labels for the selected node.
         /// </summary>
-        public void ShowNode(string title, string summary, bool canExplore)
+        public void ShowNode(string title, string summary, bool canTravel)
         {
             if (_title != null)
             {
@@ -66,14 +66,14 @@ namespace EndlessHeros.Overworld.UI
                 _summary.text = summary ?? string.Empty;
             }
 
-            SetExploreEnabled(canExplore);
+            SetTravelEnabled(canTravel);
         }
 
-        private void SetExploreEnabled(bool enabled)
+        private void SetTravelEnabled(bool enabled)
         {
-            if (_exploreButton != null)
+            if (_travelButton != null)
             {
-                _exploreButton.SetEnabled(enabled);
+                _travelButton.SetEnabled(enabled);
             }
         }
     }

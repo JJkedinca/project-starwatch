@@ -3,7 +3,7 @@ using EndlessHeros.Overworld;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Presentation snapshot for one planet icon in the system view.
+    /// Presentation snapshot for one planet icon in the star system.
     /// </summary>
     internal readonly struct PlanetPresentationState
     {

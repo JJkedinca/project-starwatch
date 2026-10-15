@@ -1,23 +1,27 @@
 using System.Collections.Generic;
 using EndlessHeros.Core.Events;
+using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Core.Run.Timeline;
 using EndlessHeros.Core.Simulation;
+using EndlessHeros.Overworld.Services;
 
 namespace EndlessHeros.Overworld.Systems
 {
     /// <summary>
-    /// Completes due fleet arrivals. Stepped by SimulationLoop, not Unity Update.
+    /// Completes due fleet arrivals and explores the destination. Stepped by SimulationLoop, not Unity Update.
     /// </summary>
     public sealed class TravelSystem : ISimulationSystem
     {
         private readonly RunManager _runManager;
+        private readonly ExplorationService _exploration;
         private readonly EventJournal _eventJournal;
         private readonly List<ActiveTravel> _completedBuffer = new();
 
-        public TravelSystem(RunManager runManager, EventJournal eventJournal)
+        public TravelSystem(RunManager runManager, ExplorationService exploration, EventJournal eventJournal)
         {
             _runManager = runManager;
+            _exploration = exploration;
             _eventJournal = eventJournal;
         }
 
@@ -43,17 +47,18 @@ namespace EndlessHeros.Overworld.Systems
             _completedBuffer.Clear();
             var completed = _runManager.CurrentRun.Timeline.CompleteArrivals(time, _completedBuffer);
 
-            if (_eventJournal != null)
+            for (var i = 0; i < _completedBuffer.Count; i++)
             {
-                for (var i = 0; i < _completedBuffer.Count; i++)
-                {
-                    var travel = _completedBuffer[i];
-                    _eventJournal.Record(
-                        GameEventType.FleetArrived,
-                        time,
-                        travel.FleetId,
-                        travel.ToNodeId);
-                }
+                var travel = _completedBuffer[i];
+                _exploration?.Explore(
+                    _runManager.CurrentRun,
+                    ObserverId.Player,
+                    travel.ToNodeId);
+                _eventJournal?.Record(
+                    GameEventType.FleetArrived,
+                    time,
+                    travel.FleetId,
+                    travel.ToNodeId);
             }
 
             return completed;

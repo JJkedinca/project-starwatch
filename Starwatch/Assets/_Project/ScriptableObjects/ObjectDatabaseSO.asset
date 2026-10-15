@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84d817c5b31ddf34b8fa679240f2c166, type: 3}
   m_Name: ObjectDatabaseSO
   m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Content.ObjectDatabaseSO
-  _spaceNodeDatabase: {fileID: 11400000, guid: d5f8b02c3e9a4f7b0c1d2e3f40518462, type: 2}
+  _starSystemDatabase: {fileID: 11400000, guid: d5f8b02c3e9a4f7b0c1d2e3f40518462, type: 2}
   _planetDatabase: {fileID: 11400000, guid: b8d4f2c05e304b7f9c1d2e3f40516273, type: 2}

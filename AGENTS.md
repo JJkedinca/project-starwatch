@@ -40,6 +40,7 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 - **VContainer** LifetimeScopes: project scope (Bootstrap / DontDestroyOnLoad) for core managers; scene scopes for Overworld and Battle.
 - **MVP for UI only** — Presenters call services; Views stay thin. Do not wrap units/combat in Presenters.
 - **UI:** UI Toolkit (UXML + USS + `UIDocument`). Do not build UGUI Canvas/Button hierarchies in code.
+- The screen UXML is the `UIDocument` source. It owns layout (where regions sit) and instances view templates. A view class that owns a fixed set of controls has its own UXML template; `Bind` takes that template root. Regions code fills at runtime (map nodes, planet icons) stay empty hosts on the screen UXML. Tests may build a stand-in tree with the same element names.
 - **Gameplay:** systems + MonoBehaviour views (`BattleSimulation`, `CombatService`, `Unit` as squad). Squads (per-member HP summed on the squad, shared energy, member placeholders), not one independent agent per sprite.
 - **MessagePipe** for typed cross-system events/intents.
 - **UniTask** for async (scene flow, saves, delays).

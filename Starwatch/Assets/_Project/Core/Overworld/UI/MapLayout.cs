@@ -16,6 +16,13 @@ namespace EndlessHeros.Overworld.UI
         /// </summary>
         internal const float kNodeSize = 56f;
 
+        /// <summary>
+        /// Gap between the map-node edge and the fleet orbit ring.
+        /// </summary>
+        internal const float kFleetOrbitOutset = 8f;
+
+        internal const float kFleetPipSize = 8f;
+
         internal const float kRoutePad = 4f;
 
         internal const float kRouteLineWidth = 3f;

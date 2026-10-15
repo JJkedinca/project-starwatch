@@ -15,6 +15,8 @@ namespace EndlessHeros.Overworld.UI
 
         public bool HasFleet { get; }
 
+        public bool IsFleetTraveling { get; }
+
         public string RevealedLabel { get; }
 
         public MapNodePresentationState(
@@ -22,12 +24,14 @@ namespace EndlessHeros.Overworld.UI
             bool isExplorable,
             bool isSelected,
             bool hasFleet,
+            bool isFleetTraveling,
             string revealedLabel)
         {
             Visibility = visibility;
             IsExplorable = isExplorable;
             IsSelected = isSelected;
             HasFleet = hasFleet;
+            IsFleetTraveling = isFleetTraveling;
             RevealedLabel = revealedLabel ?? string.Empty;
         }
     }

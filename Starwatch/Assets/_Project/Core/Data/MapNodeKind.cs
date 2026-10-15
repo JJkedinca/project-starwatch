@@ -1,7 +1,7 @@
 namespace EndlessHeros.Core.Data
 {
     /// <summary>
-    /// Distinguishes star systems from non-system space nodes on the map graph.
+    /// Distinguishes planetary star systems from other star-map locations such as belts and rifts.
     /// </summary>
     public enum MapNodeKind
     {

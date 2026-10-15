@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Flat planet icon button for the system view strip.
+    /// Flat planet icon button for the star-system planet strip.
     /// </summary>
     internal sealed class PlanetIconView
     {

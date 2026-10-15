@@ -1,5 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="Overworld.uss" />
+    <ui:Template name="StarSystemView" src="StarSystemView.uxml" />
+    <ui:Template name="StarSystemInspection" src="StarSystemInspection.uxml" />
+    <ui:Template name="PlanetInspection" src="PlanetInspection.uxml" />
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="header" class="header">
             <ui:Label name="title" text="Star Map" class="title" />
@@ -8,23 +11,11 @@
         <ui:VisualElement name="content" class="content">
             <ui:VisualElement name="map-panel" class="map-panel">
                 <ui:VisualElement name="map-surface" class="map-surface" />
-                <ui:VisualElement name="system-view" class="system-view">
-                    <ui:VisualElement name="system-view-header" class="system-view-header">
-                        <ui:Button name="system-back-button" text="Back to map" class="action-button system-back-button" />
-                        <ui:Label name="system-view-title" text="System" class="system-view-title" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="planet-strip" class="planet-strip" />
-                </ui:VisualElement>
+                <ui:Instance template="StarSystemView" class="star-system-host" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:VisualElement name="inspection-panel" class="inspection-panel">
-                <ui:Label name="inspection-title" text="Select a node" class="inspection-title" />
-                <ui:Label name="inspection-summary" text="" class="inspection-summary" />
-                <ui:Button name="explore-button" text="Explore" class="action-button" />
-                <ui:VisualElement name="planet-detail" class="planet-detail">
-                    <ui:Label name="planet-detail-name" text="" class="planet-detail-name" />
-                    <ui:Label name="planet-detail-summary" text="" class="planet-detail-summary" />
-                    <ui:Button name="scan-button" text="Scan" class="action-button" />
-                </ui:VisualElement>
+                <ui:Instance template="StarSystemInspection" />
+                <ui:Instance template="PlanetInspection" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

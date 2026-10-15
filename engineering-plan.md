@@ -67,7 +67,7 @@ ScriptableObjects describe authored content:
 
 - `ScenarioDefinition`
 - `MapNodeDefinition`
-- `SpaceNodeDefinition`
+- `StarSystemDefinition`
 - `PlanetDefinition`
 - `PlanetArchetypeDefinition`
 - `BuildingDefinition`
@@ -647,15 +647,15 @@ hidden content on its own.
 - Exploration reveals only the intended information.
 - Scanning reveals planet details and records archive map knowledge.
 - Travel takes simulation time and arrives at the correct node.
-- Invalid travel and unexplored destinations return command errors.
+- Invalid travel returns a command error. A fleet can travel a known route into an unexplored node; arrival explores that node. Planet scans stay a separate manual action.
 - Starting placement comes from `StartingEmpireDefinition`, not loader
   constants.
 
 ### Deliverable
 
-The player can start from a defined home system, inspect the map, explore a
-route, scan planets, and move a starter fleet toward a meaningful expansion
-choice.
+The player can start from a defined home system, inspect the map, travel a
+known route (arrival explores the destination), scan planets, and move a
+starter fleet toward a meaningful expansion choice.
 
 ## Phase 2: Settlement and Economy
 

@@ -29,20 +29,28 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
         }
 
         [Test]
-        public void Explore_RevealsAdjacentNodeAndRecordsArchive()
+        public void Explore_RequiresFleetAtNode_AndDoesNotScanPlanets()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(2));
             var forge = ContentId.From("forge-system");
+            var planet = ContentId.From("forge-world");
 
+            var blocked = stack.Exploration.Explore(run, ObserverId.Player, forge);
+
+            Assert.That(blocked.Success, Is.False);
+            Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.False);
+
+            run.Timeline.TrySetFleetLocation(run.Timeline.Fleets[0].Id, forge);
             var result = stack.Exploration.Explore(run, ObserverId.Player, forge);
 
             Assert.That(result.Success, Is.True);
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.True);
+            Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.False);
             Assert.That(stack.Journal.Records, Has.Count.EqualTo(1));
             Assert.That(
                 stack.Visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, forge),
-                Is.EqualTo(MapNodeVisibility.Explored));
+                Is.EqualTo(MapNodeVisibility.Present));
         }
 
         [Test]
@@ -68,7 +76,11 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
             var blocked = stack.Sensor.ScanPlanet(run, ObserverId.Player, planet);
             Assert.That(blocked.Success, Is.False);
 
+            run.Timeline.TrySetFleetLocation(
+                run.Timeline.Fleets[0].Id,
+                ContentId.From("forge-system"));
             stack.Exploration.Explore(run, ObserverId.Player, ContentId.From("forge-system"));
+            Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.False);
             var scanned = stack.Sensor.ScanPlanet(run, ObserverId.Player, planet);
 
             Assert.That(scanned.Success, Is.True);
@@ -120,17 +132,15 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
         }
 
         [Test]
-        public void Travel_RejectsUnexploredDestination_ThenArrivesAfterSimTime()
+        public void Travel_ToUnexploredNeighbor_ArrivesAndExploresWithoutScanning()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(4));
             var fleetId = run.Timeline.Fleets[0].Id;
             var forge = ContentId.From("forge-system");
+            var planet = ContentId.From("forge-world");
 
-            var blocked = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, forge);
-            Assert.That(blocked.Success, Is.False);
-
-            stack.Exploration.Explore(run, ObserverId.Player, forge);
+            Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.False);
             stack.Clock.SetPaused(false);
             var started = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, forge);
             Assert.That(started.Success, Is.True);
@@ -147,6 +157,8 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
 
             Assert.That(run.Timeline.IsFleetTraveling(fleetId), Is.False);
             Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(forge));
+            Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.True);
+            Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.False);
             Assert.That(
                 stack.Visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, forge),
                 Is.EqualTo(MapNodeVisibility.Present));
@@ -159,11 +171,6 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(5));
             var fleetId = run.Timeline.Fleets[0].Id;
             var frontier = ContentId.From("frontier-system");
-
-            // Force explore through adjacency chain so destination is known but not adjacent.
-            stack.Exploration.Explore(run, ObserverId.Player, ContentId.From("forge-system"));
-            stack.Exploration.Explore(run, ObserverId.Player, ContentId.From("choke-system"));
-            stack.Exploration.Explore(run, ObserverId.Player, frontier);
 
             var result = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, frontier);
 

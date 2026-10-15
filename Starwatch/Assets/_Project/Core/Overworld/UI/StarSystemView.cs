@@ -6,9 +6,9 @@ using UnityEngine.UIElements;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// In-system planet strip shown when the player drills into a map node.
+    /// Planet strip shown when the player opens a star system.
     /// </summary>
-    internal sealed class SystemView
+    internal sealed class StarSystemView
     {
         public event Action BackClicked;
 
@@ -22,18 +22,18 @@ namespace EndlessHeros.Overworld.UI
         private bool _isVisible;
 
         /// <summary>
-        /// Binds to system-view controls from Overworld UXML.
+        /// Binds the StarSystemView.uxml root.
         /// </summary>
-        public void Bind(VisualElement systemViewRoot)
+        public void Bind(VisualElement root)
         {
-            _root = systemViewRoot;
+            _root = root;
             if (_root == null)
             {
                 return;
             }
 
-            _title = _root.Q<Label>("system-view-title");
-            _backButton = _root.Q<Button>("system-back-button");
+            _title = _root.Q<Label>("star-system-title");
+            _backButton = _root.Q<Button>("star-system-back");
             _planetStrip = _root.Q<VisualElement>("planet-strip");
             if (_backButton != null)
             {
@@ -44,12 +44,12 @@ namespace EndlessHeros.Overworld.UI
         }
 
         /// <summary>
-        /// Whether the system view is currently shown.
+        /// Whether the star system is currently shown.
         /// </summary>
         public bool IsVisible => _isVisible;
 
         /// <summary>
-        /// Shows the system view and rebuilds planet icons.
+        /// Shows the star system and rebuilds planet icons.
         /// </summary>
         public void Show(string title, IReadOnlyList<ContentId> planetIds)
         {
@@ -60,7 +60,7 @@ namespace EndlessHeros.Overworld.UI
 
             if (_title != null)
             {
-                _title.text = title ?? "System";
+                _title.text = title ?? "Star System";
             }
 
             RebuildPlanets(planetIds);
@@ -69,7 +69,7 @@ namespace EndlessHeros.Overworld.UI
         }
 
         /// <summary>
-        /// Hides the system view and clears planet icons.
+        /// Hides the star system and clears planet icons.
         /// </summary>
         public void Hide()
         {

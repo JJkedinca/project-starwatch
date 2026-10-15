@@ -7,7 +7,7 @@ using EndlessHeros.Core.Simulation;
 namespace EndlessHeros.Overworld.Services
 {
     /// <summary>
-    /// Reveals map nodes into archive knowledge when adjacency / presence rules allow.
+    /// Reveals a map node when a fleet is there. Planets stay unscanned until a manual scan.
     /// </summary>
     public sealed class ExplorationService
     {
@@ -29,7 +29,7 @@ namespace EndlessHeros.Overworld.Services
         }
 
         /// <summary>
-        /// Explores a node for the observer when it exists and is reachable from known space.
+        /// Explores a node the observer's fleet has entered.
         /// </summary>
         public CommandResult Explore(RunState run, ObserverId observerId, ContentId nodeId)
         {
@@ -63,7 +63,7 @@ namespace EndlessHeros.Overworld.Services
             {
                 return CommandResult.Fail(
                     CommandErrorCode.PrerequisiteNotMet,
-                    "Node is not adjacent to explored space or a present fleet.");
+                    "A fleet must be at the node to explore it.");
             }
 
             _archiveService.TryRecordExploredNode(run.Archive, observerId, nodeId);
@@ -79,7 +79,7 @@ namespace EndlessHeros.Overworld.Services
         }
 
         /// <summary>
-        /// Returns whether the observer may explore the node from current knowledge/presence.
+        /// Returns whether a fleet is at this unexplored node.
         /// </summary>
         public bool CanExplore(RunState run, ObserverId observerId, ContentId nodeId)
         {
@@ -95,15 +95,6 @@ namespace EndlessHeros.Overworld.Services
             for (var i = 0; i < run.Timeline.Fleets.Count; i++)
             {
                 if (run.Timeline.Fleets[i].LocationSystemId == nodeId)
-                {
-                    return true;
-                }
-            }
-
-            var neighbors = _routeService.GetNeighbors(run.Universe.MapGraph, nodeId);
-            for (var i = 0; i < neighbors.Count; i++)
-            {
-                if (knowledge.HasExploredNode(neighbors[i]))
                 {
                     return true;
                 }
