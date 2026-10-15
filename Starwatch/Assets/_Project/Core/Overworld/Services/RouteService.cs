@@ -7,7 +7,7 @@ namespace EndlessHeros.Overworld.Services
     /// <summary>
     /// Stateless route queries against the universe map graph.
     /// </summary>
-    public sealed class RouteService
+    internal sealed class RouteService
     {
         /// <summary>
         /// Returns neighbor ids for a node, or empty when unknown.

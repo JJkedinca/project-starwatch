@@ -10,7 +10,7 @@ namespace EndlessHeros.Overworld.Services
     /// <summary>
     /// Starts fleet travel when route and exploration rules allow.
     /// </summary>
-    public sealed class TravelService
+    internal sealed class TravelService
     {
         private readonly RouteService _routeService;
         private readonly SimulationClock _clock;
@@ -46,12 +46,7 @@ namespace EndlessHeros.Overworld.Services
 
             var depart = _clock != null ? _clock.CurrentTime : GameTime.Zero;
             var arrive = depart.Add(duration);
-            var travel = new ActiveTravel(
-                fleetId,
-                fleet.LocationSystemId,
-                destinationNodeId,
-                depart,
-                arrive);
+            var travel = new ActiveTravel(fleetId, fleet.LocationSystemId, destinationNodeId, depart, arrive);
 
             if (!run.Timeline.TryStartTravel(travel))
             {
@@ -94,19 +89,9 @@ namespace EndlessHeros.Overworld.Services
         /// <summary>
         /// Returns whether StartTravel would accept this leg.
         /// </summary>
-        public bool CanStartTravel(
-            RunState run,
-            ObserverId observerId,
-            EntityId fleetId,
-            ContentId destinationNodeId)
+        public bool CanStartTravel(RunState run, ObserverId observerId, EntityId fleetId, ContentId destinationNodeId)
         {
-            return EvaluateTravel(
-                run,
-                observerId,
-                fleetId,
-                destinationNodeId,
-                out _,
-                out _).Success;
+            return EvaluateTravel(run, observerId, fleetId, destinationNodeId, out _, out _).Success;
         }
 
         private CommandResult EvaluateTravel(
@@ -148,9 +133,7 @@ namespace EndlessHeros.Overworld.Services
                 || !knowledge.HasKnownRoute(
                     RouteService.MakeRouteKey(fleet.LocationSystemId, destinationNodeId)))
             {
-                return CommandResult.Fail(
-                    CommandErrorCode.PrerequisiteNotMet,
-                    "Route is not known.");
+                return CommandResult.Fail(CommandErrorCode.PrerequisiteNotMet, "Route is not known.");
             }
 
             if (!_routeService.TryGetTravelDuration(

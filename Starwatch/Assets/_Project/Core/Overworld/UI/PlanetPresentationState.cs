@@ -13,10 +13,7 @@ namespace EndlessHeros.Overworld.UI
 
         public string DisplayName { get; }
 
-        public PlanetPresentationState(
-            PlanetVisibility visibility,
-            bool isSelected,
-            string displayName)
+        public PlanetPresentationState(PlanetVisibility visibility, bool isSelected, string displayName)
         {
             Visibility = visibility;
             IsSelected = isSelected;

@@ -7,7 +7,7 @@ namespace EndlessHeros.Core.Persistence
     /// TODO: Replace with a disk-backed IRunStateStore adapter when save/load lands;
     /// keep this type for EditMode/tests if useful.
     /// </summary>
-    public sealed class InMemoryRunStateStore : IRunStateStore
+    internal sealed class InMemoryRunStateStore : IRunStateStore
     {
         private RunState _stored;
 

@@ -8,7 +8,7 @@ namespace EndlessHeros.Core.Bootstrap
     /// <summary>
     /// Unity SceneManager implementation of ISceneLoader using UniTask awaits.
     /// </summary>
-    public sealed class UnitySceneLoader : ISceneLoader
+    internal sealed class UnitySceneLoader : ISceneLoader
     {
         /// <summary>
         /// Loads the scene in Single mode, replacing the active scene stack.

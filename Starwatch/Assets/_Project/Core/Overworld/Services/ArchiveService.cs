@@ -6,7 +6,7 @@ namespace EndlessHeros.Overworld.Services
     /// <summary>
     /// Thin façade for map-knowledge writes on the run archive.
     /// </summary>
-    public sealed class ArchiveService
+    internal sealed class ArchiveService
     {
         /// <summary>
         /// Records an explored node for the observer when knowledge exists.

@@ -14,7 +14,7 @@ namespace EndlessHeros.Core.Run
     /// Owns the active run and exposes read-only access to universe, timeline,
     /// archive, and rewind index. Feature services mutate through dedicated APIs.
     /// </summary>
-    public sealed class RunManager
+    internal sealed class RunManager
     {
         public bool HasActiveRun => _currentRun != null;
 
@@ -93,10 +93,7 @@ namespace EndlessHeros.Core.Run
                 return null;
             }
 
-            var timeline = _timelineFactory.Create(
-                _currentRun.Universe,
-                _currentRun.Archive,
-                _currentRun.EntityIds);
+            var timeline = _timelineFactory.Create(_currentRun.Universe, _currentRun.Archive, _currentRun.EntityIds);
             if (!_currentRun.ReplaceTimeline(timeline, rewindIndex))
             {
                 Debug.LogError("RunManager.RecreateTimeline failed to replace timeline state.");

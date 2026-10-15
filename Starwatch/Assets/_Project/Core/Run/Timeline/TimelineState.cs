@@ -28,11 +28,7 @@ namespace EndlessHeros.Core.Run.Timeline
         /// <summary>
         /// Adds a placeholder fleet when class, location, and ship count are valid.
         /// </summary>
-        public bool TryAddFleet(
-            ContentId classId,
-            int shipCount,
-            ContentId locationSystemId,
-            out EntityId id)
+        public bool TryAddFleet(ContentId classId, int shipCount, ContentId locationSystemId, out EntityId id)
         {
             id = default;
             if (classId.IsEmpty || locationSystemId.IsEmpty || shipCount <= 0)

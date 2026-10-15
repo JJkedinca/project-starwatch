@@ -13,7 +13,7 @@ namespace EndlessHeros.Core.Simulation
         /// <summary>
         /// Injects the fixed-rate simulation loop driven each frame.
         /// </summary>
-        public void Configure(SimulationLoop simulationLoop)
+        internal void Configure(SimulationLoop simulationLoop)
         {
             _simulationLoop = simulationLoop;
         }

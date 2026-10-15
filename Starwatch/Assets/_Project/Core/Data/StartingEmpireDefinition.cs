@@ -22,10 +22,7 @@ namespace EndlessHeros.Core.Data
             && !HomeSystemId.IsEmpty
             && !StarterFleetClassId.IsEmpty;
 
-        public StartingEmpireDefinition(
-            ContentId homeSystemId,
-            ContentId starterFleetClassId,
-            int starterShipCount)
+        public StartingEmpireDefinition(ContentId homeSystemId, ContentId starterFleetClassId, int starterShipCount)
         {
             HomeSystemId = homeSystemId;
             StarterFleetClassId = starterFleetClassId;

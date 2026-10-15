@@ -20,10 +20,7 @@ namespace EndlessHeros.Overworld.UI
         private readonly TravelService _travel;
         private readonly ObjectDatabaseSO _objectDatabase;
 
-        public OverworldMapQuery(
-            VisibilityService visibility,
-            TravelService travel,
-            ObjectDatabaseSO objectDatabase)
+        public OverworldMapQuery(VisibilityService visibility, TravelService travel, ObjectDatabaseSO objectDatabase)
         {
             _visibility = visibility ?? throw new ArgumentNullException(nameof(visibility));
             _travel = travel ?? throw new ArgumentNullException(nameof(travel));
@@ -73,11 +70,7 @@ namespace EndlessHeros.Overworld.UI
         /// </summary>
         internal MapNodePresentationState NodeState(RunState run, MapNode node, ContentId selectedNodeId)
         {
-            var visibility = _visibility.GetNodeVisibility(
-                run.Archive,
-                run.Timeline,
-                ObserverId.Player,
-                node.Id);
+            var visibility = _visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, node.Id);
             var hasFleet = visibility != MapNodeVisibility.Hidden && NodeHasFleet(run.Timeline, node.Id);
             return new MapNodePresentationState(
                 visibility,
@@ -116,11 +109,7 @@ namespace EndlessHeros.Overworld.UI
             for (var i = 0; i < node.PlanetIds.Count; i++)
             {
                 var planetId = node.PlanetIds[i];
-                var visibility = _visibility.GetPlanetVisibility(
-                    run.Archive,
-                    ObserverId.Player,
-                    node.Id,
-                    planetId);
+                var visibility = _visibility.GetPlanetVisibility(run.Archive, ObserverId.Player, node.Id, planetId);
                 if (visibility == PlanetVisibility.Hidden)
                 {
                     continue;
@@ -141,11 +130,7 @@ namespace EndlessHeros.Overworld.UI
             ContentId planetId,
             ContentId selectedPlanetId)
         {
-            var visibility = _visibility.GetPlanetVisibility(
-                run.Archive,
-                ObserverId.Player,
-                node.Id,
-                planetId);
+            var visibility = _visibility.GetPlanetVisibility(run.Archive, ObserverId.Player, node.Id, planetId);
             return new PlanetPresentationState(
                 visibility,
                 isSelected: planetId == selectedPlanetId,
@@ -168,11 +153,7 @@ namespace EndlessHeros.Overworld.UI
                 return OverworldInspection.Empty;
             }
 
-            var visibility = _visibility.GetNodeVisibility(
-                run.Archive,
-                run.Timeline,
-                ObserverId.Player,
-                node.Id);
+            var visibility = _visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, node.Id);
             var canTravel = CanTravelTo(run, node.Id);
             if (visibility == MapNodeVisibility.Hidden)
             {
@@ -201,12 +182,7 @@ namespace EndlessHeros.Overworld.UI
             }
 
             var showPlanetDetail = TryPlanetDetail(run, node, selectedPlanetId, inStarSystemView, out var detail);
-            return new OverworldInspection(
-                NodeLabel(node),
-                summary,
-                canTravel,
-                showPlanetDetail,
-                detail);
+            return new OverworldInspection(NodeLabel(node), summary, canTravel, showPlanetDetail, detail);
         }
 
         /// <summary>

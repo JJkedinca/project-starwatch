@@ -8,7 +8,7 @@ namespace EndlessHeros.Overworld.Services
     /// <summary>
     /// Fog / explored / scanned queries over archive knowledge and timeline presence.
     /// </summary>
-    public sealed class VisibilityService
+    internal sealed class VisibilityService
     {
         /// <summary>
         /// Returns visibility for a map node for the given observer.

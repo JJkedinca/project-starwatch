@@ -11,7 +11,7 @@ namespace EndlessHeros.Core.Run.Universe
     /// <summary>
     /// Loads a ScenarioDefinition into UniverseState and seeds starter timeline/archive.
     /// </summary>
-    public sealed class UniverseLoader
+    internal sealed class UniverseLoader
     {
         private readonly TimelineFactory _timelineFactory;
 

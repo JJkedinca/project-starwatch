@@ -38,24 +38,16 @@ namespace EndlessHeros.Overworld.UI
         /// Maps a graph position into a top-left style absolute UI position.
         /// Y is flipped so authored +Y reads upward on the map surface.
         /// </summary>
-        internal static Vector2 ToLocalPosition(
-            Vector2 mapPosition,
-            float scale,
-            Vector2 originOffset)
+        internal static Vector2 ToLocalPosition(Vector2 mapPosition, float scale, Vector2 originOffset)
         {
-            return new Vector2(
-                originOffset.x + (mapPosition.x * scale),
-                originOffset.y + (-mapPosition.y * scale));
+            return new Vector2(originOffset.x + (mapPosition.x * scale), originOffset.y + (-mapPosition.y * scale));
         }
 
         /// <summary>
         /// Builds an origin so the highest authored Y sits at <paramref name="padding"/>.y
         /// and the leftmost authored X sits at <paramref name="padding"/>.x.
         /// </summary>
-        internal static Vector2 ComputeOriginOffset(
-            IReadOnlyList<Vector2> mapPositions,
-            float scale,
-            Vector2 padding)
+        internal static Vector2 ComputeOriginOffset(IReadOnlyList<Vector2> mapPositions, float scale, Vector2 padding)
         {
             if (mapPositions == null || mapPositions.Count == 0)
             {
@@ -78,18 +70,13 @@ namespace EndlessHeros.Overworld.UI
                 }
             }
 
-            return new Vector2(
-                padding.x - (minX * scale),
-                padding.y + (maxY * scale));
+            return new Vector2(padding.x - (minX * scale), padding.y + (maxY * scale));
         }
 
         /// <summary>
         /// Returns the center of a map-node element for route endpoints.
         /// </summary>
-        internal static Vector2 ToNodeCenter(
-            Vector2 mapPosition,
-            float scale,
-            Vector2 originOffset)
+        internal static Vector2 ToNodeCenter(Vector2 mapPosition, float scale, Vector2 originOffset)
         {
             var topLeft = ToLocalPosition(mapPosition, scale, originOffset);
             var half = kNodeSize * 0.5f;

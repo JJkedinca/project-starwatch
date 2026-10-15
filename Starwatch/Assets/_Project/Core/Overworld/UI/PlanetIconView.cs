@@ -41,9 +41,7 @@ namespace EndlessHeros.Overworld.UI
         /// </summary>
         public void ApplyState(PlanetPresentationState state)
         {
-            _icon.EnableInClassList(
-                "planet-icon__glyph--scanned",
-                state.Visibility == PlanetVisibility.Scanned);
+            _icon.EnableInClassList("planet-icon__glyph--scanned", state.Visibility == PlanetVisibility.Scanned);
             _icon.EnableInClassList("planet-icon__glyph--selected", state.IsSelected);
             Root.EnableInClassList("planet-icon--selected", state.IsSelected);
 

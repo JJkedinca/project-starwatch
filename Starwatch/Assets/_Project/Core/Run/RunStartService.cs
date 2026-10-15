@@ -9,7 +9,7 @@ namespace EndlessHeros.Core.Run
     /// <summary>
     /// Main-menu command handler that creates a run and requests the overworld scene.
     /// </summary>
-    public sealed class RunStartService
+    internal sealed class RunStartService
     {
         /// <summary>
         /// True while a start-run transition is already in progress.

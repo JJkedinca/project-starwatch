@@ -6,7 +6,7 @@ namespace EndlessHeros.Core.Events
     /// Ordered log of domain events for the active run.
     /// Project-scoped for DI; RunManager clears it on CreateRun and ClearRun.
     /// </summary>
-    public sealed class EventJournal
+    internal sealed class EventJournal
     {
         public IReadOnlyList<EventRecord> Records => _records;
 

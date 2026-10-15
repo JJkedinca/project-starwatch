@@ -7,7 +7,7 @@ namespace EndlessHeros.Core.Simulation
     /// Fixed-rate simulation driver. Accumulates real time, advances the clock in
     /// discrete ticks, then runs registered systems in registration order.
     /// </summary>
-    public sealed class SimulationLoop
+    internal sealed class SimulationLoop
     {
         public SimulationClock Clock { get; }
 

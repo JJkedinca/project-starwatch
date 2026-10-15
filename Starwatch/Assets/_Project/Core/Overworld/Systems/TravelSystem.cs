@@ -12,7 +12,7 @@ namespace EndlessHeros.Overworld.Systems
     /// <summary>
     /// Completes due fleet arrivals and explores the destination. Stepped by SimulationLoop, not Unity Update.
     /// </summary>
-    public sealed class TravelSystem : ISimulationSystem
+    internal sealed class TravelSystem : ISimulationSystem
     {
         private readonly RunManager _runManager;
         private readonly ExplorationService _exploration;

@@ -9,7 +9,7 @@ namespace EndlessHeros.Overworld.Services
     /// <summary>
     /// Reveals a map node when a fleet is there. Planets stay unscanned until a manual scan.
     /// </summary>
-    public sealed class ExplorationService
+    internal sealed class ExplorationService
     {
         private readonly ArchiveService _archiveService;
         private readonly RouteService _routeService;

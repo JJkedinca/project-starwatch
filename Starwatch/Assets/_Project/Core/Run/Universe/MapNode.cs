@@ -18,11 +18,7 @@ namespace EndlessHeros.Core.Run.Universe
 
         public IReadOnlyList<ContentId> PlanetIds { get; }
 
-        public MapNode(
-            ContentId id,
-            MapNodeKind kind,
-            Vector2 mapPosition,
-            IReadOnlyList<ContentId> planetIds)
+        public MapNode(ContentId id, MapNodeKind kind, Vector2 mapPosition, IReadOnlyList<ContentId> planetIds)
         {
             Id = id;
             Kind = kind;

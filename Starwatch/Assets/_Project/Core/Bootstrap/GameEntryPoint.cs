@@ -9,7 +9,7 @@ namespace EndlessHeros.Core.Bootstrap
     /// Project-scope startup hook. After the root container is ready, loads the
     /// main menu as the first player-facing scene.
     /// </summary>
-    public sealed class GameEntryPoint : IStartable
+    internal sealed class GameEntryPoint : IStartable
     {
         private readonly SceneFlow _sceneFlow;
 

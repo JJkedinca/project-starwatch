@@ -7,7 +7,7 @@ namespace EndlessHeros.Core.Events
     /// Domain event bus. Services publish after they commit state. The bus appends
     /// the journal, then notifies subscribers synchronously on this call.
     /// </summary>
-    public sealed class DomainEventBus
+    internal sealed class DomainEventBus
     {
         private readonly EventJournal _journal;
         private readonly Dictionary<Type, List<Delegate>> _handlers = new();

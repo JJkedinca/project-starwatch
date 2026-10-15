@@ -23,16 +23,12 @@ namespace EndlessHeros.Core.Commands
         {
             if (timeline == null)
             {
-                return CommandResult<EntityId>.Fail(
-                    CommandErrorCode.InvalidArgument,
-                    "Timeline is required.");
+                return CommandResult<EntityId>.Fail(CommandErrorCode.InvalidArgument, "Timeline is required.");
             }
 
             if (classId.IsEmpty)
             {
-                return CommandResult<EntityId>.Fail(
-                    CommandErrorCode.InvalidArgument,
-                    "Fleet class id is required.");
+                return CommandResult<EntityId>.Fail(CommandErrorCode.InvalidArgument, "Fleet class id is required.");
             }
 
             if (locationSystemId.IsEmpty)
@@ -44,16 +40,12 @@ namespace EndlessHeros.Core.Commands
 
             if (shipCount <= 0)
             {
-                return CommandResult<EntityId>.Fail(
-                    CommandErrorCode.NotAllowed,
-                    "Ship count must be positive.");
+                return CommandResult<EntityId>.Fail(CommandErrorCode.NotAllowed, "Ship count must be positive.");
             }
 
             if (!timeline.TryAddFleet(classId, shipCount, locationSystemId, out var id))
             {
-                return CommandResult<EntityId>.Fail(
-                    CommandErrorCode.NotAllowed,
-                    "Fleet could not be added.");
+                return CommandResult<EntityId>.Fail(CommandErrorCode.NotAllowed, "Fleet could not be added.");
             }
 
             return CommandResult<EntityId>.Ok(id);

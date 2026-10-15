@@ -9,7 +9,7 @@ namespace EndlessHeros.Core.Bootstrap
     /// <summary>
     /// Main-menu presenter entry point. Binds UI events to run-start and quit intents.
     /// </summary>
-    public sealed class MainMenuEntryPoint : IStartable
+    internal sealed class MainMenuEntryPoint : IStartable
     {
         private readonly MainMenuViewBridge _viewBridge;
         private readonly RunStartService _runStartService;

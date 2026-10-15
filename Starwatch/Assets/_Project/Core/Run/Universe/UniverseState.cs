@@ -23,10 +23,7 @@ namespace EndlessHeros.Core.Run.Universe
 
         private readonly List<ContentId> _nodeIds = new();
 
-        public UniverseState(
-            string scenarioId,
-            StartingEmpireDefinition startingEmpire,
-            MapGraph mapGraph)
+        public UniverseState(string scenarioId, StartingEmpireDefinition startingEmpire, MapGraph mapGraph)
         {
             ScenarioId = scenarioId ?? string.Empty;
             StartingEmpire = startingEmpire ?? StartingEmpireDefinition.CreateDefault();

@@ -4,7 +4,6 @@ using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Overworld.Services;
-using VContainer;
 using VContainer.Unity;
 
 namespace EndlessHeros.Overworld.UI
@@ -13,7 +12,7 @@ namespace EndlessHeros.Overworld.UI
     /// Overworld map presenter. Binds UI intents to travel and scan, then refreshes views
     /// from domain events published after those actions commit.
     /// </summary>
-    public sealed class OverworldMapPresenter : IStartable, IDisposable
+    internal sealed class OverworldMapPresenter : IStartable, IDisposable
     {
         private readonly OverworldViewBridge _viewBridge;
         private readonly RunManager _runManager;
@@ -27,7 +26,6 @@ namespace EndlessHeros.Overworld.UI
         private ContentId _selectedPlanetId;
         private bool _inStarSystemView;
 
-        [Inject]
         internal OverworldMapPresenter(
             OverworldViewBridge viewBridge,
             RunManager runManager,
@@ -192,10 +190,7 @@ namespace EndlessHeros.Overworld.UI
                 return;
             }
 
-            var result = _sensor.ScanPlanet(
-                _runManager.CurrentRun,
-                ObserverId.Player,
-                planetId);
+            var result = _sensor.ScanPlanet(_runManager.CurrentRun, ObserverId.Player, planetId);
             if (!result.Success)
             {
                 _viewBridge.SetStatus(result.Error.Message);
@@ -280,10 +275,7 @@ namespace EndlessHeros.Overworld.UI
                 return;
             }
 
-            _viewBridge.StarSystemInspection.ShowNode(
-                inspection.Title,
-                inspection.Summary,
-                inspection.CanTravel);
+            _viewBridge.StarSystemInspection.ShowNode(inspection.Title, inspection.Summary, inspection.CanTravel);
             if (inspection.ShowPlanetDetail)
             {
                 _viewBridge.PlanetInspection.ShowPlanet(inspection.PlanetDetail);

@@ -8,7 +8,7 @@ namespace EndlessHeros.Core.Bootstrap
     /// Owns gameplay scene transitions so feature services never call
     /// SceneManager directly. Battle loads additively while overworld stays active.
     /// </summary>
-    public sealed class SceneFlow
+    internal sealed class SceneFlow
     {
         public SceneId ActiveGameplayScene { get; private set; } = SceneId.Bootstrap;
 

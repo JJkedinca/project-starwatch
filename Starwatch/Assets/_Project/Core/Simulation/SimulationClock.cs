@@ -7,7 +7,7 @@ namespace EndlessHeros.Core.Simulation
     /// Time advances only through AdvanceSimulation (normally via SimulationLoop).
     /// Starts paused so menu/bootstrap time does not count toward a run.
     /// </summary>
-    public sealed class SimulationClock
+    internal sealed class SimulationClock
     {
         public GameTime CurrentTime { get; private set; } = GameTime.Zero;
 

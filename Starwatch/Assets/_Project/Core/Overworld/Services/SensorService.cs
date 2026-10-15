@@ -10,7 +10,7 @@ namespace EndlessHeros.Overworld.Services
     /// <summary>
     /// Records planet scan details into archive map knowledge.
     /// </summary>
-    public sealed class SensorService
+    internal sealed class SensorService
     {
         private readonly ArchiveService _archiveService;
         private readonly ObjectDatabaseSO _objectDatabase;
@@ -46,9 +46,7 @@ namespace EndlessHeros.Overworld.Services
 
             if (!run.Universe.MapGraph.TryGetNodeForPlanet(planetId, out var hostNode))
             {
-                return CommandResult.Fail(
-                    CommandErrorCode.InvalidArgument,
-                    "Planet is not part of this universe.");
+                return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Planet is not part of this universe.");
             }
 
             if (_objectDatabase == null || !_objectDatabase.TryGetPlanet(planetId.Value, out var planet))
@@ -58,9 +56,7 @@ namespace EndlessHeros.Overworld.Services
 
             if (planet.SystemId != hostNode.Id)
             {
-                return CommandResult.Fail(
-                    CommandErrorCode.InvalidArgument,
-                    "Planet host does not match universe map.");
+                return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Planet host does not match universe map.");
             }
 
             if (!run.Archive.TryGetMapKnowledge(observerId, out var knowledge))
