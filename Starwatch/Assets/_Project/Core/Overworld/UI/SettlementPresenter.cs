@@ -10,7 +10,7 @@ using VContainer.Unity;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Settlement intents. Rebuilds only the settlement panel.
+    /// Settlement intents. Rebuilds the panel for the open system.
     /// </summary>
     internal sealed class SettlementPresenter : IStartable, IDisposable
     {
@@ -56,6 +56,7 @@ namespace EndlessHeros.Overworld.UI
             _subscriptions.Add(_events.Subscribe<SettlementAbandonedEvent>(_ => OnSettlementChanged()));
             _subscriptions.Add(_events.Subscribe<BuildingChangedEvent>(_ => OnSettlementChanged()));
             _subscriptions.Add(_events.Subscribe<ResourceChangedEvent>(_ => OnSettlementChanged()));
+            _subscriptions.Add(_events.Subscribe<MapKnowledgeChangedEvent>(OnMapKnowledgeChanged));
             Apply();
         }
 
@@ -114,6 +115,18 @@ namespace EndlessHeros.Overworld.UI
 
             var result = command(run, _selection.SelectedPlanetId);
             _status.Post(result.Success ? success : result.Error.Message);
+        }
+
+        private void OnMapKnowledgeChanged(MapKnowledgeChangedEvent domainEvent)
+        {
+            if (domainEvent.ObserverId != ObserverId.Player
+                || domainEvent.Kind != MapKnowledgeKind.PlanetScanned
+                || !_selection.InStarSystem)
+            {
+                return;
+            }
+
+            Apply();
         }
 
         private void OnSettlementChanged()

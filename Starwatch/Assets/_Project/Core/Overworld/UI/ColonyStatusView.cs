@@ -3,7 +3,7 @@ using UnityEngine.UIElements;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Presence and the quoted output and upkeep for the selected planet.
+    /// Presence of the selected planet. Rates live on the production panel.
     /// </summary>
     internal sealed class ColonyStatusView
     {

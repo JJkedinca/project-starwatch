@@ -8,6 +8,7 @@
     <ui:Template name="ColonyStatus" src="ColonyStatus.uxml" />
     <ui:Template name="SettlementCommitment" src="SettlementCommitment.uxml" />
     <ui:Template name="BuildingList" src="BuildingList.uxml" />
+    <ui:Template name="StockpileBar" src="StockpileBar.uxml" />
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="header" class="header">
             <ui:Label name="title" text="Star Map" class="title" />
@@ -21,8 +22,17 @@
             <ui:VisualElement name="inspection-panel" class="inspection-panel">
                 <ui:Instance template="StarSystemInspection" />
                 <ui:Instance template="PlanetInspection" />
-                <ui:ScrollView name="settlement-panel" class="settlement-panel" mode="Vertical">
-                    <ui:Instance template="ResourceSummary" />
+                <ui:ScrollView name="settlement-panel" class="settlement-panel" mode="Vertical" vertical-scroller-visibility="AlwaysVisible">
+                    <ui:VisualElement name="planet-figures" class="planet-figures">
+                        <ui:VisualElement name="planet-base" class="resource-panel">
+                            <ui:Label text="Base" class="resource-panel-title" />
+                            <ui:Instance template="ResourceSummary" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="planet-production" class="resource-panel">
+                            <ui:Label text="Production" class="resource-panel-title" />
+                            <ui:Instance template="ResourceSummary" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                     <ui:Instance template="PlanetDevelopment" />
                     <ui:Instance template="ColonyStatus" />
                     <ui:Instance template="SettlementCommitment" />
@@ -30,5 +40,6 @@
                 </ui:ScrollView>
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:Instance template="StockpileBar" />
     </ui:VisualElement>
 </ui:UXML>

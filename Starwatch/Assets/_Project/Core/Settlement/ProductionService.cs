@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using EndlessHeros.Core.Content;
 using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Run.Timeline;
@@ -42,13 +43,57 @@ namespace EndlessHeros.Settlement
                     continue;
                 }
 
-                var multiplier = Multiplier(planet, definition.OutputKind);
-                var produced = definition.OutputPerLevel * placed.Level * multiplier;
-                output.Add(definition.OutputKind, produced);
-                upkeep.Add(definition.UpkeepKind, definition.UpkeepPerLevel * placed.Level);
+                AddRates(output, definition.Output, placed.Level, planet, PlanetScale.Apply);
+                AddRates(upkeep, definition.Upkeep, placed.Level, planet, PlanetScale.Ignore);
             }
 
             return new ProductionQuote(output, upkeep);
+        }
+
+        /// <summary>
+        /// Level-1 output of every catalog building after this planet's modifiers and deposits.
+        /// </summary>
+        public ResourceInventory ModifiedBase(PlanetDefinition planet)
+        {
+            var totals = new ResourceInventory();
+            var buildings = _catalog.Buildings;
+            for (var i = 0; i < buildings.Count; i++)
+            {
+                var definition = buildings[i];
+                if (definition == null)
+                {
+                    continue;
+                }
+
+                AddRates(totals, definition.Output, 1, planet, PlanetScale.Apply);
+            }
+
+            return totals;
+        }
+
+        private static void AddRates(
+            ResourceInventory inventory,
+            IReadOnlyList<ResourceAmount> rates,
+            int level,
+            PlanetDefinition planet,
+            PlanetScale scale)
+        {
+            if (rates == null || level <= 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < rates.Count; i++)
+            {
+                var rate = rates[i];
+                if (rate.Amount <= 0f)
+                {
+                    continue;
+                }
+
+                var multiplier = scale == PlanetScale.Apply ? Multiplier(planet, rate.Kind) : 1f;
+                inventory.Add(rate.Kind, rate.Amount * level * multiplier);
+            }
         }
 
         private static float Multiplier(PlanetDefinition planet, ResourceKind kind)
@@ -60,6 +105,12 @@ namespace EndlessHeros.Settlement
             }
 
             return multiplier;
+        }
+
+        private enum PlanetScale
+        {
+            Ignore,
+            Apply,
         }
     }
 }

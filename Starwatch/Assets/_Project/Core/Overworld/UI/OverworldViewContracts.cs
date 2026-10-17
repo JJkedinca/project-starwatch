@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using EndlessHeros.Core.Identifiers;
+using EndlessHeros.Core.Run.Timeline;
 
 namespace EndlessHeros.Overworld.UI
 {
@@ -55,5 +56,13 @@ namespace EndlessHeros.Overworld.UI
         event Action<ContentId> UpgradeRequested;
 
         void Apply(SettlementPanelModel model);
+    }
+
+    /// <summary>
+    /// Empire stockpile. Visible on the star map and inside a star system.
+    /// </summary>
+    internal interface IStockpileView
+    {
+        void Apply(ResourceInventory stockpile);
     }
 }

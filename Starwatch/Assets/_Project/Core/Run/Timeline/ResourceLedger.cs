@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using EndlessHeros.Core.Data;
 
@@ -27,7 +28,8 @@ namespace EndlessHeros.Core.Run.Timeline
         }
 
         /// <summary>
-        /// Adds stock from starting grants or production.
+        /// Adds stock from a bundle. Entries of one kind are summed, then the whole part is granted.
+        /// A total of 0.6 + 0.6 grants 1. The fraction below 1 is not banked.
         /// </summary>
         public void Grant(IReadOnlyList<ResourceAmount> amounts)
         {
@@ -36,9 +38,10 @@ namespace EndlessHeros.Core.Run.Timeline
                 return;
             }
 
-            for (var i = 0; i < amounts.Count; i++)
+            var kinds = ResourceKinds.All;
+            for (var i = 0; i < kinds.Count; i++)
             {
-                Add(amounts[i].Kind, amounts[i].Amount);
+                Add(kinds[i], WholePart(ResourceAmount.Total(amounts, kinds[i])));
             }
         }
 
@@ -121,7 +124,16 @@ namespace EndlessHeros.Core.Run.Timeline
 
             for (var i = 0; i < costs.Count; i++)
             {
-                if (costs[i].Amount < 0 || !ResourceKinds.IsDefined(costs[i].Kind))
+                if (costs[i].Amount < 0f || !ResourceKinds.IsDefined(costs[i].Kind))
+                {
+                    return false;
+                }
+            }
+
+            var kinds = ResourceKinds.All;
+            for (var i = 0; i < kinds.Count; i++)
+            {
+                if (!IsWhole(ResourceAmount.Total(costs, kinds[i])))
                 {
                     return false;
                 }
@@ -132,12 +144,38 @@ namespace EndlessHeros.Core.Run.Timeline
 
         private bool CanAfford(IReadOnlyList<ResourceAmount> costs, ResourceKind kind)
         {
-            return ResourceAmount.Total(costs, kind) <= Get(kind);
+            return WholeCost(ResourceAmount.Total(costs, kind)) <= Get(kind);
         }
 
         private void Spend(IReadOnlyList<ResourceAmount> costs, ResourceKind kind)
         {
-            _amounts.Subtract(kind, ResourceAmount.Total(costs, kind));
+            _amounts.Subtract(kind, WholeCost(ResourceAmount.Total(costs, kind)));
+        }
+
+        private static int WholePart(float amount)
+        {
+            if (amount <= 0f)
+            {
+                return 0;
+            }
+
+            return (int)MathF.Floor(amount);
+        }
+
+        private static int WholeCost(float amount)
+        {
+            if (!IsWhole(amount) || amount <= 0f)
+            {
+                return 0;
+            }
+
+            return (int)MathF.Round(amount);
+        }
+
+        private static bool IsWhole(float amount)
+        {
+            var nearest = MathF.Round(amount);
+            return MathF.Abs(amount - nearest) < 0.001f;
         }
     }
 }

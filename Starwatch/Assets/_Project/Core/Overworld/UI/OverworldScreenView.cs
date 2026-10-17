@@ -16,6 +16,8 @@ namespace EndlessHeros.Overworld.UI
 
         internal SettlementPanelView Settlement { get; } = new();
 
+        internal StockpileBarView Stockpile { get; } = new();
+
         [SerializeField]
         private UIDocument _document;
 
@@ -82,19 +84,22 @@ namespace EndlessHeros.Overworld.UI
             var starSystemInspection = root.Q<VisualElement>("star-system-inspection");
             var planetInspection = root.Q<VisualElement>("planet-detail");
             var settlement = root.Q<VisualElement>("settlement-panel");
+            var stockpile = root.Q<VisualElement>("stockpile-bar");
             if (mapSurface == null
                 || starSystem == null
                 || starSystemInspection == null
                 || planetInspection == null
-                || settlement == null)
+                || settlement == null
+                || stockpile == null)
             {
-                Debug.LogError("OverworldScreenView could not find the map, star system, or settlement roots.");
+                Debug.LogError("OverworldScreenView could not find the map, star system, settlement, or stockpile roots.");
                 return;
             }
 
             StarMap.Bind(mapSurface, starSystemInspection);
             StarSystem.Bind(starSystem, planetInspection, mapSurface, title);
             Settlement.Bind(settlement);
+            Stockpile.Bind(stockpile);
             if (_status != null)
             {
                 _status.Changed += OnStatus;
@@ -122,17 +127,20 @@ namespace EndlessHeros.Overworld.UI
         private readonly StarMapPresenter _map;
         private readonly StarSystemPresenter _system;
         private readonly SettlementPresenter _settlement;
+        private readonly StockpilePresenter _stockpile;
 
         public OverworldScreenBinder(
             OverworldScreenView screen,
             StarMapPresenter map,
             StarSystemPresenter system,
-            SettlementPresenter settlement)
+            SettlementPresenter settlement,
+            StockpilePresenter stockpile)
         {
             _screen = screen;
             _map = map;
             _system = system;
             _settlement = settlement;
+            _stockpile = stockpile;
         }
 
         public void Start()
@@ -141,6 +149,7 @@ namespace EndlessHeros.Overworld.UI
             _map.Start();
             _system.Start();
             _settlement.Start();
+            _stockpile.Start();
         }
     }
 }

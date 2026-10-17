@@ -58,6 +58,7 @@ namespace EndlessHeros.Core.Run
             if (!_objectDatabase.TryGetScenario(scenarioId, out var definition))
             {
                 Debug.LogError($"RunManager.CreateRun could not find scenario '{scenarioId}'.");
+                Debug.LogWarning($"Available scenarios: {string.Join(", ", _objectDatabase.Scenarios.Keys)}");
                 return null;
             }
 

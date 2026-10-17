@@ -98,6 +98,47 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         }
 
         [Test]
+        public void Scan_RevealsTheSelectedPlanetWithoutReselecting()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(61));
+            var prime = ContentId.From("home-prime");
+            var selection = new OverworldSelection();
+            selection.EnterSystem(ContentId.From("home-system"));
+            selection.SelectPlanet(prime);
+            var view = new FakeSettlementView();
+            var presenter = CreatePresenter(view, selection, new OverworldStatus(), stack);
+            presenter.Start();
+            var applies = view.ApplyCount;
+            var beforeScan = view.Model.Development;
+            var database = RunTestFixture.CreateObjectDatabase();
+            database.TryGetPlanet(prime.Value, out var planet);
+            var production = new ProductionService(database);
+
+            Assert.That(view.Model.Economy.IsRevealed, Is.False);
+            stack.Sensor.ScanPlanet(run, ObserverId.Player, prime);
+
+            Assert.That(selection.SelectedPlanetId, Is.EqualTo(prime));
+            Assert.That(view.ApplyCount, Is.GreaterThan(applies));
+            Assert.That(view.Model.Development, Is.Not.EqualTo(beforeScan));
+            Assert.That(view.Model.Economy.IsRevealed, Is.True);
+            Assert.That(
+                view.Model.Economy.Base.Get(ResourceKind.Industry),
+                Is.EqualTo(production.ModifiedBase(planet).Get(ResourceKind.Industry)));
+            Assert.That(
+                view.Model.Economy.Base.Get(ResourceKind.Energy),
+                Is.EqualTo(production.ModifiedBase(planet).Get(ResourceKind.Energy)));
+            Assert.That(
+                view.Model.Economy.Base.Get(ResourceKind.Science),
+                Is.EqualTo(production.ModifiedBase(planet).Get(ResourceKind.Science)));
+            Assert.That(
+                view.Model.Economy.Base.Get(ResourceKind.Strategic),
+                Is.EqualTo(production.ModifiedBase(planet).Get(ResourceKind.Strategic)));
+            Assert.That(view.Model.Economy.Rate(ResourceKind.Industry), Is.EqualTo(0f));
+            presenter.Dispose();
+        }
+
+        [Test]
         public void Commands_DoNothingWhileTheStarMapIsShowing()
         {
             var stack = RunTestFixture.CreateOverworldStack();

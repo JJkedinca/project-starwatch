@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using EndlessHeros.Core.Identifiers;
 using UnityEngine;
@@ -5,11 +6,13 @@ using UnityEngine;
 namespace EndlessHeros.Core.Data
 {
     /// <summary>
-    /// Authored building. Footprint is per building. Level scales output and upkeep.
+    /// Authored building. Footprint is per building. Level scales every output and upkeep entry.
     /// </summary>
     [CreateAssetMenu(fileName = "Building", menuName = "Endless Heros/Building")]
     public sealed class BuildingDefinitionSO : ScriptableObject
     {
+        private static readonly IReadOnlyList<ResourceAmount> EmptyRates = Array.Empty<ResourceAmount>();
+
         [Tooltip("Stable content id used by commands and colony state. This is not the asset file name.")]
         [SerializeField]
         private string _id;
@@ -22,21 +25,13 @@ namespace EndlessHeros.Core.Data
         [SerializeField]
         private int _footprint = 1;
 
-        [Tooltip("Resource this building produces each second of simulation time.")]
-        [field: SerializeField]
-        public ResourceKind OutputKind { get; private set; }
-
-        [Tooltip("Output granted per level before planet modifiers.")]
+        [Tooltip("Output granted per level before planet modifiers. A building may produce more than one resource.")]
         [SerializeField]
-        private int _outputPerLevel;
+        private List<ResourceAmount> _output = new();
 
-        [Tooltip("Resource this building consumes each second of simulation time.")]
-        [field: SerializeField]
-        public ResourceKind UpkeepKind { get; private set; }
-
-        [Tooltip("Upkeep paid per level. Planet modifiers do not change upkeep.")]
+        [Tooltip("Upkeep paid per level. Planet modifiers do not change upkeep. A building may pay more than one resource.")]
         [SerializeField]
-        private int _upkeepPerLevel;
+        private List<ResourceAmount> _upkeep = new();
 
         [Tooltip("Highest level. The building is placed at level 1.")]
         [SerializeField]
@@ -56,9 +51,9 @@ namespace EndlessHeros.Core.Data
 
         public int Footprint => _footprint < 0 ? 0 : _footprint;
 
-        public int OutputPerLevel => _outputPerLevel < 0 ? 0 : _outputPerLevel;
+        public IReadOnlyList<ResourceAmount> Output => _output ?? EmptyRates;
 
-        public int UpkeepPerLevel => _upkeepPerLevel < 0 ? 0 : _upkeepPerLevel;
+        public IReadOnlyList<ResourceAmount> Upkeep => _upkeep ?? EmptyRates;
 
         public int MaxLevel => _maxLevel < 1 ? 1 : _maxLevel;
 
@@ -79,6 +74,32 @@ namespace EndlessHeros.Core.Data
 
             cost = _upgradeCosts[index];
             return true;
+        }
+
+        /// <summary>
+        /// Fills a runtime building. The authored asset is the play-mode source.
+        /// </summary>
+        internal void SetContent(string id, IReadOnlyList<ResourceAmount> output, IReadOnlyList<ResourceAmount> upkeep)
+        {
+            _id = id ?? string.Empty;
+            _output = Copy(output);
+            _upkeep = Copy(upkeep);
+        }
+
+        private static List<ResourceAmount> Copy(IReadOnlyList<ResourceAmount> source)
+        {
+            List<ResourceAmount> copy = new();
+            if (source == null)
+            {
+                return copy;
+            }
+
+            for (var i = 0; i < source.Count; i++)
+            {
+                copy.Add(source[i]);
+            }
+
+            return copy;
         }
     }
 }

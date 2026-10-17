@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run.Timeline;
 
@@ -16,6 +17,11 @@ namespace EndlessHeros.Overworld.UI
 
         public ResourceInventory Resources { get; }
 
+        /// <summary>
+        /// Planet base and current production. Hidden until the planet is scanned.
+        /// </summary>
+        public PlanetEconomy Economy { get; }
+
         public bool ShowPlanet { get; }
 
         public string Development { get; }
@@ -29,6 +35,7 @@ namespace EndlessHeros.Overworld.UI
         public SettlementPanelModel(
             bool showPanel,
             ResourceInventory resources,
+            PlanetEconomy economy,
             bool showPlanet,
             string development,
             string status,
@@ -37,11 +44,39 @@ namespace EndlessHeros.Overworld.UI
         {
             ShowPanel = showPanel;
             Resources = resources ?? new ResourceInventory();
+            Economy = economy;
             ShowPlanet = showPlanet;
             Development = development ?? string.Empty;
             Status = status ?? string.Empty;
             Commitment = commitment;
             Buildings = buildings ?? Array.Empty<BuildingRowModel>();
+        }
+    }
+
+    /// <summary>
+    /// Scanned planet yield. Base is level-1 output with modifiers applied. Production is the placed buildings.
+    /// </summary>
+    internal readonly struct PlanetEconomy
+    {
+        public bool IsRevealed { get; }
+
+        public ResourceInventory Base { get; }
+
+        public ResourceInventory Production { get; }
+
+        public ResourceInventory Upkeep { get; }
+
+        public PlanetEconomy(ResourceInventory planetBase, ResourceInventory production, ResourceInventory upkeep)
+        {
+            IsRevealed = true;
+            Base = planetBase ?? new ResourceInventory();
+            Production = production ?? new ResourceInventory();
+            Upkeep = upkeep ?? new ResourceInventory();
+        }
+
+        public float Rate(ResourceKind kind)
+        {
+            return (Production?.Get(kind) ?? 0f) - (Upkeep?.Get(kind) ?? 0f);
         }
     }
 

@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="stockpile-bar" class="stockpile-bar">
+        <ui:VisualElement class="stockpile-item">
+            <ui:Label text="Industry" class="stockpile-caption" />
+            <ui:Label name="stockpile-industry" text="0" class="stockpile-amount" />
+        </ui:VisualElement>
+        <ui:VisualElement class="stockpile-item">
+            <ui:Label text="Energy" class="stockpile-caption" />
+            <ui:Label name="stockpile-energy" text="0" class="stockpile-amount" />
+        </ui:VisualElement>
+        <ui:VisualElement class="stockpile-item">
+            <ui:Label text="Science" class="stockpile-caption" />
+            <ui:Label name="stockpile-science" text="0" class="stockpile-amount" />
+        </ui:VisualElement>
+        <ui:VisualElement class="stockpile-item">
+            <ui:Label text="Strategic" class="stockpile-caption" />
+            <ui:Label name="stockpile-strategic" text="0" class="stockpile-amount" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

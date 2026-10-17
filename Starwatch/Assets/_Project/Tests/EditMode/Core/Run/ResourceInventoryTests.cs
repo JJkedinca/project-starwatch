@@ -68,6 +68,39 @@ namespace EndlessHeros.Tests.EditMode.Core.Run
         }
 
         [Test]
+        public void Grant_SumsAKindBeforeKeepingTheWholePart()
+        {
+            var ledger = new ResourceLedger();
+
+            ledger.Grant(new[]
+            {
+                new ResourceAmount(ResourceKind.Industry, 0.6f),
+                new ResourceAmount(ResourceKind.Industry, 0.6f),
+            });
+
+            Assert.That(ledger.Get(ResourceKind.Industry), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void TrySpend_RejectsAFractionalCost()
+        {
+            var ledger = new ResourceLedger();
+            ledger.Add(ResourceKind.Industry, 5);
+            var fractional = new[] { new ResourceAmount(ResourceKind.Industry, 1.5f) };
+            var halves = new[]
+            {
+                new ResourceAmount(ResourceKind.Industry, 0.5f),
+                new ResourceAmount(ResourceKind.Industry, 0.5f),
+            };
+
+            Assert.That(ledger.CanAfford(fractional), Is.False);
+            Assert.That(ledger.TrySpend(fractional), Is.False);
+            Assert.That(ledger.Get(ResourceKind.Industry), Is.EqualTo(5));
+            Assert.That(ledger.TrySpend(halves), Is.True);
+            Assert.That(ledger.Get(ResourceKind.Industry), Is.EqualTo(4));
+        }
+
+        [Test]
         public void DepositFlooredInto_GrantsWholeResources()
         {
             var output = new ResourceInventory();

@@ -1,3 +1,4 @@
+using System;
 using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Run.Timeline;
 using UnityEngine.UIElements;
@@ -5,7 +6,7 @@ using UnityEngine.UIElements;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Stockpile line for the four settlement resources.
+    /// Four resource amounts for one planet panel.
     /// </summary>
     internal sealed class ResourceSummaryView
     {
@@ -16,7 +17,7 @@ namespace EndlessHeros.Overworld.UI
         private Label _strategic;
 
         /// <summary>
-        /// Binds the ResourceSummary.uxml root.
+        /// Binds the panel that contains a resource summary. Hiding this root hides the panel title with the amounts.
         /// </summary>
         public void Bind(VisualElement root)
         {
@@ -34,7 +35,7 @@ namespace EndlessHeros.Overworld.UI
         }
 
         /// <summary>
-        /// Hides the stockpile.
+        /// Hides the planet resources.
         /// </summary>
         public void Hide()
         {
@@ -45,32 +46,71 @@ namespace EndlessHeros.Overworld.UI
         }
 
         /// <summary>
-        /// Shows whole stockpile totals from the inventory.
+        /// Shows unsigned totals. Fractions stay visible.
         /// </summary>
-        public void Show(ResourceInventory resources)
+        public void Show(ResourceInventory output)
         {
             if (_root == null)
             {
                 return;
             }
 
-            Set(_industry, Whole(resources, ResourceKind.Industry));
-            Set(_energy, Whole(resources, ResourceKind.Energy));
-            Set(_science, Whole(resources, ResourceKind.Science));
-            Set(_strategic, Whole(resources, ResourceKind.Strategic));
+            Set(_industry, Format(Amount(output, ResourceKind.Industry)));
+            Set(_energy, Format(Amount(output, ResourceKind.Energy)));
+            Set(_science, Format(Amount(output, ResourceKind.Science)));
+            Set(_strategic, Format(Amount(output, ResourceKind.Strategic)));
             _root.style.display = DisplayStyle.Flex;
         }
 
-        private static int Whole(ResourceInventory resources, ResourceKind kind)
+        /// <summary>
+        /// Shows output minus upkeep. A positive rate is marked with +.
+        /// </summary>
+        public void ShowRate(ResourceInventory output, ResourceInventory upkeep)
         {
-            return resources == null ? 0 : resources.GetWhole(kind);
+            if (_root == null)
+            {
+                return;
+            }
+
+            Set(_industry, FormatRate(Amount(output, ResourceKind.Industry) - Amount(upkeep, ResourceKind.Industry)));
+            Set(_energy, FormatRate(Amount(output, ResourceKind.Energy) - Amount(upkeep, ResourceKind.Energy)));
+            Set(_science, FormatRate(Amount(output, ResourceKind.Science) - Amount(upkeep, ResourceKind.Science)));
+            Set(_strategic, FormatRate(Amount(output, ResourceKind.Strategic) - Amount(upkeep, ResourceKind.Strategic)));
+            _root.style.display = DisplayStyle.Flex;
         }
 
-        private static void Set(Label label, int amount)
+        private static float Amount(ResourceInventory output, ResourceKind kind)
+        {
+            return output == null ? 0f : output.Get(kind);
+        }
+
+        private static string FormatRate(float amount)
+        {
+            var text = Format(amount);
+            if (amount > 0f && text != "0")
+            {
+                return "+" + text;
+            }
+
+            return text;
+        }
+
+        private static string Format(float amount)
+        {
+            var nearest = MathF.Round(amount);
+            if (MathF.Abs(amount - nearest) < 0.001f)
+            {
+                return ((int)nearest).ToString();
+            }
+
+            return amount.ToString("0.#");
+        }
+
+        private static void Set(Label label, string amount)
         {
             if (label != null)
             {
-                label.text = amount.ToString();
+                label.text = amount ?? string.Empty;
             }
         }
     }

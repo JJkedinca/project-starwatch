@@ -12,7 +12,7 @@ namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
     /// Read model for the settlement panel on an open star system.
-    /// Income numbers come from <see cref="ProductionService.Quote"/>.
+    /// Base stats and current production come from <see cref="ProductionService"/>.
     /// </summary>
     internal sealed class SettlementQuery
     {
@@ -26,7 +26,7 @@ namespace EndlessHeros.Overworld.UI
         }
 
         /// <summary>
-        /// Stockpile, planet development, commitment, and building rows for the open system.
+        /// Stockpile for the empire, and the selected planet's resources, development, commitment, and buildings.
         /// </summary>
         internal SettlementPanelModel Describe(RunState run, OverworldSelection selection)
         {
@@ -44,6 +44,7 @@ namespace EndlessHeros.Overworld.UI
                 return new SettlementPanelModel(
                     showPanel: true,
                     resources,
+                    default,
                     showPlanet: false,
                     string.Empty,
                     string.Empty,
@@ -56,11 +57,18 @@ namespace EndlessHeros.Overworld.UI
             return new SettlementPanelModel(
                 showPanel: true,
                 resources,
+                scanned ? DescribeEconomy(planet, colony) : default,
                 showPlanet: true,
                 scanned ? DevelopmentText(planet, colony) : "Scan to reveal development.",
-                StatusText(colony, planet),
+                StatusText(colony),
                 Commitment(run, colony, scanned),
                 BuildingRows(run, planet, colony));
+        }
+
+        private PlanetEconomy DescribeEconomy(PlanetDefinition planet, ColonyState colony)
+        {
+            var quote = _production.Quote(colony, planet);
+            return new PlanetEconomy(_production.ModifiedBase(planet), quote.Output, quote.Upkeep);
         }
 
         private string DevelopmentText(PlanetDefinition planet, ColonyState colony)
@@ -83,40 +91,14 @@ namespace EndlessHeros.Overworld.UI
             return builder.ToString();
         }
 
-        private string StatusText(ColonyState colony, PlanetDefinition planet)
+        private static string StatusText(ColonyState colony)
         {
             if (colony == null)
             {
                 return "Unclaimed";
             }
 
-            if (colony.Presence != ColonyPresence.Colony)
-            {
-                return "Outpost\nNo production.";
-            }
-
-            var quote = _production.Quote(colony, planet);
-            var output = FormatRates(quote.Output, "+");
-            var upkeep = FormatRates(quote.Upkeep, "-");
-            if (output.Length == 0 && upkeep.Length == 0)
-            {
-                return "Colony\nNo production.";
-            }
-
-            var builder = new StringBuilder("Colony");
-            if (output.Length > 0)
-            {
-                builder.Append('\n');
-                builder.Append(output);
-            }
-
-            if (upkeep.Length > 0)
-            {
-                builder.Append('\n');
-                builder.Append(upkeep);
-            }
-
-            return builder.ToString();
+            return colony.Presence == ColonyPresence.Colony ? "Colony" : "Outpost";
         }
 
         private static SettlementCommitmentModel Commitment(RunState run, ColonyState colony, bool scanned)
@@ -243,29 +225,6 @@ namespace EndlessHeros.Overworld.UI
             }
 
             return text.Length == 0 ? "none" : text;
-        }
-
-        private static string FormatRates(ResourceInventory inventory, string sign)
-        {
-            var text = string.Empty;
-            var kinds = ResourceKinds.All;
-            for (var i = 0; i < kinds.Count; i++)
-            {
-                var amount = inventory.Get(kinds[i]);
-                if (amount <= 0f)
-                {
-                    continue;
-                }
-
-                if (text.Length > 0)
-                {
-                    text += ", ";
-                }
-
-                text += sign + FormatQuantity(amount) + " " + kinds[i] + "/s";
-            }
-
-            return text;
         }
 
         private static string FormatCost(IReadOnlyList<ResourceAmount> amounts)

@@ -5,8 +5,7 @@ using UnityEngine.UIElements;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Settlement panel. Shows the stockpile while a star system is open, and the
-    /// planet sections when a planet is selected.
+    /// Settlement panel. Planet base, current production, and the other planet sections appear for the selected planet.
     /// </summary>
     internal sealed class SettlementPanelView : ISettlementView
     {
@@ -20,7 +19,8 @@ namespace EndlessHeros.Overworld.UI
 
         public event Action<ContentId> UpgradeRequested;
 
-        private readonly ResourceSummaryView _resources = new();
+        private readonly ResourceSummaryView _baseStats = new();
+        private readonly ResourceSummaryView _production = new();
         private readonly PlanetDevelopmentView _development = new();
         private readonly ColonyStatusView _status = new();
         private readonly SettlementCommitmentView _commitment = new();
@@ -35,7 +35,8 @@ namespace EndlessHeros.Overworld.UI
                 return;
             }
 
-            _resources.Bind(panel.Q<VisualElement>("resource-summary"));
+            _baseStats.Bind(panel.Q<VisualElement>("planet-base"));
+            _production.Bind(panel.Q<VisualElement>("planet-production"));
             _development.Bind(panel.Q<VisualElement>("planet-development"));
             _status.Bind(panel.Q<VisualElement>("colony-status"));
             _commitment.Bind(panel.Q<VisualElement>("settlement-commitment"));
@@ -57,14 +58,26 @@ namespace EndlessHeros.Overworld.UI
             }
 
             _panel.style.display = DisplayStyle.Flex;
-            _resources.Show(model.Resources);
             if (!model.ShowPlanet)
             {
+                _baseStats.Hide();
+                _production.Hide();
                 _development.Hide();
                 _status.Hide();
                 _commitment.Hide();
                 _buildings.Hide();
                 return;
+            }
+
+            if (!model.Economy.IsRevealed)
+            {
+                _baseStats.Hide();
+                _production.Hide();
+            }
+            else
+            {
+                _baseStats.Show(model.Economy.Base);
+                _production.ShowRate(model.Economy.Production, model.Economy.Upkeep);
             }
 
             _development.Show(model.Development);
@@ -100,7 +113,8 @@ namespace EndlessHeros.Overworld.UI
 
         private void Hide()
         {
-            _resources.Hide();
+            _baseStats.Hide();
+            _production.Hide();
             _development.Hide();
             _status.Hide();
             _commitment.Hide();

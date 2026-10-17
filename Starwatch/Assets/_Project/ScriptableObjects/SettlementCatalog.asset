@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a91c4e7b2d8f4a6e8c0b1d3e5f7081a4, type: 3}
   m_Name: SettlementCatalog
   m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Data.SettlementCatalogSO
-  Buildings:
+  _buildings:
   - {fileID: 11400000, guid: 1a4e8c20d5b74f6e8a1c3d9e2b506174, type: 2}
   - {fileID: 11400000, guid: 2b5f9d31e6c84a7f9b2d4e0f3c617285, type: 2}
   - {fileID: 11400000, guid: 3c6a0e42f7d94b8a0c3e5f104d728396, type: 2}

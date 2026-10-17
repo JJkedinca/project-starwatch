@@ -15,10 +15,12 @@ MonoBehaviour:
   _id: extractor
   _displayName: Extractor
   _footprint: 2
-  <OutputKind>k__BackingField: 3
-  _outputPerLevel: 2
-  <UpkeepKind>k__BackingField: 1
-  _upkeepPerLevel: 1
+  _output:
+  - <Kind>k__BackingField: 3
+    <Amount>k__BackingField: 2
+  _upkeep:
+  - <Kind>k__BackingField: 1
+    <Amount>k__BackingField: 0
   _maxLevel: 2
   <BuildCost>k__BackingField:
     <Amounts>k__BackingField:
