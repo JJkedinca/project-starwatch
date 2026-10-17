@@ -17,8 +17,19 @@ namespace EndlessHeros.Core.Run.Timeline
 
         public IReadOnlyList<ActiveTravel> ActiveTravels => _activeTravels;
 
+        public IReadOnlyList<ColonyState> Colonies => _colonies;
+
+        public ResourceLedger Resources { get; } = new();
+
         private readonly List<FleetPlaceholderState> _fleets = new();
         private readonly List<ActiveTravel> _activeTravels = new();
+        private readonly List<ColonyState> _colonies = new();
+
+        // Derived from _fleets and _activeTravels. TryAddFleet, TrySetFleetLocation, TryStartTravel,
+        // and CompleteArrivals keep these current. A new writer, such as removing a fleet, must too.
+        // Loading a save should rebuild them after restoring those two lists.
+        private readonly Dictionary<ContentId, List<EntityId>> _fleetsByNode = new();
+        private readonly HashSet<EntityId> _travelingFleetIds = new();
 
         public TimelineState(EntityIdFactory entityIds)
         {
@@ -38,6 +49,7 @@ namespace EndlessHeros.Core.Run.Timeline
 
             id = EntityIds.Next();
             _fleets.Add(new FleetPlaceholderState(id, classId, shipCount, locationSystemId));
+            AddFleetToNode(locationSystemId, id);
             return true;
         }
 
@@ -77,11 +89,13 @@ namespace EndlessHeros.Core.Run.Timeline
                     continue;
                 }
 
+                RemoveFleetFromNode(existing.LocationSystemId, existing.Id);
                 _fleets[i] = new FleetPlaceholderState(
                     existing.Id,
                     existing.ClassId,
                     existing.ShipCount,
                     locationSystemId);
+                AddFleetToNode(locationSystemId, existing.Id);
                 return true;
             }
 
@@ -93,9 +107,32 @@ namespace EndlessHeros.Core.Run.Timeline
         /// </summary>
         public bool IsFleetTraveling(EntityId fleetId)
         {
-            for (var i = 0; i < _activeTravels.Count; i++)
+            return _travelingFleetIds.Contains(fleetId);
+        }
+
+        /// <summary>
+        /// Whether any fleet is currently at this node.
+        /// </summary>
+        public bool HasFleetAt(ContentId nodeId)
+        {
+            return !nodeId.IsEmpty
+                && _fleetsByNode.TryGetValue(nodeId, out var fleets)
+                && fleets.Count > 0;
+        }
+
+        /// <summary>
+        /// Whether a fleet at this node is on an active travel leg.
+        /// </summary>
+        public bool HasTravelingFleetAt(ContentId nodeId)
+        {
+            if (nodeId.IsEmpty || !_fleetsByNode.TryGetValue(nodeId, out var fleets))
             {
-                if (_activeTravels[i].FleetId == fleetId)
+                return false;
+            }
+
+            for (var i = 0; i < fleets.Count; i++)
+            {
+                if (_travelingFleetIds.Contains(fleets[i]))
                 {
                     return true;
                 }
@@ -122,6 +159,7 @@ namespace EndlessHeros.Core.Run.Timeline
             }
 
             _activeTravels.Add(travel);
+            _travelingFleetIds.Add(travel.FleetId);
             return true;
         }
 
@@ -147,10 +185,98 @@ namespace EndlessHeros.Core.Run.Timeline
                     completed++;
                 }
 
+                _travelingFleetIds.Remove(travel.FleetId);
                 _activeTravels.RemoveAt(i);
             }
 
             return completed;
+        }
+
+        /// <summary>
+        /// Colonies only. Outposts do not raise the settlement curve.
+        /// </summary>
+        public int ColonyCount()
+        {
+            var count = 0;
+            for (var i = 0; i < _colonies.Count; i++)
+            {
+                if (_colonies[i].Presence == ColonyPresence.Colony)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        public bool TryGetColony(ContentId planetId, out ColonyState colony)
+        {
+            for (var i = 0; i < _colonies.Count; i++)
+            {
+                if (_colonies[i].PlanetId == planetId)
+                {
+                    colony = _colonies[i];
+                    return true;
+                }
+            }
+
+            colony = null;
+            return false;
+        }
+
+        public bool TryAddColony(ColonyState colony)
+        {
+            if (colony == null || colony.PlanetId.IsEmpty || TryGetColony(colony.PlanetId, out _))
+            {
+                return false;
+            }
+
+            _colonies.Add(colony);
+            return true;
+        }
+
+        /// <summary>
+        /// Removes an outpost or colony. Buildings on that claim go with it.
+        /// </summary>
+        public bool TryRemoveColony(ContentId planetId)
+        {
+            for (var i = 0; i < _colonies.Count; i++)
+            {
+                if (_colonies[i].PlanetId != planetId)
+                {
+                    continue;
+                }
+
+                _colonies.RemoveAt(i);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void AddFleetToNode(ContentId nodeId, EntityId fleetId)
+        {
+            if (!_fleetsByNode.TryGetValue(nodeId, out var fleets))
+            {
+                fleets = new List<EntityId>();
+                _fleetsByNode.Add(nodeId, fleets);
+            }
+
+            fleets.Add(fleetId);
+        }
+
+        private void RemoveFleetFromNode(ContentId nodeId, EntityId fleetId)
+        {
+            if (!_fleetsByNode.TryGetValue(nodeId, out var fleets))
+            {
+                return;
+            }
+
+            fleets.Remove(fleetId);
+            if (fleets.Count == 0)
+            {
+                _fleetsByNode.Remove(nodeId);
+            }
         }
     }
 }

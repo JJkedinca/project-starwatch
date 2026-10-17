@@ -185,8 +185,6 @@ Add:
 - Planet archetype modifiers.
 - Building capacity and simple vertical upgrades.
 - Resource production and upkeep.
-- Frontier Pressure and colony stability.
-- One deterministic planet challenge.
 
 Success means the player must choose which opportunities to commit to rather
 than settling every available planet.

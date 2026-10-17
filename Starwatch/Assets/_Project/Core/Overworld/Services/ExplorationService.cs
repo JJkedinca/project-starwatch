@@ -92,15 +92,7 @@ namespace EndlessHeros.Overworld.Services
                 return false;
             }
 
-            for (var i = 0; i < run.Timeline.Fleets.Count; i++)
-            {
-                if (run.Timeline.Fleets[i].LocationSystemId == nodeId)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return run.Timeline.HasFleetAt(nodeId);
         }
 
         private void RevealIncidentRoutes(RunState run, ObserverId observerId, ContentId nodeId)

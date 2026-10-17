@@ -1,3 +1,5 @@
+using EndlessHeros.Core.Run;
+
 namespace EndlessHeros.Core.Simulation
 {
     /// <summary>
@@ -6,6 +8,16 @@ namespace EndlessHeros.Core.Simulation
     /// </summary>
     public interface ISimulationSystem
     {
+        /// <summary>
+        /// Receives the active run when it is created, replaced, or cleared.
+        /// </summary>
+        void OnRunChanged(RunState run);
+
+        /// <summary>
+        /// Drops timeline-local tick state after the active run replaces its timeline.
+        /// </summary>
+        void OnTimelineReset();
+
         /// <summary>
         /// Runs one simulation tick after the clock has advanced by tickDeltaSeconds.
         /// </summary>

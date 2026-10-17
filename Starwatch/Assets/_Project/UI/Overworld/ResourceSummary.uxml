@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="resource-summary" class="resource-summary">
+        <ui:VisualElement class="resource-line">
+            <ui:Label text="Industry" class="resource-caption" />
+            <ui:Label name="resource-industry" text="0" class="resource-amount" />
+        </ui:VisualElement>
+        <ui:VisualElement class="resource-line">
+            <ui:Label text="Energy" class="resource-caption" />
+            <ui:Label name="resource-energy" text="0" class="resource-amount" />
+        </ui:VisualElement>
+        <ui:VisualElement class="resource-line">
+            <ui:Label text="Science" class="resource-caption" />
+            <ui:Label name="resource-science" text="0" class="resource-amount" />
+        </ui:VisualElement>
+        <ui:VisualElement class="resource-line">
+            <ui:Label text="Strategic" class="resource-caption" />
+            <ui:Label name="resource-strategic" text="0" class="resource-amount" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

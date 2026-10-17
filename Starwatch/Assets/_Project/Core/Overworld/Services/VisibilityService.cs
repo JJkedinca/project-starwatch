@@ -26,15 +26,9 @@ namespace EndlessHeros.Overworld.Services
                 return MapNodeVisibility.Hidden;
             }
 
-            if (timeline != null)
+            if (timeline != null && timeline.HasFleetAt(nodeId))
             {
-                for (var i = 0; i < timeline.Fleets.Count; i++)
-                {
-                    if (timeline.Fleets[i].LocationSystemId == nodeId)
-                    {
-                        return MapNodeVisibility.Present;
-                    }
-                }
+                return MapNodeVisibility.Present;
             }
 
             return knowledge.HasExploredNode(nodeId)

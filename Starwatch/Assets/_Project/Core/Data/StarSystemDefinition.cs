@@ -14,17 +14,13 @@ namespace EndlessHeros.Core.Data
         [SerializeField]
         private string _id;
 
-        [SerializeField]
-        private MapNodeKind _kind;
+        [field: SerializeField]
+        public MapNodeKind Kind { get; private set; }
 
-        [SerializeField]
-        private Vector2 _mapPosition;
+        [field: SerializeField]
+        public Vector2 MapPosition { get; private set; }
 
         public ContentId Id => ContentId.From(_id);
-
-        public MapNodeKind Kind => _kind;
-
-        public Vector2 MapPosition => _mapPosition;
 
         public StarSystemDefinition()
         {
@@ -33,8 +29,8 @@ namespace EndlessHeros.Core.Data
         public StarSystemDefinition(ContentId id, MapNodeKind kind, Vector2 mapPosition)
         {
             _id = id.IsEmpty ? string.Empty : id.Value;
-            _kind = kind;
-            _mapPosition = mapPosition;
+            Kind = kind;
+            MapPosition = mapPosition;
         }
     }
 }

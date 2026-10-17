@@ -14,16 +14,24 @@ namespace EndlessHeros.Overworld.Systems
     /// </summary>
     internal sealed class TravelSystem : ISimulationSystem
     {
-        private readonly RunManager _runManager;
         private readonly ExplorationService _exploration;
         private readonly DomainEventBus _events;
         private readonly List<ActiveTravel> _completedBuffer = new();
+        private RunState _run;
 
-        public TravelSystem(RunManager runManager, ExplorationService exploration, DomainEventBus events)
+        public TravelSystem(ExplorationService exploration, DomainEventBus events)
         {
-            _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
             _exploration = exploration ?? throw new ArgumentNullException(nameof(exploration));
             _events = events ?? throw new ArgumentNullException(nameof(events));
+        }
+
+        public void OnRunChanged(RunState run)
+        {
+            _run = run;
+        }
+
+        public void OnTimelineReset()
+        {
         }
 
         /// <summary>
@@ -40,13 +48,13 @@ namespace EndlessHeros.Overworld.Systems
         /// </summary>
         public int CompleteArrivals(GameTime time)
         {
-            if (!_runManager.HasActiveRun)
+            if (_run == null)
             {
                 return 0;
             }
 
             _completedBuffer.Clear();
-            var completed = _runManager.CurrentRun.Timeline.CompleteArrivals(time, _completedBuffer);
+            var completed = _run.Timeline.CompleteArrivals(time, _completedBuffer);
 
             for (var i = 0; i < _completedBuffer.Count; i++)
             {
@@ -57,7 +65,7 @@ namespace EndlessHeros.Overworld.Systems
                     travel.FromNodeId,
                     travel.ToNodeId,
                     FleetTravelKind.Arrived));
-                _exploration.Explore(_runManager.CurrentRun, ObserverId.Player, travel.ToNodeId);
+                _exploration.Explore(_run, ObserverId.Player, travel.ToNodeId);
             }
 
             return completed;

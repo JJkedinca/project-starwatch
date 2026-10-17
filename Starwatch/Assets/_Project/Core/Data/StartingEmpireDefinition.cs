@@ -3,8 +3,7 @@ using EndlessHeros.Core.Identifiers;
 namespace EndlessHeros.Core.Data
 {
     /// <summary>
-    /// Minimal authored starting empire data for Phase 0/1. Colony and resource
-    /// fields arrive with the settlement slice; this only places home + fleet.
+    /// Authored starting empire: home, starter fleet, and that faction's opening stockpile.
     /// </summary>
     public sealed class StartingEmpireDefinition
     {
@@ -14,6 +13,8 @@ namespace EndlessHeros.Core.Data
 
         public int StarterShipCount { get; }
 
+        public StartingResources StartingResources { get; }
+
         /// <summary>
         /// True when home, fleet class, and ship count are all valid for placement.
         /// </summary>
@@ -22,11 +23,16 @@ namespace EndlessHeros.Core.Data
             && !HomeSystemId.IsEmpty
             && !StarterFleetClassId.IsEmpty;
 
-        public StartingEmpireDefinition(ContentId homeSystemId, ContentId starterFleetClassId, int starterShipCount)
+        public StartingEmpireDefinition(
+            ContentId homeSystemId,
+            ContentId starterFleetClassId,
+            int starterShipCount,
+            StartingResources startingResources = default)
         {
             HomeSystemId = homeSystemId;
             StarterFleetClassId = starterFleetClassId;
             StarterShipCount = starterShipCount < 0 ? 0 : starterShipCount;
+            StartingResources = startingResources;
         }
 
         /// <summary>

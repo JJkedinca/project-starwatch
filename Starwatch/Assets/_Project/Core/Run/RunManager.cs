@@ -24,18 +24,21 @@ namespace EndlessHeros.Core.Run
         private readonly UniverseLoader _universeLoader;
         private readonly ObjectDatabaseSO _objectDatabase;
         private readonly EventJournal _eventJournal;
+        private readonly SimulationLoop _simulationLoop;
         private RunState _currentRun;
 
         public RunManager(
             TimelineFactory timelineFactory,
             UniverseLoader universeLoader,
             ObjectDatabaseSO objectDatabase,
-            EventJournal eventJournal)
+            EventJournal eventJournal,
+            SimulationLoop simulationLoop)
         {
             _timelineFactory = timelineFactory ?? throw new ArgumentNullException(nameof(timelineFactory));
             _universeLoader = universeLoader ?? throw new ArgumentNullException(nameof(universeLoader));
             _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
             _eventJournal = eventJournal ?? throw new ArgumentNullException(nameof(eventJournal));
+            _simulationLoop = simulationLoop ?? throw new ArgumentNullException(nameof(simulationLoop));
         }
 
         /// <summary>
@@ -55,6 +58,7 @@ namespace EndlessHeros.Core.Run
             if (!_objectDatabase.TryGetScenario(scenarioId, out var definition))
             {
                 Debug.LogError($"RunManager.CreateRun could not find scenario '{scenarioId}'.");
+                Debug.LogWarning($"Available scenarios: {string.Join(", ", _objectDatabase.Scenarios.Keys)}");
                 return null;
             }
 
@@ -73,6 +77,7 @@ namespace EndlessHeros.Core.Run
             _eventJournal.Clear();
             var random = new DeterministicRandom(seed.Value);
             _currentRun = new RunState(seed, universe, timeline, archive, rewindIndex: 0, random, entityIds);
+            _simulationLoop.NotifyRunChanged(_currentRun);
             return _currentRun;
         }
 
@@ -100,6 +105,7 @@ namespace EndlessHeros.Core.Run
                 return null;
             }
 
+            _simulationLoop.NotifyTimelineReset();
             return timeline;
         }
 
@@ -110,6 +116,7 @@ namespace EndlessHeros.Core.Run
         {
             _currentRun = null;
             _eventJournal.Clear();
+            _simulationLoop.NotifyRunChanged(null);
         }
     }
 }

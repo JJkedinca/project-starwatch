@@ -1,5 +1,8 @@
 .root {
     flex-grow: 1;
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
     background-color: rgb(10, 14, 20);
     padding: 12px;
 }
@@ -24,14 +27,47 @@
 
 .content {
     flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
     flex-direction: row;
+}
+
+.stockpile-bar {
+    flex-direction: row;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    height: 28px;
+    margin-top: 8px;
+    background-color: rgb(16, 22, 32);
+    border-width: 1px;
+    border-color: rgb(40, 52, 70);
+}
+
+.stockpile-item {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 14px;
+    margin-right: 14px;
+}
+
+.stockpile-caption {
+    font-size: 11px;
+    color: rgb(160, 176, 196);
+    margin-right: 6px;
+}
+
+.stockpile-amount {
+    font-size: 12px;
+    color: rgb(230, 236, 245);
+    -unity-font-style: bold;
 }
 
 .map-panel {
     flex-grow: 1;
+    min-height: 0;
     position: relative;
     margin-right: 12px;
-    min-height: 480px;
 }
 
 .map-surface {
@@ -135,13 +171,17 @@
 .planet-icon__label {
     color: rgb(200, 210, 225);
     font-size: 12px;
-    unity-text-align: middle-center;
+    -unity-text-align: middle-center;
     white-space: normal;
     max-width: 96px;
 }
 
 .inspection-panel {
-    width: 280px;
+    width: 320px;
+    flex-shrink: 0;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
     background-color: rgb(18, 24, 34);
     border-width: 1px;
     border-color: rgb(40, 52, 70);
@@ -195,6 +235,92 @@
     margin-bottom: 8px;
 }
 
+.settlement-panel {
+    display: none;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top-width: 1px;
+    border-top-color: rgb(40, 52, 70);
+}
+
+.planet-figures {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.resource-panel {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+    margin-right: 12px;
+    margin-bottom: 8px;
+}
+
+.resource-panel-title {
+    color: rgb(220, 228, 240);
+    font-size: 13px;
+    margin-bottom: 4px;
+    -unity-font-style: bold;
+}
+
+.resource-summary {
+    margin-bottom: 8px;
+}
+
+.resource-line {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.resource-caption {
+    color: rgb(160, 176, 196);
+    font-size: 12px;
+}
+
+.resource-amount {
+    color: rgb(230, 236, 245);
+    font-size: 12px;
+    -unity-font-style: bold;
+}
+
+.planet-development,
+.colony-status,
+.settlement-commitment {
+    margin-top: 8px;
+}
+
+.settlement-summary {
+    white-space: normal;
+    color: rgb(180, 192, 210);
+    font-size: 12px;
+}
+
+.building-list {
+    margin-top: 8px;
+}
+
+.building-row {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(40, 52, 70);
+}
+
+.building-label {
+    white-space: normal;
+    color: rgb(200, 210, 225);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.building-row .action-button {
+    font-size: 11px;
+}
+
 .map-node {
     position: absolute;
     /* Width, height, and non-system radius come from MapLayout.kNodeSize. */
@@ -204,7 +330,7 @@
     background-color: rgb(42, 54, 72);
     justify-content: center;
     align-items: center;
-    unity-text-align: middle-center;
+    -unity-text-align: middle-center;
     color: rgb(220, 228, 240);
     font-size: 10px;
     white-space: normal;

@@ -40,6 +40,8 @@ namespace EndlessHeros.Core.Run.Timeline
                     out _);
             }
 
+            timeline.Resources.Grant(startingEmpire.StartingResources);
+
             return timeline;
         }
     }

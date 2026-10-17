@@ -1,6 +1,5 @@
 using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Overworld;
 using EndlessHeros.Overworld.UI;
 using NUnit.Framework;
@@ -23,14 +22,34 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
 
             map.Rebuild(new[]
             {
-                new MapNode(ContentId.From("home-system"), MapNodeKind.System, Vector2.zero, null),
-                new MapNode(ContentId.From("forge-system"), MapNodeKind.System, Vector2.one, null),
+                new StarMapNodeModel(ContentId.From("home-system"), MapNodeKind.System, Vector2.zero, default),
+                new StarMapNodeModel(ContentId.From("forge-system"), MapNodeKind.System, Vector2.one, default),
             });
 
             Assert.That(map.NodeCount, Is.EqualTo(2));
             Assert.That(map.HasNode(ContentId.From("home-system")), Is.True);
             // Route layer + two node elements.
             Assert.That(surface.childCount, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Rebuild_KeepsNodeElementsWhenTheSetIsUnchanged()
+        {
+            var surface = new VisualElement();
+            var map = new StarMapView();
+            map.Bind(surface);
+            var nodes = new[]
+            {
+                new StarMapNodeModel(ContentId.From("home-system"), MapNodeKind.System, Vector2.zero, default),
+                new StarMapNodeModel(ContentId.From("forge-system"), MapNodeKind.System, Vector2.one, default),
+            };
+            map.Rebuild(nodes);
+            var home = surface.Q<Button>("node-home-system");
+
+            map.Rebuild(nodes);
+
+            Assert.That(surface.Q<Button>("node-home-system"), Is.SameAs(home));
+            Assert.That(map.NodeCount, Is.EqualTo(2));
         }
 
         [Test]
@@ -42,7 +61,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             var nodeId = ContentId.From("forge-system");
             map.Rebuild(new[]
             {
-                new MapNode(nodeId, MapNodeKind.System, Vector2.one, null),
+                new StarMapNodeModel(nodeId, MapNodeKind.System, Vector2.one, default),
             });
 
             map.SetNodeState(
@@ -70,7 +89,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             var nodeId = ContentId.From("forge-system");
             map.Rebuild(new[]
             {
-                new MapNode(nodeId, MapNodeKind.System, Vector2.one, null),
+                new StarMapNodeModel(nodeId, MapNodeKind.System, Vector2.one, default),
             });
 
             map.SetNodeState(
@@ -98,7 +117,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             var nodeId = ContentId.From("home-system");
             map.Rebuild(new[]
             {
-                new MapNode(nodeId, MapNodeKind.System, Vector2.zero, null),
+                new StarMapNodeModel(nodeId, MapNodeKind.System, Vector2.zero, default),
             });
 
             var orbit = surface.Q<Button>("node-home-system").Q<VisualElement>("fleet-orbit");
@@ -130,7 +149,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             var nodeId = ContentId.From("home-system");
             map.Rebuild(new[]
             {
-                new MapNode(nodeId, MapNodeKind.System, Vector2.zero, null),
+                new StarMapNodeModel(nodeId, MapNodeKind.System, Vector2.zero, default),
             });
 
             map.SetNodeState(

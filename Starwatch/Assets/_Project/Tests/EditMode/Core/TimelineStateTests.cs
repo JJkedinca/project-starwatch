@@ -122,5 +122,48 @@ namespace EndlessHeros.Tests.EditMode.Core
             Assert.That(completed[0].FleetId, Is.EqualTo(firstFleet));
             Assert.That(completed[1].FleetId, Is.EqualTo(secondFleet));
         }
+
+        [Test]
+        public void FleetIndex_FollowsLocationAndTravel()
+        {
+            var timeline = new TimelineState(new EntityIdFactory());
+            var home = ContentId.From("home-system");
+            var forge = ContentId.From("forge-system");
+            Assert.That(
+                timeline.TryAddFleet(ContentId.From("screen"), shipCount: 1, home, out var first),
+                Is.True);
+            Assert.That(
+                timeline.TryAddFleet(ContentId.From("screen"), shipCount: 1, home, out var second),
+                Is.True);
+            Assert.That(timeline.HasFleetAt(home), Is.True);
+            Assert.That(timeline.HasTravelingFleetAt(home), Is.False);
+
+            Assert.That(
+                timeline.TryStartTravel(new ActiveTravel(
+                    first,
+                    home,
+                    forge,
+                    GameTime.Zero,
+                    new GameTime(3d))),
+                Is.True);
+            Assert.That(timeline.HasTravelingFleetAt(home), Is.True);
+            Assert.That(timeline.IsFleetTraveling(first), Is.True);
+            Assert.That(timeline.IsFleetTraveling(second), Is.False);
+
+            Assert.That(timeline.TrySetFleetLocation(second, forge), Is.True);
+            Assert.That(timeline.HasFleetAt(home), Is.True);
+            Assert.That(timeline.HasFleetAt(forge), Is.True);
+
+            System.Collections.Generic.List<ActiveTravel> completed = new();
+            timeline.CompleteArrivals(new GameTime(3d), completed);
+
+            Assert.That(timeline.HasFleetAt(home), Is.False);
+            Assert.That(timeline.HasFleetAt(forge), Is.True);
+            Assert.That(timeline.HasTravelingFleetAt(home), Is.False);
+            Assert.That(timeline.HasTravelingFleetAt(forge), Is.False);
+            Assert.That(timeline.IsFleetTraveling(first), Is.False);
+            Assert.That(timeline.TryGetFleet(first, out var moved), Is.True);
+            Assert.That(moved.LocationSystemId, Is.EqualTo(forge));
+        }
     }
 }

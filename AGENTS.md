@@ -78,6 +78,7 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 
 - Tests live under `EndlessHerosUnity/Assets/_Project/Tests/` (`EditMode/` for pure logic, `PlayMode/` when Unity frame/scene lifetime is required).
 - **Every functional / abstractable type needs tests** — services, managers, registries, coordinators, catalog lookups, combat/resolve helpers, presenters’ logic (not thin MonoBehaviour views, pure DTOs/enums, or empty LifetimeScope shells). Add or extend tests in the same change as the production code.
+- UI tests target logic, not the visual tree. Test query/model builders, selection/navigation state, and presenter intent → service / domain event → refresh wiring (against a fake view). Do not assert on visual-tree element names, USS classes, or exact display strings, and do not test thin views. At most one end-to-end smoke test per screen.
 - Prefer EditMode tests; use PlayMode only when behavior depends on `Update`, scenes, physics, or NavMesh.
 - Mirror production folders under Tests (`Core/`, `Battle/`, …).
 - No need to run Unity tests or force a compile unless the user asks. User builds / runs Test Runner in the Editor.

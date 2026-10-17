@@ -17,28 +17,20 @@ namespace EndlessHeros.Core.Content
         [SerializeField]
         private PlanetDatabaseSO _planetDatabase;
 
-        private readonly Dictionary<string, ScenarioDefinition> _scenarios = new();
+        [field: SerializeField]
+        public SettlementCatalogSO SettlementCatalog { get; private set; }
 
-        private readonly Dictionary<string, PlanetDefinition> _planets = new();
+        private Dictionary<string, ScenarioDefinition> _scenarios = new();
+        public IReadOnlyDictionary<string, ScenarioDefinition> Scenarios => _scenarios;
+
+        private Dictionary<string, PlanetDefinition> _planets = new();
 
         private bool _indexed;
 
-        /// <summary>
-        /// Points a runtime instance at the authored databases. Used by EditMode tests.
-        /// </summary>
-        internal void AssignDatabases(StarSystemDatabaseSO starSystemDatabase, PlanetDatabaseSO planetDatabase)
+        private void OnEnable()
         {
-            _starSystemDatabase = starSystemDatabase;
-            _planetDatabase = planetDatabase;
-        }
-
-        /// <summary>
-        /// Registers or replaces a scenario definition by its scenario id.
-        /// </summary>
-        public void RegisterScenario(ScenarioDefinition definition)
-        {
-            EnsureIndexed();
-            AddScenario(definition);
+            // Domain reload keeps this asset and drops the runtime scenario. The next lookup must rebuild.
+            _indexed = false;
         }
 
         /// <summary>
@@ -71,38 +63,102 @@ namespace EndlessHeros.Core.Content
             return _planets.TryGetValue(planetId, out definition);
         }
 
+        /// <summary>
+        /// Points a runtime instance at the authored databases. Used by EditMode tests.
+        /// </summary>
+        internal void AssignDatabases(
+            StarSystemDatabaseSO starSystemDatabase,
+            PlanetDatabaseSO planetDatabase,
+            SettlementCatalogSO settlementCatalog = null)
+        {
+            _starSystemDatabase = starSystemDatabase;
+            _planetDatabase = planetDatabase;
+            SettlementCatalog = settlementCatalog;
+            _indexed = false;
+        }
+
+        /// <summary>
+        /// Registers or replaces a scenario definition by its scenario id. Used by EditMode tests.
+        /// </summary>
+        internal void RegisterScenario(ScenarioDefinition definition)
+        {
+            EnsureIndexed();
+            AddScenario(definition);
+        }
+
+        /// <summary>
+        /// Clears the runtime scenario index and leaves it marked built.
+        /// EditMode tests use this to simulate a domain reload. The next lookup must rebuild.
+        /// </summary>
+        internal void ResetBuiltIndex()
+        {
+            _scenarios ??= new Dictionary<string, ScenarioDefinition>();
+            _planets ??= new Dictionary<string, PlanetDefinition>();
+            ClearIndex();
+            _indexed = true;
+        }
+
         private void EnsureIndexed()
         {
-            if (_indexed && !CachedScenarioWasDestroyed())
+            _scenarios ??= new Dictionary<string, ScenarioDefinition>();
+            _planets ??= new Dictionary<string, PlanetDefinition>();
+            if (_indexed && !IndexNeedsRebuild())
             {
                 return;
             }
 
-            // Exit play mode destroys the runtime ScenarioDefinition. This asset outlives
-            // that object when the editor keeps its memory, so rebuild a destroyed entry.
-            _scenarios.Clear();
-            _planets.Clear();
-            _indexed = true;
+            // Play-mode exit and script recompile destroy the runtime scenario while this asset stays.
+            ClearIndex();
             if (_starSystemDatabase == null || _planetDatabase == null)
             {
+                _indexed = false;
                 Debug.LogError("ObjectDatabaseSO requires an assigned StarSystemDatabaseSO and PlanetDatabaseSO.");
                 return;
             }
 
             AddScenario(VerticalSliceScenarioFactory.Create(_starSystemDatabase, _planetDatabase));
+            _indexed = _scenarios.Count > 0;
         }
 
-        private bool CachedScenarioWasDestroyed()
+        private bool IndexNeedsRebuild()
         {
+            if (_scenarios == null || _scenarios.Count == 0)
+            {
+                return true;
+            }
+
             foreach (var pair in _scenarios)
             {
-                if (pair.Value == null)
+                if (pair.Value == null || string.IsNullOrWhiteSpace(pair.Value.ScenarioId))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private void ClearIndex()
+        {
+            foreach (var pair in _scenarios)
+            {
+                if (pair.Value == null)
+                {
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    Destroy(pair.Value);
+                }
+                else
+                {
+                    DestroyImmediate(pair.Value);
+                }
+            }
+
+            _scenarios.Clear();
+            _planets.Clear();
         }
 
         private void AddScenario(ScenarioDefinition definition)
@@ -112,6 +168,7 @@ namespace EndlessHeros.Core.Content
                 return;
             }
 
+            definition.hideFlags = HideFlags.HideAndDontSave;
             _scenarios[definition.ScenarioId] = definition;
 
             if (definition.Planets == null)

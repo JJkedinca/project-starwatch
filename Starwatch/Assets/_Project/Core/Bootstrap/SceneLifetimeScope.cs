@@ -19,7 +19,7 @@ namespace EndlessHeros.Core.Bootstrap
                 parentReference = ParentReference.Create<ProjectLifetimeScope>();
             }
 
-            if (FindFirstObjectByType<ProjectLifetimeScope>() == null)
+            if (FindAnyObjectByType<ProjectLifetimeScope>() == null)
             {
                 Debug.LogError($"{GetType().Name} requires a ProjectLifetimeScope parent.");
             }

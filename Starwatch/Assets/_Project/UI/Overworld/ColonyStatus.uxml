@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="colony-status" class="colony-status">
+        <ui:Label name="colony-status-summary" text="" class="settlement-summary" />
+    </ui:VisualElement>
+</ui:UXML>
