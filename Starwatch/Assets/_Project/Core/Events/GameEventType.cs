@@ -9,7 +9,7 @@ namespace EndlessHeros.Core.Events
         NodeExplored = 1,
         PlanetScanned = 2,
         MapKnowledgeChanged = 3,
-        SettlementStarted = 4,
+        SettlementFounded = 4,
         ChallengeRevealed = 5,
         ResourceChanged = 6,
         ResearchCompleted = 7,
@@ -26,5 +26,7 @@ namespace EndlessHeros.Core.Events
         CombatIntelRecorded = 18,
         TimelineOutcomeChanged = 19,
         FleetTravelStarted = 20,
+        BuildingChanged = 21,
+        SettlementAbandoned = 22,
     }
 }

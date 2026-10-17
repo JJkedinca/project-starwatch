@@ -39,9 +39,9 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             var started = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, forge);
 
             Assert.That(started.Success, Is.True);
-            var forgeState = query.NodeState(run, RequireNode(run, forge), ContentId.Empty);
-            var homeState = query.NodeState(run, RequireNode(run, home), ContentId.Empty);
-            var inspection = query.DescribeSelection(run, forge, ContentId.Empty, inStarSystemView: false);
+            var forgeState = query.NodeState(run, RequireNode(run, forge), default(ContentId));
+            var homeState = query.NodeState(run, RequireNode(run, home), default(ContentId));
+            var inspection = query.DescribeSelection(run, forge, default(ContentId), inStarSystemView: false);
 
             Assert.That(forgeState.Visibility, Is.EqualTo(MapNodeVisibility.Hidden));
             Assert.That(forgeState.IsExplorable, Is.True);
@@ -62,7 +62,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             var query = CreateQuery(stack.Visibility, stack.Travel);
             var forge = ContentId.From("forge-system");
 
-            var inspection = query.DescribeSelection(run, forge, ContentId.Empty, inStarSystemView: false);
+            var inspection = query.DescribeSelection(run, forge, default(ContentId), inStarSystemView: false);
 
             Assert.That(inspection.HasSelection, Is.True);
             Assert.That(inspection.CanTravel, Is.True);
@@ -119,7 +119,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             Assert.That(scanned.PlanetDetail.Detail, Is.EqualTo("Temperate starter world."));
             Assert.That(scanned.PlanetDetail.CanScan, Is.False);
             Assert.That(
-                query.PlanetState(run, home, prime, ContentId.Empty).Visibility,
+                query.PlanetState(run, home, prime, default(ContentId)).Visibility,
                 Is.EqualTo(PlanetVisibility.Scanned));
         }
 

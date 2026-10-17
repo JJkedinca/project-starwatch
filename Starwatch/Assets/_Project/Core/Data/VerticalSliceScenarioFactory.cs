@@ -7,7 +7,7 @@ namespace EndlessHeros.Core.Data
     /// <summary>
     /// Builds the deterministic authored-vertical-slice scenario for Phase 1.
     /// Star systems come from StarSystemDatabaseSO and planets from PlanetDatabaseSO.
-    /// Routes and the starting empire stay here until the scenario itself is an asset.
+    /// Routes and this faction's opening stockpile stay here until the scenario itself is an asset.
     /// </summary>
     public static class VerticalSliceScenarioFactory
     {
@@ -43,7 +43,8 @@ namespace EndlessHeros.Core.Data
             var startingEmpire = new StartingEmpireDefinition(
                 home,
                 ContentId.From("starter-screen"),
-                starterShipCount: 3);
+                starterShipCount: 3,
+                new StartingResources(industry: 80, energy: 40));
 
             var planets = planetDatabase != null
                 ? planetDatabase.Planets

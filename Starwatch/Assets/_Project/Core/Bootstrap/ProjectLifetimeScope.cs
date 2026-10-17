@@ -7,6 +7,7 @@ using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Core.Simulation;
 using EndlessHeros.Overworld.Services;
 using EndlessHeros.Overworld.Systems;
+using EndlessHeros.Settlement;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -70,6 +71,11 @@ namespace EndlessHeros.Core.Bootstrap
             builder.Register<SensorService>(Lifetime.Singleton);
             builder.Register<TravelService>(Lifetime.Singleton);
             builder.Register<TravelSystem>(Lifetime.Singleton);
+            builder.Register<ProductionService>(Lifetime.Singleton);
+            builder.Register<EconomyService>(Lifetime.Singleton);
+            builder.Register<EconomyTickSystem>(Lifetime.Singleton);
+            builder.Register<SettlementService>(Lifetime.Singleton);
+            builder.Register<BuildingService>(Lifetime.Singleton);
             builder.Register<RunManager>(Lifetime.Singleton);
             builder.Register<IRunStateStore, InMemoryRunStateStore>(Lifetime.Singleton);
 
@@ -79,6 +85,7 @@ namespace EndlessHeros.Core.Bootstrap
                 var loop = container.Resolve<SimulationLoop>();
                 // Deterministic order: travel resolution after clock advance (more systems append later).
                 loop.Register(container.Resolve<TravelSystem>());
+                loop.Register(container.Resolve<EconomyTickSystem>());
                 _updateManager.Configure(loop);
             });
         }

@@ -17,27 +17,78 @@ MonoBehaviour:
     _systemId: home-system
     _displayName: Home Prime
     _summary: Temperate starter world.
+    <Modifiers>k__BackingField:
+      _industryMultiplier: 1
+      _energyMultiplier: 1
+      _scienceMultiplier: 1
+      _strategicMultiplier: 1
+    _footprintBudget: 4
+    _deposits: []
   - _id: home-moon
     _systemId: home-system
     _displayName: Home Moon
     _summary: Barren moon with sensor coverage.
+    <Modifiers>k__BackingField:
+      _industryMultiplier: 1
+      _energyMultiplier: 1
+      _scienceMultiplier: 1
+      _strategicMultiplier: 1
+    _footprintBudget: 2
+    _deposits: []
   - _id: forge-world
     _systemId: forge-system
     _displayName: Forge World
     _summary: Industrial crust with rich metals.
+    <Modifiers>k__BackingField:
+      _industryMultiplier: 2
+      _energyMultiplier: 1
+      _scienceMultiplier: 1
+      _strategicMultiplier: 1
+    _footprintBudget: 4
+    _deposits:
+    - 3
   - _id: forge-inner-belt
     _systemId: forge-system
     _displayName: Inner Belt
     _summary: Dense ore field near the forge star.
+    <Modifiers>k__BackingField:
+      _industryMultiplier: 1
+      _energyMultiplier: 1
+      _scienceMultiplier: 1
+      _strategicMultiplier: 2
+    _footprintBudget: 2
+    _deposits:
+    - 3
   - _id: frontier-world
     _systemId: frontier-system
     _displayName: Frontier World
     _summary: Sparse but expandable rim colony site.
+    <Modifiers>k__BackingField:
+      _industryMultiplier: 1
+      _energyMultiplier: 1
+      _scienceMultiplier: 1
+      _strategicMultiplier: 1
+    _footprintBudget: 3
+    _deposits: []
   - _id: relic-world
     _systemId: relic-system
     _displayName: Relic World
     _summary: Ruined surface with scan-worthy anomalies.
+    <Modifiers>k__BackingField:
+      _industryMultiplier: 1
+      _energyMultiplier: 1
+      _scienceMultiplier: 2
+      _strategicMultiplier: 1
+    _footprintBudget: 3
+    _deposits: []
   - _id: relic-outpost
     _systemId: relic-system
     _displayName: Relic Outpost
     _summary: Derelict station in high orbit.
+    <Modifiers>k__BackingField:
+      _industryMultiplier: 1
+      _energyMultiplier: 1
+      _scienceMultiplier: 2
+      _strategicMultiplier: 1
+    _footprintBudget: 1
+    _deposits: []

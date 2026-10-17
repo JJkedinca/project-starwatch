@@ -17,8 +17,13 @@ namespace EndlessHeros.Core.Run.Timeline
 
         public IReadOnlyList<ActiveTravel> ActiveTravels => _activeTravels;
 
+        public IReadOnlyList<ColonyState> Colonies => _colonies;
+
+        public ResourceLedger Resources { get; } = new();
+
         private readonly List<FleetPlaceholderState> _fleets = new();
         private readonly List<ActiveTravel> _activeTravels = new();
+        private readonly List<ColonyState> _colonies = new();
 
         public TimelineState(EntityIdFactory entityIds)
         {
@@ -151,6 +156,68 @@ namespace EndlessHeros.Core.Run.Timeline
             }
 
             return completed;
+        }
+
+        /// <summary>
+        /// Colonies only. Outposts do not raise the settlement curve.
+        /// </summary>
+        public int ColonyCount()
+        {
+            var count = 0;
+            for (var i = 0; i < _colonies.Count; i++)
+            {
+                if (_colonies[i].Presence == ColonyPresence.Colony)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        public bool TryGetColony(ContentId planetId, out ColonyState colony)
+        {
+            for (var i = 0; i < _colonies.Count; i++)
+            {
+                if (_colonies[i].PlanetId == planetId)
+                {
+                    colony = _colonies[i];
+                    return true;
+                }
+            }
+
+            colony = null;
+            return false;
+        }
+
+        public bool TryAddColony(ColonyState colony)
+        {
+            if (colony == null || colony.PlanetId.IsEmpty || TryGetColony(colony.PlanetId, out _))
+            {
+                return false;
+            }
+
+            _colonies.Add(colony);
+            return true;
+        }
+
+        /// <summary>
+        /// Removes an outpost or colony. Buildings on that claim go with it.
+        /// </summary>
+        public bool TryRemoveColony(ContentId planetId)
+        {
+            for (var i = 0; i < _colonies.Count; i++)
+            {
+                if (_colonies[i].PlanetId != planetId)
+                {
+                    continue;
+                }
+
+                _colonies.RemoveAt(i);
+                return true;
+            }
+
+            return false;
         }
     }
 }

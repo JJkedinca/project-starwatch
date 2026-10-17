@@ -1,3 +1,7 @@
+using EndlessHeros.Core.Events;
+using EndlessHeros.Core.Run;
+using EndlessHeros.Core.Run.Timeline;
+using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Core.Simulation;
 using NUnit.Framework;
 
@@ -13,6 +17,20 @@ namespace EndlessHeros.Tests.EditMode.Core
             public int Ticks { get; private set; }
 
             public float LastDelta { get; private set; }
+
+            public RunState Run { get; private set; }
+
+            public int TimelineResets { get; private set; }
+
+            public void OnRunChanged(RunState run)
+            {
+                Run = run;
+            }
+
+            public void OnTimelineReset()
+            {
+                TimelineResets++;
+            }
 
             public void OnSimulationTick(GameTime time, float tickDeltaSeconds)
             {
@@ -70,6 +88,56 @@ namespace EndlessHeros.Tests.EditMode.Core
 
             Assert.That(ticks, Is.EqualTo(SimulationLoop.kMaxCatchUpTicks));
             Assert.That(system.Ticks, Is.EqualTo(SimulationLoop.kMaxCatchUpTicks));
+        }
+
+        [Test]
+        public void NotifyRunChanged_TellsEveryRegisteredSystem()
+        {
+            var clock = new SimulationClock();
+            var loop = new SimulationLoop(clock);
+            var first = new CountingSystem();
+            var second = new CountingSystem();
+            loop.Register(first);
+            loop.Register(second);
+            var run = RunTestFixture.CreateRunManager().CreateRun("authored-vertical-slice", RunSeed.FromValue(9));
+
+            loop.NotifyRunChanged(run);
+            var late = new CountingSystem();
+            loop.Register(late);
+
+            Assert.That(first.Run, Is.SameAs(run));
+            Assert.That(second.Run, Is.SameAs(run));
+            Assert.That(late.Run, Is.SameAs(run));
+
+            loop.NotifyRunChanged(null);
+
+            Assert.That(first.Run, Is.Null);
+            Assert.That(second.Run, Is.Null);
+            Assert.That(late.Run, Is.Null);
+        }
+
+        [Test]
+        public void RecreateTimeline_NotifiesRegisteredSystems()
+        {
+            var clock = new SimulationClock();
+            var loop = new SimulationLoop(clock);
+            var system = new CountingSystem();
+            loop.Register(system);
+            var timelineFactory = new TimelineFactory();
+            var manager = new RunManager(
+                timelineFactory,
+                new UniverseLoader(timelineFactory),
+                RunTestFixture.CreateObjectDatabase(),
+                new EventJournal(),
+                loop);
+            var run = manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(10));
+
+            var timeline = manager.RecreateTimeline(1);
+
+            Assert.That(timeline, Is.Not.Null);
+            Assert.That(run.Timeline, Is.SameAs(timeline));
+            Assert.That(system.Run, Is.SameAs(run));
+            Assert.That(system.TimelineResets, Is.EqualTo(1));
         }
     }
 }

@@ -14,23 +14,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Data.StarSystemDatabaseSO
   _starSystems:
   - _id: home-system
-    _kind: 0
-    _mapPosition: {x: 0, y: 0}
+    <Kind>k__BackingField: 0
+    <MapPosition>k__BackingField: {x: 0, y: 0}
   - _id: forge-system
-    _kind: 0
-    _mapPosition: {x: 2, y: 1}
+    <Kind>k__BackingField: 0
+    <MapPosition>k__BackingField: {x: 2, y: 1}
   - _id: choke-system
-    _kind: 0
-    _mapPosition: {x: 4, y: 0}
+    <Kind>k__BackingField: 0
+    <MapPosition>k__BackingField: {x: 4, y: 0}
   - _id: frontier-system
-    _kind: 0
-    _mapPosition: {x: 6, y: 0}
+    <Kind>k__BackingField: 0
+    <MapPosition>k__BackingField: {x: 6, y: 0}
   - _id: relic-system
-    _kind: 0
-    _mapPosition: {x: 4, y: 2}
+    <Kind>k__BackingField: 0
+    <MapPosition>k__BackingField: {x: 4, y: 2}
   - _id: asteroid-belt
-    _kind: 1
-    _mapPosition: {x: 2, y: -1}
+    <Kind>k__BackingField: 1
+    <MapPosition>k__BackingField: {x: 2, y: -1}
   - _id: anomaly-rift
-    _kind: 1
-    _mapPosition: {x: 5, y: 1}
+    <Kind>k__BackingField: 1
+    <MapPosition>k__BackingField: {x: 5, y: 1}

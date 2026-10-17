@@ -17,6 +17,9 @@ namespace EndlessHeros.Core.Content
         [SerializeField]
         private PlanetDatabaseSO _planetDatabase;
 
+        [field: SerializeField]
+        public SettlementCatalogSO SettlementCatalog { get; private set; }
+
         private readonly Dictionary<string, ScenarioDefinition> _scenarios = new();
 
         private readonly Dictionary<string, PlanetDefinition> _planets = new();
@@ -26,10 +29,14 @@ namespace EndlessHeros.Core.Content
         /// <summary>
         /// Points a runtime instance at the authored databases. Used by EditMode tests.
         /// </summary>
-        internal void AssignDatabases(StarSystemDatabaseSO starSystemDatabase, PlanetDatabaseSO planetDatabase)
+        internal void AssignDatabases(
+            StarSystemDatabaseSO starSystemDatabase,
+            PlanetDatabaseSO planetDatabase,
+            SettlementCatalogSO settlementCatalog = null)
         {
             _starSystemDatabase = starSystemDatabase;
             _planetDatabase = planetDatabase;
+            SettlementCatalog = settlementCatalog;
         }
 
         /// <summary>

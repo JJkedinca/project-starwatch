@@ -69,8 +69,8 @@ ScriptableObjects describe authored content:
 - `MapNodeDefinition`
 - `StarSystemDefinition`
 - `PlanetDefinition`
-- `PlanetArchetypeDefinition`
-- `BuildingDefinition`
+- `PlanetModifiers`
+- `BuildingDefinitionSO`
 - `ResourceDefinition`
 - `ProductionRecipeDefinition`
 - `ShipyardDefinition`
@@ -383,7 +383,7 @@ as:
 - `NodeExplored`
 - `PlanetScanned`
 - `MapKnowledgeChanged`
-- `SettlementStarted`
+- `SettlementFounded`
 - `ChallengeRevealed`
 - `ResourceChanged`
 - `ResearchCompleted`
@@ -557,7 +557,8 @@ and travel before adding settlement or factions as systems.
 
 ### Deferred to later phases
 
-- Settlement, resources, buildings, challenges → Phase 2
+- Settlement, resources, buildings → Phase 2
+- Planet challenges → after the economy loop is playable
 - Research and discoveries as tech unlocks → Phase 3
 - Faction contact, sorties, and diplomacy → later map/politics slice or Phase 5
   setup (scenario may still mark a faction-owned node as inert content)
@@ -666,12 +667,16 @@ shipyards or fleet production here; those arrive with the fleet slice.
 
 - Outposts / settlement / colonies
 - Resources, buildings, upkeep
-- Frontier Pressure, colony stability
-- One deterministic planet challenge
 - Economy tick + resource ledger
 
 ### Deferred
 
+- Frontier Pressure and colony stability (`FrontierPressureService`,
+  `ColonyStabilityService`) → after the base settlement loop is in. Add them as
+  further restrictions on cost, upkeep, and output.
+- Planet challenges (`PlanetChallengeDefinition`, `PlanetChallengeService`,
+  `PlanetChallengeView`) → after the economy loop is playable. `ChallengeRevealed`
+  stays reserved on `GameEventType`.
 - Shipyards, production queues, ship construction → Phase 4
 - Research infrastructure as tech progression → Phase 3 (buildings may produce
   Science now without a research UI)
@@ -683,9 +688,8 @@ shipyards or fleet production here; those arrive with the fleet slice.
 Create:
 
 - `ResourceDefinition`
-- `PlanetArchetypeDefinition`
-- `BuildingDefinition`
-- `PlanetChallengeDefinition`
+- `PlanetModifiers`
+- `BuildingDefinitionSO`
 
 Small resource set: Industry, Energy, Science, one strategic material.
 
@@ -701,9 +705,6 @@ Implement:
 - `EconomyTickSystem`
 - `ProductionService` (resource output only)
 - `ResourceLedger`
-- `FrontierPressureService`
-- `ColonyStabilityService`
-- `PlanetChallengeService`
 
 Responsibilities:
 
@@ -713,8 +714,7 @@ Responsibilities:
 - Apply archetype multipliers without hard-locking off-specialization
   buildings.
 - Produce and consume resources on simulation ticks.
-- Apply upkeep, Frontier Pressure, and stability effects.
-- Reveal and resolve a deterministic local challenge after commitment.
+- Apply building upkeep from the ledger.
 
 Economy calculations should be pure functions where possible. Views never
 calculate income.
@@ -727,7 +727,6 @@ Implement:
 - `BuildingListView`
 - `ResourceSummaryView`
 - `SettlementCommitmentView`
-- `PlanetChallengeView`
 - `ColonyStatusView`
 
 ### Tests
@@ -738,15 +737,13 @@ Implement:
 - Archetype multipliers affect output without blocking off-specialization
   buildings.
 - Production and upkeep update correctly over a simulated interval.
-- Frontier Pressure changes the intended costs or risks.
-- A challenge is deterministic within a run.
-- Abandoning a challenge applies the documented sunk cost and state.
 - Colony and resource state is timeline-owned (ready for later rewind).
 
 ### Deliverable
 
 The player must choose between at least two useful planets because settling
-both immediately creates a measurable economic or logistical burden.
+both immediately spends a rising cost and then pays upkeep. Frontier Pressure
+and stability can tighten that choice after this loop works.
 
 ## Phase 3: Research and Discovery
 

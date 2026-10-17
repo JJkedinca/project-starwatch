@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EndlessHeros.Core.Run;
 
 namespace EndlessHeros.Core.Simulation
 {
@@ -18,6 +19,7 @@ namespace EndlessHeros.Core.Simulation
         internal const float kTickIntervalSeconds = 1f / kTickRateHz;
 
         private readonly List<ISimulationSystem> _systems = new();
+        private RunState _run;
         private float _accumulator;
 
         public SimulationLoop(SimulationClock clock)
@@ -35,10 +37,13 @@ namespace EndlessHeros.Core.Simulation
                 return;
             }
 
-            if (!_systems.Contains(system))
+            if (_systems.Contains(system))
             {
-                _systems.Add(system);
+                return;
             }
+
+            _systems.Add(system);
+            system.OnRunChanged(_run);
         }
 
         /// <summary>
@@ -52,6 +57,30 @@ namespace EndlessHeros.Core.Simulation
             }
 
             _systems.Remove(system);
+        }
+
+        /// <summary>
+        /// Stores the active run and tells every registered system. Null clears it.
+        /// A system registered later receives this same run.
+        /// </summary>
+        public void NotifyRunChanged(RunState run)
+        {
+            _run = run;
+            for (var i = 0; i < _systems.Count; i++)
+            {
+                _systems[i].OnRunChanged(run);
+            }
+        }
+
+        /// <summary>
+        /// Tells every registered system that the active run replaced its timeline.
+        /// </summary>
+        public void NotifyTimelineReset()
+        {
+            for (var i = 0; i < _systems.Count; i++)
+            {
+                _systems[i].OnTimelineReset();
+            }
         }
 
         /// <summary>
