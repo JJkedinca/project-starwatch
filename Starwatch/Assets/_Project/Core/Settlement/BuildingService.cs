@@ -145,8 +145,7 @@ namespace EndlessHeros.Settlement
         private int UsedFootprint(ColonyState colony)
         {
             var used = 0;
-            var buildings = colony.Buildings;
-            foreach (var placed in buildings.Values)
+            foreach (var placed in colony.Buildings.Values)
             {
                 if (_catalog.TryGetBuilding(placed.BuildingId, out var definition))
                 {

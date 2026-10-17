@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="settlement-commitment" class="settlement-commitment">
+        <ui:Button name="found-outpost-button" text="Outpost" class="action-button" />
+        <ui:Button name="found-colony-button" text="Colony" class="action-button" />
+        <ui:Button name="abandon-button" text="Abandon" class="action-button" />
+    </ui:VisualElement>
+</ui:UXML>

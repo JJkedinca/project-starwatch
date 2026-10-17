@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Universe;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -18,6 +17,7 @@ namespace EndlessHeros.Overworld.UI
         private VisualElement _routeLayer;
         private readonly Dictionary<ContentId, MapNodeView> _nodesById = new();
         private readonly List<RouteView> _routes = new();
+        private readonly List<MapRouteSegment> _routeSegments = new();
         private float _scale = MapLayout.kDefaultScale;
         private Vector2 _originOffset = MapLayout.kDefaultPadding;
 
@@ -31,23 +31,23 @@ namespace EndlessHeros.Overworld.UI
         }
 
         /// <summary>
-        /// Clears and rebuilds node elements from the current universe graph.
+        /// Creates node elements when the set of nodes changes. An existing node stays in
+        /// place so a click can refresh without removing that button.
         /// </summary>
-        public void Rebuild(IEnumerable<MapNode> nodes)
+        public void Rebuild(IReadOnlyList<StarMapNodeModel> nodes)
         {
-            Clear();
-            if (_mapSurface == null || nodes == null)
+            if (_mapSurface == null)
             {
                 return;
             }
 
-            EnsureRouteLayer();
-
-            List<MapNode> validNodes = new();
+            List<StarMapNodeModel> validNodes = new();
             List<Vector2> positions = new();
-            foreach (var node in nodes)
+            var count = nodes?.Count ?? 0;
+            for (var i = 0; i < count; i++)
             {
-                if (node == null || node.Id.IsEmpty)
+                var node = nodes[i];
+                if (node.NodeId.IsEmpty)
                 {
                     continue;
                 }
@@ -56,24 +56,37 @@ namespace EndlessHeros.Overworld.UI
                 positions.Add(node.MapPosition);
             }
 
+            if (SameNodes(validNodes))
+            {
+                return;
+            }
+
+            Clear();
+            EnsureRouteLayer();
             _originOffset = MapLayout.ComputeOriginOffset(positions, _scale, MapLayout.kDefaultPadding);
 
             for (var i = 0; i < validNodes.Count; i++)
             {
                 var node = validNodes[i];
-                var view = new MapNodeView(node.Id, node.Kind);
+                var view = new MapNodeView(node.NodeId, node.Kind);
                 view.Clicked += id => NodeClicked?.Invoke(id);
                 view.SetMapPosition(node.MapPosition, _scale, _originOffset);
-                _nodesById[node.Id] = view;
+                _nodesById[node.NodeId] = view;
                 _mapSurface.Add(view.Root);
             }
         }
 
         /// <summary>
-        /// Rebuilds known-route lines from authored map-space segments.
+        /// Creates route lines when the set of segments changes. An existing line stays in
+        /// place so a map refresh can update nodes without redrawing the same routes.
         /// </summary>
         public void SetRoutes(IReadOnlyList<MapRouteSegment> segments)
         {
+            if (SameRoutes(segments))
+            {
+                return;
+            }
+
             ClearRoutes();
             EnsureRouteLayer();
             if (_routeLayer == null || segments == null)
@@ -89,6 +102,7 @@ namespace EndlessHeros.Overworld.UI
                     MapLayout.ToNodeCenter(segment.MapPositionA, _scale, _originOffset),
                     MapLayout.ToNodeCenter(segment.MapPositionB, _scale, _originOffset));
                 _routes.Add(route);
+                _routeSegments.Add(segment);
                 _routeLayer.Add(route.Root);
             }
         }
@@ -138,6 +152,63 @@ namespace EndlessHeros.Overworld.UI
         /// </summary>
         public int RouteCount => _routes.Count;
 
+        private bool SameNodes(List<StarMapNodeModel> nodes)
+        {
+            if (_nodesById.Count != nodes.Count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                if (!_nodesById.ContainsKey(nodes[i].NodeId))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool SameRoutes(IReadOnlyList<MapRouteSegment> segments)
+        {
+            var count = segments?.Count ?? 0;
+            if (_routeSegments.Count != count)
+            {
+                return false;
+            }
+
+            var matched = new bool[count];
+            for (var i = 0; i < count; i++)
+            {
+                var segment = segments[i];
+                var found = false;
+                for (var j = 0; j < count; j++)
+                {
+                    if (matched[j] || !SameSegment(_routeSegments[j], segment))
+                    {
+                        continue;
+                    }
+
+                    matched[j] = true;
+                    found = true;
+                    break;
+                }
+
+                if (!found)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool SameSegment(MapRouteSegment left, MapRouteSegment right)
+        {
+            return left.MapPositionA == right.MapPositionA && left.MapPositionB == right.MapPositionB;
+        }
+
         private void EnsureRouteLayer()
         {
             if (_mapSurface == null)
@@ -165,6 +236,7 @@ namespace EndlessHeros.Overworld.UI
             }
 
             _routes.Clear();
+            _routeSegments.Clear();
         }
     }
 }

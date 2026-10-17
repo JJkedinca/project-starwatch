@@ -141,7 +141,7 @@
 }
 
 .inspection-panel {
-    width: 280px;
+    width: 320px;
     background-color: rgb(18, 24, 34);
     border-width: 1px;
     border-color: rgb(40, 52, 70);
@@ -193,6 +193,70 @@
     color: rgb(150, 164, 184);
     font-size: 12px;
     margin-bottom: 8px;
+}
+
+.settlement-panel {
+    display: none;
+    flex-grow: 1;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top-width: 1px;
+    border-top-color: rgb(40, 52, 70);
+}
+
+.resource-summary {
+    margin-bottom: 8px;
+}
+
+.resource-line {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.resource-caption {
+    color: rgb(160, 176, 196);
+    font-size: 12px;
+}
+
+.resource-amount {
+    color: rgb(230, 236, 245);
+    font-size: 12px;
+    -unity-font-style: bold;
+}
+
+.planet-development,
+.colony-status,
+.settlement-commitment {
+    margin-top: 8px;
+}
+
+.settlement-summary {
+    white-space: normal;
+    color: rgb(180, 192, 210);
+    font-size: 12px;
+}
+
+.building-list {
+    margin-top: 8px;
+}
+
+.building-row {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(40, 52, 70);
+}
+
+.building-label {
+    white-space: normal;
+    color: rgb(200, 210, 225);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.building-row .action-button {
+    font-size: 11px;
 }
 
 .map-node {

@@ -3,6 +3,11 @@
     <ui:Template name="StarSystemView" src="StarSystemView.uxml" />
     <ui:Template name="StarSystemInspection" src="StarSystemInspection.uxml" />
     <ui:Template name="PlanetInspection" src="PlanetInspection.uxml" />
+    <ui:Template name="ResourceSummary" src="ResourceSummary.uxml" />
+    <ui:Template name="PlanetDevelopment" src="PlanetDevelopment.uxml" />
+    <ui:Template name="ColonyStatus" src="ColonyStatus.uxml" />
+    <ui:Template name="SettlementCommitment" src="SettlementCommitment.uxml" />
+    <ui:Template name="BuildingList" src="BuildingList.uxml" />
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="header" class="header">
             <ui:Label name="title" text="Star Map" class="title" />
@@ -16,6 +21,13 @@
             <ui:VisualElement name="inspection-panel" class="inspection-panel">
                 <ui:Instance template="StarSystemInspection" />
                 <ui:Instance template="PlanetInspection" />
+                <ui:ScrollView name="settlement-panel" class="settlement-panel" mode="Vertical">
+                    <ui:Instance template="ResourceSummary" />
+                    <ui:Instance template="PlanetDevelopment" />
+                    <ui:Instance template="ColonyStatus" />
+                    <ui:Instance template="SettlementCommitment" />
+                    <ui:Instance template="BuildingList" />
+                </ui:ScrollView>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

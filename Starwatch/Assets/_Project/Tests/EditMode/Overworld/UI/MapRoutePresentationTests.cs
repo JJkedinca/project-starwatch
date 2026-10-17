@@ -1,7 +1,6 @@
 using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Overworld.Services;
 using EndlessHeros.Overworld.UI;
 using EndlessHeros.Tests.EditMode.Core;
@@ -36,8 +35,8 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             map.Bind(surface);
             map.Rebuild(new[]
             {
-                new MapNode(ContentId.From("a"), MapNodeKind.System, Vector2.zero, null),
-                new MapNode(ContentId.From("b"), MapNodeKind.System, Vector2.one, null),
+                new StarMapNodeModel(ContentId.From("a"), MapNodeKind.System, Vector2.zero, default),
+                new StarMapNodeModel(ContentId.From("b"), MapNodeKind.System, Vector2.one, default),
             });
 
             map.SetRoutes(new[]
@@ -49,6 +48,75 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         }
 
         [Test]
+        public void SetRoutes_KeepsRouteElementsWhenTheSetIsUnchanged()
+        {
+            var surface = new VisualElement();
+            var map = new StarMapView();
+            map.Bind(surface);
+            var segments = new[]
+            {
+                new MapRouteSegment(Vector2.zero, Vector2.one),
+            };
+            map.SetRoutes(segments);
+            var route = surface.Q<VisualElement>("map-route");
+
+            map.SetRoutes(new[]
+            {
+                new MapRouteSegment(Vector2.zero, Vector2.one),
+            });
+
+            Assert.That(surface.Q<VisualElement>("map-route"), Is.SameAs(route));
+            Assert.That(map.RouteCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void SetRoutes_RebuildsWhenASegmentIsAdded()
+        {
+            var surface = new VisualElement();
+            var map = new StarMapView();
+            map.Bind(surface);
+            map.SetRoutes(new[]
+            {
+                new MapRouteSegment(Vector2.zero, Vector2.one),
+            });
+            var route = surface.Q<VisualElement>("map-route");
+
+            map.SetRoutes(new[]
+            {
+                new MapRouteSegment(Vector2.zero, Vector2.one),
+                new MapRouteSegment(Vector2.one, new Vector2(2f, 0f)),
+            });
+
+            Assert.That(map.RouteCount, Is.EqualTo(2));
+            Assert.That(surface.Q<VisualElement>("map-route"), Is.Not.SameAs(route));
+        }
+
+        [Test]
+        public void Rebuild_RecreatesRoutesAfterTheNodeSetChanges()
+        {
+            var surface = new VisualElement();
+            var map = new StarMapView();
+            map.Bind(surface);
+            map.Rebuild(new[]
+            {
+                new StarMapNodeModel(ContentId.From("a"), MapNodeKind.System, Vector2.zero, default),
+            });
+            var segment = new MapRouteSegment(Vector2.zero, Vector2.one);
+            map.SetRoutes(new[] { segment });
+            var route = surface.Q<VisualElement>("map-route");
+
+            map.Rebuild(new[]
+            {
+                new StarMapNodeModel(ContentId.From("a"), MapNodeKind.System, Vector2.zero, default),
+                new StarMapNodeModel(ContentId.From("b"), MapNodeKind.System, Vector2.one, default),
+            });
+            map.SetRoutes(new[] { segment });
+
+            Assert.That(map.RouteCount, Is.EqualTo(1));
+            Assert.That(surface.Q<VisualElement>("map-route"), Is.Not.SameAs(route));
+        }
+
+        [Test]
         public void SetRoutes_BoundsMatchNodeElementCenters()
         {
             var surface = new VisualElement();
@@ -56,8 +124,8 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             map.Bind(surface);
             map.Rebuild(new[]
             {
-                new MapNode(ContentId.From("a"), MapNodeKind.System, Vector2.zero, null),
-                new MapNode(ContentId.From("b"), MapNodeKind.System, Vector2.one, null),
+                new StarMapNodeModel(ContentId.From("a"), MapNodeKind.System, Vector2.zero, default),
+                new StarMapNodeModel(ContentId.From("b"), MapNodeKind.System, Vector2.one, default),
             });
             map.SetRoutes(new[]
             {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using EndlessHeros.Core.Identifiers;
 using UnityEngine;
@@ -13,6 +14,8 @@ namespace EndlessHeros.Core.Data
         [Tooltip("Building assets included in this catalog.")]
         [SerializeField]
         private List<BuildingDefinitionSO> _buildings = new();
+
+        public IReadOnlyList<BuildingDefinitionSO> Buildings => _buildings;
 
         /// <summary>
         /// Fills a runtime catalog. The authored asset is the play-mode source.

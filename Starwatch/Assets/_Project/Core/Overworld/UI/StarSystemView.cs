@@ -49,9 +49,10 @@ namespace EndlessHeros.Overworld.UI
         public bool IsVisible => _isVisible;
 
         /// <summary>
-        /// Shows the star system and rebuilds planet icons.
+        /// Shows the star system. Planet icons are recreated only when the set of planets
+        /// changes, so a click can refresh without removing that icon.
         /// </summary>
-        public void Show(string title, IReadOnlyList<ContentId> planetIds)
+        public void Show(string title, IReadOnlyList<StarSystemPlanetModel> planets)
         {
             if (_root == null)
             {
@@ -63,7 +64,17 @@ namespace EndlessHeros.Overworld.UI
                 _title.text = title ?? "Star System";
             }
 
-            RebuildPlanets(planetIds);
+            if (!SamePlanets(planets))
+            {
+                RebuildPlanets(planets);
+            }
+
+            var count = planets?.Count ?? 0;
+            for (var i = 0; i < count; i++)
+            {
+                SetPlanetState(planets[i].PlanetId, planets[i].State);
+            }
+
             _root.style.display = DisplayStyle.Flex;
             _isVisible = true;
         }
@@ -108,17 +119,37 @@ namespace EndlessHeros.Overworld.UI
             return _planetsById.ContainsKey(planetId);
         }
 
-        private void RebuildPlanets(IReadOnlyList<ContentId> planetIds)
+        private bool SamePlanets(IReadOnlyList<StarSystemPlanetModel> planets)
+        {
+            var count = planets?.Count ?? 0;
+            if (_planetsById.Count != count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var planetId = planets[i].PlanetId;
+                if (planetId.IsEmpty || !_planetsById.ContainsKey(planetId))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void RebuildPlanets(IReadOnlyList<StarSystemPlanetModel> planets)
         {
             ClearPlanets();
-            if (_planetStrip == null || planetIds == null)
+            if (_planetStrip == null || planets == null)
             {
                 return;
             }
 
-            for (var i = 0; i < planetIds.Count; i++)
+            for (var i = 0; i < planets.Count; i++)
             {
-                var planetId = planetIds[i];
+                var planetId = planets[i].PlanetId;
                 if (planetId.IsEmpty || _planetsById.ContainsKey(planetId))
                 {
                     continue;
