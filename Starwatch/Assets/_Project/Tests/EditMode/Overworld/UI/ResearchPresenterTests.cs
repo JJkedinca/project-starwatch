@@ -109,7 +109,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         }
 
         [Test]
-        public void ScienceTick_SkipsAClosedPanelAndAnUnchangedOpenPanel()
+        public void ScienceTick_SkipsAClosedPanelAndRedrawsWhenOpen()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(84));
@@ -131,17 +131,40 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
 
             view.Open();
 
-            Assert.That(view.ApplyCount, Is.EqualTo(afterStart));
+            Assert.That(view.ApplyCount, Is.EqualTo(afterStart + 1));
 
-            view.IsOpen = true;
             stack.Economy.ApplyTick(stack.Manager.CurrentRun);
             stack.Research.ApplyScience(stack.Manager.CurrentRun, stack.Economy.ProducedScience);
-            var afterDrop = view.ApplyCount;
-            stack.Research.ApplyScience(stack.Manager.CurrentRun, stack.Economy.ProducedScience);
 
-            Assert.That(afterDrop, Is.EqualTo(afterStart + 1));
-            Assert.That(view.ApplyCount, Is.EqualTo(afterDrop));
+            Assert.That(view.ApplyCount, Is.EqualTo(afterStart + 2));
             Assert.That(view.Model.ScienceDropped, Is.True);
+            presenter.Dispose();
+        }
+
+        [Test]
+        public void Completion_DismissesAnOpenSwitchPrompt()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(86));
+            var view = new FakeResearchView();
+            var presenter = new ResearchPresenter(
+                view,
+                new OverworldStatus(),
+                stack.Manager,
+                stack.Research,
+                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.Economy),
+                stack.Events);
+            presenter.Start();
+            var first = view.Model.Offers[0].Id;
+            view.RaiseStart(first);
+            view.RaiseStart(view.Model.Offers[0].Id);
+
+            Assert.That(view.PromptedId, Is.EqualTo(view.Model.Offers[0].Id));
+
+            stack.Research.ApplyScience(run, 1000f);
+
+            Assert.That(run.Timeline.Research.HasActive, Is.False);
+            Assert.That(view.PromptedId.IsEmpty, Is.True);
             presenter.Dispose();
         }
 
@@ -176,6 +199,11 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             public void PromptSwitch(ContentId researchId)
             {
                 PromptedId = researchId;
+            }
+
+            public void DismissSwitch()
+            {
+                PromptedId = default;
             }
 
             public void RaiseStart(ContentId researchId)

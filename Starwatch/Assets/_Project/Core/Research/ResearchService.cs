@@ -115,14 +115,24 @@ namespace EndlessHeros.Research
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "That project is already in progress.");
             }
 
-            if (researchId.IsEmpty || Catalog == null || !Catalog.TryGet(researchId, out _))
+            if (researchId.IsEmpty || Catalog == null || !Catalog.TryGet(researchId, out var project))
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Unknown research project.");
+            }
+
+            if (project.PointCost <= 0f)
+            {
+                return CommandResult.Fail(CommandErrorCode.InvalidArgument, "That project has no Science cost.");
             }
 
             if (!progress.IsOffered(researchId))
             {
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "That project is not one of the current offers.");
+            }
+
+            if (!IsEligible(run, researchId))
+            {
+                return CommandResult.Fail(CommandErrorCode.PrerequisiteNotMet, "That project's prerequisites are not met.");
             }
 
             progress.ClearActive();

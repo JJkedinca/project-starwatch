@@ -9,7 +9,7 @@ using VContainer.Unity;
 namespace EndlessHeros.Overworld.UI
 {
     /// <summary>
-    /// Research intents. A closed panel skips the per-second refresh. An open panel refreshes only when the contents change.
+    /// Research intents. A closed panel skips the window refresh. Opening the panel redraws it.
     /// </summary>
     internal sealed class ResearchPresenter : IStartable, IDisposable
     {
@@ -20,8 +20,7 @@ namespace EndlessHeros.Overworld.UI
         private readonly ResearchQuery _query;
         private readonly DomainEventBus _events;
         private readonly List<IDisposable> _subscriptions = new();
-        private ResearchPanelStamp _shown;
-        private bool _hasShown;
+        private ContentId _shownActiveId;
 
         public ResearchPresenter(
             IResearchView view,
@@ -98,7 +97,7 @@ namespace EndlessHeros.Overworld.UI
 
         private void OnOpened()
         {
-            ApplyIfChanged();
+            Apply();
         }
 
         private void OnScienceApplied()
@@ -108,29 +107,20 @@ namespace EndlessHeros.Overworld.UI
                 return;
             }
 
-            ApplyIfChanged();
+            Apply();
         }
 
         private void Apply()
         {
-            var run = CurrentRun();
-            _view.Apply(_query.Describe(run));
-            _shown = _query.Stamp(run);
-            _hasShown = true;
-        }
-
-        private void ApplyIfChanged()
-        {
-            var run = CurrentRun();
-            var stamp = _query.Stamp(run);
-            if (_hasShown && stamp.Equals(_shown))
+            var model = _query.Describe(CurrentRun());
+            var activeId = model.HasActive ? model.ActiveId : default;
+            if (activeId != _shownActiveId)
             {
-                return;
+                _view.DismissSwitch();
             }
 
-            _view.Apply(_query.Describe(run));
-            _shown = stamp;
-            _hasShown = true;
+            _shownActiveId = activeId;
+            _view.Apply(model);
         }
 
         private RunState CurrentRun()

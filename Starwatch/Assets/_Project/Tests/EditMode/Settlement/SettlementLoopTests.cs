@@ -144,17 +144,20 @@ namespace EndlessHeros.Tests.EditMode.Settlement
             var industryBefore = run.Timeline.Resources.Get(ResourceKind.Industry);
             var energyBefore = run.Timeline.Resources.Get(ResourceKind.Energy);
             var ticksPerInterval = TicksPerEconomyStep();
-            var seconds = (int)EconomyTickSystem.kIntervalSeconds;
+            var seconds = EconomyTickSystem.kIntervalSeconds;
+            var notices = ResourceChangeCount(stack.Journal);
 
             AdvanceTicks(stack.Loop, stack.Clock, ticksPerInterval - 1);
 
-            Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industryBefore));
+            Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industryBefore + (2 * (seconds - 1))));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(energyBefore));
+            Assert.That(ResourceChangeCount(stack.Journal), Is.EqualTo(notices));
 
             AdvanceTicks(stack.Loop, stack.Clock, 1);
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industryBefore + (2 * seconds)));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(energyBefore));
+            Assert.That(ResourceChangeCount(stack.Journal), Is.EqualTo(notices + 1));
 
             PrepareForge(stack.Exploration, stack.Sensor, run, forge);
             run.Timeline.Resources.Grant(new[]
@@ -171,6 +174,27 @@ namespace EndlessHeros.Tests.EditMode.Settlement
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(beforeForgeTick + ((2 + 4) * seconds)));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Strategic), Is.EqualTo(strategicBefore + (4 * seconds)));
+        }
+
+        [Test]
+        public void EconomyTick_CreditsOnlyTheSecondsABuildingExisted()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = UnsettledRun(stack, 66);
+            var home = ContentId.From("home-prime");
+            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
+            stack.Settlement.FoundColony(run, ObserverId.Player, home);
+            var ticksPerSecond = (int)Math.Round(1f / SimulationLoop.kTickIntervalSeconds);
+            var seconds = EconomyTickSystem.kIntervalSeconds;
+            AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond * (seconds - 1));
+            var industryBefore = run.Timeline.Resources.Get(ResourceKind.Industry);
+            var notices = ResourceChangeCount(stack.Journal);
+
+            Assert.That(stack.Buildings.Place(run, home, ContentId.From("industry-works")).Success, Is.True);
+            AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond);
+
+            Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industryBefore + 2));
+            Assert.That(ResourceChangeCount(stack.Journal), Is.EqualTo(notices + 1));
         }
 
         [Test]
@@ -338,9 +362,24 @@ namespace EndlessHeros.Tests.EditMode.Settlement
             return (settlement, run);
         }
 
+        private static int ResourceChangeCount(EventJournal journal)
+        {
+            var count = 0;
+            var records = journal.Records;
+            for (var i = 0; i < records.Count; i++)
+            {
+                if (records[i].EventType == GameEventType.ResourceChanged)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         private static int TicksPerEconomyStep()
         {
-            return (int)Math.Round(EconomyTickSystem.kIntervalSeconds / SimulationLoop.kTickIntervalSeconds);
+            return (int)Math.Round(EconomyTickSystem.kIntervalSeconds / (double)SimulationLoop.kTickIntervalSeconds);
         }
 
         private static void AdvanceTicks(SimulationLoop loop, SimulationClock clock, int ticks)

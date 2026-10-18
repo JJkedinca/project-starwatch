@@ -5,18 +5,20 @@ using EndlessHeros.Core.Simulation;
 namespace EndlessHeros.Settlement
 {
     /// <summary>
-    /// Accumulates per-second colony rates and settles them every 30 seconds of simulation time.
-    /// The stockpile and research hear one result for the whole window. The active run arrives through <see cref="ISimulationSystem.OnRunChanged"/>.
+    /// Settles colony rates every simulation second, then notifies listeners once every <see cref="kIntervalSeconds"/> seconds.
+    /// The ledger matches the colonies that existed during each second. The active run arrives through <see cref="ISimulationSystem.OnRunChanged"/>.
     /// </summary>
     internal sealed class EconomyTickSystem : ISimulationSystem
     {
-        internal const float kIntervalSeconds = 10f;
+        internal const int kIntervalSeconds = 10;
 
         private readonly EconomyService _economy;
         private Action<float> _afterSettlement;
         private RunState _run;
         private float _elapsedSeconds;
         private int _pendingSeconds;
+        private float _windowScience;
+        private bool _windowChanged;
 
         public EconomyTickSystem(EconomyService economy)
         {
@@ -40,7 +42,7 @@ namespace EndlessHeros.Settlement
         }
 
         /// <summary>
-        /// Runs after each 30-second settlement. The argument is the Science granted across that window.
+        /// Runs when the 10-second window closes. The argument is the Science granted across that window.
         /// </summary>
         internal void AfterEachSettlement(Action<float> callback)
         {
@@ -59,39 +61,37 @@ namespace EndlessHeros.Settlement
             while (_elapsedSeconds >= 1f)
             {
                 _elapsedSeconds -= 1f;
+                _windowChanged |= _economy.SettleSecond(_run);
+                _windowScience += _economy.ProducedScience;
                 _pendingSeconds++;
-            }
+                if (_pendingSeconds < kIntervalSeconds)
+                {
+                    continue;
+                }
 
-            var window = (int)kIntervalSeconds;
-            while (_pendingSeconds >= window)
-            {
-                _pendingSeconds -= window;
-                SettleWindow(window);
+                _pendingSeconds -= kIntervalSeconds;
+                CloseWindow();
             }
         }
 
-        private void SettleWindow(int seconds)
+        private void CloseWindow()
         {
-            var science = 0f;
-            var changed = false;
-            for (var i = 0; i < seconds; i++)
-            {
-                changed |= _economy.SettleSecond(_run);
-                science += _economy.ProducedScience;
-            }
-
-            if (changed)
+            if (_windowChanged)
             {
                 _economy.PublishChanged();
             }
 
-            _afterSettlement?.Invoke(science);
+            _afterSettlement?.Invoke(_windowScience);
+            _windowScience = 0f;
+            _windowChanged = false;
         }
 
         private void ResetStep()
         {
             _elapsedSeconds = 0f;
             _pendingSeconds = 0;
+            _windowScience = 0f;
+            _windowChanged = false;
             _economy.ClearOutputRemainder();
         }
     }

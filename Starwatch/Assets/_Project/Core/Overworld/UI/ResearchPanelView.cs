@@ -78,6 +78,11 @@ namespace EndlessHeros.Overworld.UI
             Apply(ResearchPanelModel.Empty);
         }
 
+        public void DismissSwitch()
+        {
+            HideConfirm();
+        }
+
         public void PromptSwitch(ContentId researchId)
         {
             _pendingSwitch = researchId;

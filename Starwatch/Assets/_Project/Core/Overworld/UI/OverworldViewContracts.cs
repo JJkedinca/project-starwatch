@@ -82,5 +82,7 @@ namespace EndlessHeros.Overworld.UI
         void Apply(ResearchPanelModel model);
 
         void PromptSwitch(ContentId researchId);
+
+        void DismissSwitch();
     }
 }

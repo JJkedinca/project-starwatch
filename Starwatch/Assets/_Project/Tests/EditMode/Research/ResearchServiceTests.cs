@@ -108,6 +108,23 @@ namespace EndlessHeros.Tests.EditMode.Research
         }
 
         [Test]
+        public void Switch_KeepsTheActiveProjectWhenTheReplacementIsRejected()
+        {
+            var harness = Harness(
+                Project("basic-construction", 20f, TechnologyEffect.Capability("construction")),
+                Project("free", 0f, TechnologyEffect.Capability("free")));
+            harness.Research.OnRunStarted(harness.Run);
+            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            harness.Run.Timeline.Research.AddPoints(5f);
+
+            var rejected = harness.Research.Switch(harness.Run, Id("free"));
+
+            Assert.That(rejected.Success, Is.False);
+            Assert.That(harness.Run.Timeline.Research.ActiveId, Is.EqualTo(Id("basic-construction")));
+            Assert.That(harness.Run.Timeline.Research.Points, Is.EqualTo(5f));
+        }
+
+        [Test]
         public void ActiveProject_AdvancesFromLabScienceAndReplayMatches()
         {
             var projects = new[]

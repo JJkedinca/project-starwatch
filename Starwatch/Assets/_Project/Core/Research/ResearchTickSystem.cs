@@ -7,7 +7,7 @@ namespace EndlessHeros.Research
 {
     /// <summary>
     /// Hears run and timeline changes from the simulation loop. Science is taken from
-    /// <see cref="EconomyTickSystem"/> after each 30-second settlement.
+    /// <see cref="EconomyTickSystem"/> once when each 10-second window closes.
     /// </summary>
     internal sealed class ResearchTickSystem : ISimulationSystem
     {
@@ -44,7 +44,7 @@ namespace EndlessHeros.Research
         }
 
         /// <summary>
-        /// Called once after each settlement, including a window that produced zero Science.
+        /// Called once when the 10-second window closes, including a window that produced zero Science.
         /// </summary>
         public void Consume(float science)
         {
