@@ -18,5 +18,11 @@
             <ui:Label text="Completed" class="research-caption" />
             <ui:Label name="research-completed" text="" class="research-line" />
         </ui:VisualElement>
+        <ui:Label name="research-hover" text="" class="research-hover" />
+        <ui:VisualElement name="research-confirm" class="research-confirm">
+            <ui:Label name="research-confirm-message" text="Switch research? Progress on the current project will be lost." class="research-line" />
+            <ui:Button name="research-confirm-yes" text="Switch" class="research-confirm-button" />
+            <ui:Button name="research-confirm-no" text="Cancel" class="research-confirm-button" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

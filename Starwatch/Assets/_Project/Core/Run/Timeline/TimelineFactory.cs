@@ -1,5 +1,4 @@
 using System;
-using EndlessHeros.Core.Content;
 using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run.Archive;
@@ -14,13 +13,6 @@ namespace EndlessHeros.Core.Run.Timeline
     /// </summary>
     internal sealed class TimelineFactory
     {
-        private readonly ObjectDatabaseSO _database;
-
-        public TimelineFactory(ObjectDatabaseSO database = null)
-        {
-            _database = database;
-        }
-
         /// <summary>
         /// Creates timeline-owned state for a new run or rewind.
         /// Uses the run-scoped entity id factory so ids stay unique across rewinds.
@@ -51,47 +43,45 @@ namespace EndlessHeros.Core.Run.Timeline
             }
 
             timeline.Resources.Grant(startingEmpire.StartingResources);
-            SeedVerticalSliceHome(timeline, universe);
+            SeedStartingSettlements(timeline, startingEmpire);
 
             return timeline;
         }
 
         /// <summary>
-        /// The vertical slice starts with a level-1 colony and one of each catalog building. The stockpile is not charged.
+        /// Places the empire's authored settlements. The stockpile is not charged.
         /// </summary>
-        private void SeedVerticalSliceHome(TimelineState timeline, UniverseState universe)
+        private static void SeedStartingSettlements(TimelineState timeline, StartingEmpireDefinition empire)
         {
-            if (_database == null
-                || universe.ScenarioId != VerticalSliceScenarioFactory.ScenarioId
-                || _database.SettlementCatalog == null)
+            var settlements = empire.StartingSettlements;
+            for (var i = 0; i < settlements.Count; i++)
             {
-                return;
-            }
-
-            var home = ContentId.From("home-prime");
-            var colony = new ColonyState(home, ColonyPresence.Colony);
-            var buildings = _database.SettlementCatalog.Buildings;
-            var placed = 0;
-            for (var i = 0; i < buildings.Count; i++)
-            {
-                var building = buildings[i];
-                if (building == null || building.Id.IsEmpty)
+                var settlement = settlements[i];
+                if (settlement.PlanetId.IsEmpty)
                 {
+                    Debug.LogWarning("TimelineFactory skipped a starting settlement with no planet.");
                     continue;
                 }
 
-                colony.AddBuilding(new ColonyBuildingState(building.Id, 1));
-                placed++;
-            }
+                var presence = settlement.IsColony ? ColonyPresence.Colony : ColonyPresence.Outpost;
+                var colony = new ColonyState(settlement.PlanetId, presence);
+                var buildings = settlement.Buildings;
+                for (var buildingIndex = 0; buildingIndex < buildings.Count; buildingIndex++)
+                {
+                    var building = buildings[buildingIndex];
+                    if (building.BuildingId.IsEmpty)
+                    {
+                        continue;
+                    }
 
-            if (placed == 0)
-            {
-                Debug.LogWarning("TimelineFactory found no buildings to place on the vertical-slice home colony.");
-            }
+                    colony.AddBuilding(new ColonyBuildingState(building.BuildingId, building.Level));
+                }
 
-            if (!timeline.TryAddColony(colony))
-            {
-                Debug.LogWarning("TimelineFactory could not place the vertical-slice home colony.");
+                if (!timeline.TryAddColony(colony))
+                {
+                    Debug.LogWarning(
+                        $"TimelineFactory could not place the starting settlement on '{settlement.PlanetId.Value}'.");
+                }
             }
         }
     }

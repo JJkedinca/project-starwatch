@@ -89,6 +89,25 @@ namespace EndlessHeros.Tests.EditMode.Research
         }
 
         [Test]
+        public void Switch_ReplacesTheActiveProjectAndDropsItsProgress()
+        {
+            var harness = Harness(
+                Project("basic-construction", 20f, TechnologyEffect.Capability("construction")),
+                Project("basic-energy", 20f, TechnologyEffect.Capability("energy")));
+            harness.Research.OnRunStarted(harness.Run);
+            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            harness.Run.Timeline.Research.AddPoints(5f);
+            var next = harness.Run.Timeline.Research.Offers[0];
+
+            var switched = harness.Research.Switch(harness.Run, next);
+
+            Assert.That(switched.Success, Is.True);
+            Assert.That(harness.Run.Timeline.Research.ActiveId, Is.EqualTo(next));
+            Assert.That(harness.Run.Timeline.Research.Points, Is.EqualTo(0f));
+            Assert.That(next, Is.Not.EqualTo(Id("basic-construction")));
+        }
+
+        [Test]
         public void ActiveProject_AdvancesFromLabScienceAndReplayMatches()
         {
             var projects = new[]

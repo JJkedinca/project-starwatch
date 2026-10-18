@@ -129,7 +129,10 @@ namespace EndlessHeros.Core.Content
                 return;
             }
 
-            AddScenario(VerticalSliceScenarioFactory.Create(_starSystemDatabase, _planetDatabase));
+            AddScenario(VerticalSliceScenarioFactory.Create(
+                _starSystemDatabase,
+                _planetDatabase,
+                SettlementCatalog));
             _indexed = _scenarios.Count > 0;
         }
 

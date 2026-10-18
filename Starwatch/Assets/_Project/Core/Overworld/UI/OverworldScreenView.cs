@@ -135,19 +135,22 @@ namespace EndlessHeros.Overworld.UI
         private readonly StarSystemPresenter _system;
         private readonly SettlementPresenter _settlement;
         private readonly StockpilePresenter _stockpile;
+        private readonly ResearchPresenter _research;
 
         public OverworldScreenBinder(
             OverworldScreenView screen,
             StarMapPresenter map,
             StarSystemPresenter system,
             SettlementPresenter settlement,
-            StockpilePresenter stockpile)
+            StockpilePresenter stockpile,
+            ResearchPresenter research)
         {
             _screen = screen;
             _map = map;
             _system = system;
             _settlement = settlement;
             _stockpile = stockpile;
+            _research = research;
         }
 
         public void Start()
@@ -157,6 +160,7 @@ namespace EndlessHeros.Overworld.UI
             _system.Start();
             _settlement.Start();
             _stockpile.Start();
+            _research.Start();
         }
     }
 }

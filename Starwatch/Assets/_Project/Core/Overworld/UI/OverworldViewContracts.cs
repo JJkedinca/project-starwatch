@@ -73,6 +73,14 @@ namespace EndlessHeros.Overworld.UI
     {
         event Action<ContentId> StartRequested;
 
+        event Action<ContentId> SwitchConfirmed;
+
+        event Action Opened;
+
+        bool IsOpen { get; }
+
         void Apply(ResearchPanelModel model);
+
+        void PromptSwitch(ContentId researchId);
     }
 }

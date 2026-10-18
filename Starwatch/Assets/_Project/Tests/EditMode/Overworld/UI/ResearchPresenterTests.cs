@@ -47,6 +47,24 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             var model = new ResearchQuery(database, stack.Economy).Describe(run);
 
             Assert.That(model.CompletedNames, Does.Contain(project.DisplayName));
+            Assert.That(model.CompletedTooltip, Does.Contain(project.DisplayName));
+            Assert.That(model.CompletedTooltip, Does.Contain(ResearchEffectText.Describe(project.Effect)));
+        }
+
+        [Test]
+        public void Describe_OffersCarryTheEffectTooltip()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(85));
+            var database = RunTestFixture.CreateObjectDatabase();
+            var model = new ResearchQuery(database, stack.Economy).Describe(run);
+
+            Assert.That(model.Offers, Is.Not.Empty);
+            for (var i = 0; i < model.Offers.Count; i++)
+            {
+                Assert.That(database.ResearchCatalog.TryGet(model.Offers[i].Id, out var project), Is.True);
+                Assert.That(model.Offers[i].EffectText, Is.EqualTo(ResearchEffectText.Describe(project.Effect)));
+            }
         }
 
         [Test]
@@ -70,12 +88,60 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
 
             Assert.That(view.Model.HasActive, Is.True);
             Assert.That(view.Model.ActiveId, Is.EqualTo(first));
+            Assert.That(
+                RunTestFixture.CreateObjectDatabase().ResearchCatalog.TryGet(first, out var started),
+                Is.True);
+            Assert.That(view.Model.ActiveEffectText, Is.EqualTo(ResearchEffectText.Describe(started.Effect)));
             Assert.That(view.Model.Offers[0].CanStart, Is.False);
             Assert.That(run.Timeline.Research.ActiveId, Is.EqualTo(first));
 
-            view.RaiseStart(view.Model.Offers[0].Id);
+            var other = view.Model.Offers[0].Id;
+            view.RaiseStart(other);
 
             Assert.That(run.Timeline.Research.ActiveId, Is.EqualTo(first));
+            Assert.That(view.PromptedId, Is.EqualTo(other));
+
+            view.ConfirmSwitch();
+
+            Assert.That(run.Timeline.Research.ActiveId, Is.EqualTo(other));
+            Assert.That(run.Timeline.Research.Points, Is.EqualTo(0f));
+            presenter.Dispose();
+        }
+
+        [Test]
+        public void ScienceTick_SkipsAClosedPanelAndAnUnchangedOpenPanel()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(84));
+            var view = new FakeResearchView();
+            var presenter = new ResearchPresenter(
+                view,
+                new OverworldStatus(),
+                stack.Manager,
+                stack.Research,
+                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.Economy),
+                stack.Events);
+            presenter.Start();
+            var afterStart = view.ApplyCount;
+
+            stack.Research.ApplyScience(stack.Manager.CurrentRun, 0f);
+            stack.Research.ApplyScience(stack.Manager.CurrentRun, 0f);
+
+            Assert.That(view.ApplyCount, Is.EqualTo(afterStart));
+
+            view.Open();
+
+            Assert.That(view.ApplyCount, Is.EqualTo(afterStart));
+
+            view.IsOpen = true;
+            stack.Economy.ApplyTick(stack.Manager.CurrentRun);
+            stack.Research.ApplyScience(stack.Manager.CurrentRun, stack.Economy.ProducedScience);
+            var afterDrop = view.ApplyCount;
+            stack.Research.ApplyScience(stack.Manager.CurrentRun, stack.Economy.ProducedScience);
+
+            Assert.That(afterDrop, Is.EqualTo(afterStart + 1));
+            Assert.That(view.ApplyCount, Is.EqualTo(afterDrop));
+            Assert.That(view.Model.ScienceDropped, Is.True);
             presenter.Dispose();
         }
 
@@ -83,16 +149,43 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         {
             public event System.Action<ContentId> StartRequested;
 
+            public event System.Action<ContentId> SwitchConfirmed;
+
+            public event System.Action Opened;
+
+            public ContentId PromptedId { get; private set; }
+
+            public bool IsOpen { get; set; }
+
             public ResearchPanelModel Model { get; private set; }
+
+            public int ApplyCount { get; private set; }
 
             public void Apply(ResearchPanelModel model)
             {
+                ApplyCount++;
                 Model = model;
+            }
+
+            public void Open()
+            {
+                IsOpen = true;
+                Opened?.Invoke();
+            }
+
+            public void PromptSwitch(ContentId researchId)
+            {
+                PromptedId = researchId;
             }
 
             public void RaiseStart(ContentId researchId)
             {
                 StartRequested?.Invoke(researchId);
+            }
+
+            public void ConfirmSwitch()
+            {
+                SwitchConfirmed?.Invoke(PromptedId);
             }
         }
     }

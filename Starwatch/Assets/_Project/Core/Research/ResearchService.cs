@@ -100,6 +100,36 @@ namespace EndlessHeros.Research
         }
 
         /// <summary>
+        /// Drops the active project's progress and starts another offered project.
+        /// </summary>
+        public CommandResult Switch(RunState run, ContentId researchId)
+        {
+            if (run == null)
+            {
+                return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Run is required.");
+            }
+
+            var progress = run.Timeline.Research;
+            if (progress.HasActive && progress.ActiveId == researchId)
+            {
+                return CommandResult.Fail(CommandErrorCode.NotAllowed, "That project is already in progress.");
+            }
+
+            if (researchId.IsEmpty || Catalog == null || !Catalog.TryGet(researchId, out _))
+            {
+                return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Unknown research project.");
+            }
+
+            if (!progress.IsOffered(researchId))
+            {
+                return CommandResult.Fail(CommandErrorCode.NotAllowed, "That project is not one of the current offers.");
+            }
+
+            progress.ClearActive();
+            return Start(run, researchId);
+        }
+
+        /// <summary>
         /// Adds this second's Science to the active project, or records that it was dropped.
         /// </summary>
         public void ApplyScience(RunState run, float science)

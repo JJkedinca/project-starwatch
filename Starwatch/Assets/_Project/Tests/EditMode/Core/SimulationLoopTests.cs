@@ -124,7 +124,7 @@ namespace EndlessHeros.Tests.EditMode.Core
             var system = new CountingSystem();
             loop.Register(system);
             var database = RunTestFixture.CreateObjectDatabase();
-            var timelineFactory = new TimelineFactory(database);
+            var timelineFactory = new TimelineFactory();
             var manager = new RunManager(
                 timelineFactory,
                 new UniverseLoader(timelineFactory),

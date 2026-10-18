@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using EndlessHeros.Core.Identifiers;
 
 namespace EndlessHeros.Core.Data
 {
     /// <summary>
-    /// Authored starting empire: home, starter fleet, and that faction's opening stockpile.
+    /// Authored starting empire: home, starter fleet, opening stockpile, and starting settlements.
     /// </summary>
     public sealed class StartingEmpireDefinition
     {
@@ -14,6 +15,8 @@ namespace EndlessHeros.Core.Data
         public int StarterShipCount { get; }
 
         public StartingResources StartingResources { get; }
+
+        public IReadOnlyList<StartingSettlement> StartingSettlements { get; }
 
         /// <summary>
         /// True when home, fleet class, and ship count are all valid for placement.
@@ -27,12 +30,26 @@ namespace EndlessHeros.Core.Data
             ContentId homeSystemId,
             ContentId starterFleetClassId,
             int starterShipCount,
-            StartingResources startingResources = default)
+            StartingResources startingResources = default,
+            IReadOnlyList<StartingSettlement> startingSettlements = null)
         {
             HomeSystemId = homeSystemId;
             StarterFleetClassId = starterFleetClassId;
             StarterShipCount = starterShipCount < 0 ? 0 : starterShipCount;
             StartingResources = startingResources;
+            StartingSettlements = Copy(startingSettlements);
+        }
+
+        /// <summary>
+        /// Same home, fleet, and stockpile, with no settlements already placed.
+        /// </summary>
+        public StartingEmpireDefinition WithoutSettlements()
+        {
+            return new StartingEmpireDefinition(
+                HomeSystemId,
+                StarterFleetClassId,
+                StarterShipCount,
+                StartingResources);
         }
 
         /// <summary>
@@ -44,6 +61,25 @@ namespace EndlessHeros.Core.Data
                 ContentId.From("home-system"),
                 ContentId.From("starter-screen"),
                 starterShipCount: 3);
+        }
+
+        private static List<StartingSettlement> Copy(IReadOnlyList<StartingSettlement> source)
+        {
+            var copy = new List<StartingSettlement>();
+            if (source == null)
+            {
+                return copy;
+            }
+
+            for (var i = 0; i < source.Count; i++)
+            {
+                if (source[i] != null)
+                {
+                    copy.Add(source[i]);
+                }
+            }
+
+            return copy;
         }
     }
 }

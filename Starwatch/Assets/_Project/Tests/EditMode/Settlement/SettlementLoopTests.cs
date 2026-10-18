@@ -25,8 +25,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         public void FoundColony_SpendsRisingCostAndRejectsASecondColonyTheStockpileCannotAfford()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(51));
-            RemoveStarterHome(run);
+            var run = UnsettledRun(stack, 51);
             var home = ContentId.From("home-prime");
             var moon = ContentId.From("home-moon");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -48,8 +47,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         public void FoundOutpost_DoesNotCountTowardTheColonyCurve()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(52));
-            RemoveStarterHome(run);
+            var run = UnsettledRun(stack, 52);
             var moon = ContentId.From("home-moon");
             var home = ContentId.From("home-prime");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -70,8 +68,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         public void FoundColony_PromotesAnOutpostAndRequiresAScan()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(53));
-            RemoveStarterHome(run);
+            var run = UnsettledRun(stack, 53);
             var home = ContentId.From("home-prime");
             var forge = ContentId.From("forge-world");
 
@@ -118,8 +115,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         public void Upgrade_StopsAtMaxLevel()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(55));
-            RemoveStarterHome(run);
+            var run = UnsettledRun(stack, 55);
             var home = ContentId.From("home-prime");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
             stack.Settlement.FoundColony(run, ObserverId.Player, home);
@@ -135,11 +131,10 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         }
 
         [Test]
-        public void EconomyTick_PaysUpkeepOncePerSimulationSecond()
+        public void EconomyTick_SettlesAccumulatedRatesOncePerInterval()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(56));
-            RemoveStarterHome(run);
+            var run = UnsettledRun(stack, 56);
             var home = ContentId.From("home-prime");
             var forge = ContentId.From("forge-world");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -148,22 +143,18 @@ namespace EndlessHeros.Tests.EditMode.Settlement
             stack.Buildings.Place(run, home, industry);
             var industryBefore = run.Timeline.Resources.Get(ResourceKind.Industry);
             var energyBefore = run.Timeline.Resources.Get(ResourceKind.Energy);
-            var ticksPerSecond = TicksPerEconomyStep();
+            var ticksPerInterval = TicksPerEconomyStep();
+            var seconds = (int)EconomyTickSystem.kIntervalSeconds;
 
-            AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond - 1);
+            AdvanceTicks(stack.Loop, stack.Clock, ticksPerInterval - 1);
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industryBefore));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(energyBefore));
 
             AdvanceTicks(stack.Loop, stack.Clock, 1);
 
-            Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industryBefore + 2));
-            Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(energyBefore - 1));
-
-            run.Timeline.Resources.TrySpend(new[] { new ResourceAmount(ResourceKind.Energy, run.Timeline.Resources.Get(ResourceKind.Energy)) });
-            var stalled = run.Timeline.Resources.Get(ResourceKind.Industry);
-            AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond);
-            Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(stalled));
+            Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industryBefore + (2 * seconds)));
+            Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(energyBefore));
 
             PrepareForge(stack.Exploration, stack.Sensor, run, forge);
             run.Timeline.Resources.Grant(new[]
@@ -176,10 +167,10 @@ namespace EndlessHeros.Tests.EditMode.Settlement
             Assert.That(stack.Buildings.Place(run, forge, ContentId.From("extractor")).Success, Is.True);
             var beforeForgeTick = run.Timeline.Resources.Get(ResourceKind.Industry);
             var strategicBefore = run.Timeline.Resources.Get(ResourceKind.Strategic);
-            AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond);
+            AdvanceTicks(stack.Loop, stack.Clock, ticksPerInterval);
 
-            Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(beforeForgeTick + 2 + 4));
-            Assert.That(run.Timeline.Resources.Get(ResourceKind.Strategic), Is.EqualTo(strategicBefore + 4));
+            Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(beforeForgeTick + ((2 + 4) * seconds)));
+            Assert.That(run.Timeline.Resources.Get(ResourceKind.Strategic), Is.EqualTo(strategicBefore + (4 * seconds)));
         }
 
         [Test]
@@ -221,8 +212,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         public void Abandon_DropsTheClaimAndLeavesTheSunkCostSpent()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(58));
-            RemoveStarterHome(run);
+            var run = UnsettledRun(stack, 58);
             var home = ContentId.From("home-prime");
             var missing = stack.Settlement.Abandon(run, home);
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -250,24 +240,24 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(57));
-            RemoveStarterHome(run);
             var home = ContentId.From("home-prime");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
-            stack.Settlement.FoundColony(run, ObserverId.Player, home);
+            var moon = ContentId.From("home-moon");
+            Assert.That(stack.Settlement.FoundOutpost(run, ObserverId.Player, moon).Success, Is.True);
 
             var fresh = new TimelineFactory().Create(run.Universe, run.Archive, new EntityIdFactory());
 
-            Assert.That(fresh.ColonyCount(), Is.EqualTo(0));
+            Assert.That(fresh.TryGetColony(home, out var restored), Is.True);
+            Assert.That(restored.Presence, Is.EqualTo(ColonyPresence.Colony));
+            Assert.That(fresh.TryGetColony(moon, out _), Is.False);
             Assert.That(fresh.Resources.Get(ResourceKind.Industry), Is.EqualTo(80));
-            Assert.That(run.Timeline.ColonyCount(), Is.EqualTo(1));
+            Assert.That(run.Timeline.TryGetColony(moon, out _), Is.True);
         }
 
         [Test]
         public void EconomyTick_DropsThePartialSecondWhenTheTimelineIsRecreated()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(59));
-            RemoveStarterHome(run);
+            var run = UnsettledRun(stack, 59);
             var home = ContentId.From("home-prime");
             var industry = ContentId.From("industry-works");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -307,9 +297,12 @@ namespace EndlessHeros.Tests.EditMode.Settlement
             }
         }
 
-        private static void RemoveStarterHome(RunState run)
+        private static RunState UnsettledRun(OverworldTestContext stack, int seed)
         {
-            run.Timeline.TryRemoveColony(ContentId.From("home-prime"));
+            return stack.Manager.CreateRun(
+                "authored-vertical-slice",
+                RunSeed.FromValue(seed),
+                RunTestFixture.UnsettledVerticalSlice());
         }
 
         private static (SettlementService Settlement, RunState Run) CreateRunOnGraph(

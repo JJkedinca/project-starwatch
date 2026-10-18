@@ -52,8 +52,10 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         public void SettlementFounded_UpdatesTheBar()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(65));
-            run.Timeline.TryRemoveColony(ContentId.From("home-prime"));
+            var run = stack.Manager.CreateRun(
+                "authored-vertical-slice",
+                RunSeed.FromValue(65),
+                RunTestFixture.UnsettledVerticalSlice());
             var view = new FakeStockpileView();
             var presenter = new StockpilePresenter(view, stack.Manager, new StockpileQuery(), stack.Events);
             presenter.Start();

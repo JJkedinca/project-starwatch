@@ -1,3 +1,4 @@
+using System;
 using EndlessHeros.Core.Content;
 using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Effects;
@@ -38,7 +39,7 @@ namespace EndlessHeros.Tests.EditMode.Core
         {
             objectDatabase = objectDatabase ?? CreateObjectDatabase();
             journal = journal ?? new EventJournal();
-            var timelineFactory = new TimelineFactory(objectDatabase);
+            var timelineFactory = new TimelineFactory();
             var loader = new UniverseLoader(timelineFactory);
             return new RunManager(timelineFactory, loader, objectDatabase, journal, new SimulationLoop(new SimulationClock()));
         }
@@ -50,7 +51,7 @@ namespace EndlessHeros.Tests.EditMode.Core
             var events = new DomainEventBus(journal);
             var clock = new SimulationClock();
             var loop = new SimulationLoop(clock);
-            var timelineFactory = new TimelineFactory(objectDatabase);
+            var timelineFactory = new TimelineFactory();
             var loader = new UniverseLoader(timelineFactory);
             var manager = new RunManager(timelineFactory, loader, objectDatabase, journal, loop);
             var route = new RouteService();
@@ -64,7 +65,7 @@ namespace EndlessHeros.Tests.EditMode.Core
             var economy = new EconomyService(objectDatabase, production, events, clock);
             var research = new ResearchService(objectDatabase, effects, events, clock);
             var economyTick = new EconomyTickSystem(economy);
-            var researchTick = new ResearchTickSystem(research, economy, economyTick);
+            var researchTick = new ResearchTickSystem(research, economyTick);
             var sensor = new SensorService(archive, objectDatabase, events, clock);
             var settlement = new SettlementService(objectDatabase, events, clock);
             var buildings = new BuildingService(objectDatabase, events, clock);
@@ -87,6 +88,18 @@ namespace EndlessHeros.Tests.EditMode.Core
                 economy: economy,
                 research: research,
                 effects: effects);
+        }
+
+        internal static StartingEmpireDefinition UnsettledVerticalSlice()
+        {
+            var database = CreateObjectDatabase();
+            if (!database.TryGetScenario(VerticalSliceScenarioFactory.ScenarioId, out var scenario)
+                || scenario.StartingEmpire == null)
+            {
+                throw new InvalidOperationException("The vertical slice scenario is missing.");
+            }
+
+            return scenario.StartingEmpire.WithoutSettlements();
         }
     }
 }

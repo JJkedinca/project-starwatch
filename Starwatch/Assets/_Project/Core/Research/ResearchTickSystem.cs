@@ -7,24 +7,22 @@ namespace EndlessHeros.Research
 {
     /// <summary>
     /// Hears run and timeline changes from the simulation loop. Science is taken from
-    /// <see cref="EconomyTickSystem"/> after each settled second.
+    /// <see cref="EconomyTickSystem"/> after each 30-second settlement.
     /// </summary>
     internal sealed class ResearchTickSystem : ISimulationSystem
     {
         private readonly ResearchService _research;
-        private readonly EconomyService _economy;
         private RunState _run;
 
-        public ResearchTickSystem(ResearchService research, EconomyService economy, EconomyTickSystem economyTick)
+        public ResearchTickSystem(ResearchService research, EconomyTickSystem economyTick)
         {
             _research = research ?? throw new ArgumentNullException(nameof(research));
-            _economy = economy ?? throw new ArgumentNullException(nameof(economy));
             if (economyTick == null)
             {
                 throw new ArgumentNullException(nameof(economyTick));
             }
 
-            economyTick.AfterEachSecond(Consume);
+            economyTick.AfterEachSettlement(Consume);
         }
 
         public void OnRunChanged(RunState run)
@@ -40,22 +38,22 @@ namespace EndlessHeros.Research
 
         public void OnSimulationTick(GameTime time, float tickDeltaSeconds)
         {
-            // Science is applied from the economy-second callback, not from this tick.
+            // Science is applied from the economy settlement, not from this tick.
             _ = time;
             _ = tickDeltaSeconds;
         }
 
         /// <summary>
-        /// Called once after each economy second, including a second that produced zero Science.
+        /// Called once after each settlement, including a window that produced zero Science.
         /// </summary>
-        public void Consume()
+        public void Consume(float science)
         {
             if (_run == null)
             {
                 return;
             }
 
-            _research.ApplyScience(_run, _economy.ProducedScience);
+            _research.ApplyScience(_run, science);
         }
     }
 }
