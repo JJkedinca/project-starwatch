@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Universe;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Universe;
 
-namespace EndlessHeros.Overworld.Services
+namespace ProjectStarwatch.Overworld.Services
 {
     /// <summary>
     /// Stateless route queries against the universe map graph.

@@ -1,6 +1,6 @@
-using EndlessHeros.Core.Run;
+using ProjectStarwatch.Core.Run;
 
-namespace EndlessHeros.Core.Persistence
+namespace ProjectStarwatch.Core.Persistence
 {
     /// <summary>
     /// Persistence boundary for run state. Feature services depend on this

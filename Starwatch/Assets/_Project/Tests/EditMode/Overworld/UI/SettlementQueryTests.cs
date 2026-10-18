@@ -1,12 +1,12 @@
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Overworld.UI;
-using EndlessHeros.Settlement;
-using EndlessHeros.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Overworld.UI;
+using ProjectStarwatch.Settlement;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 
-namespace EndlessHeros.Tests.EditMode.Overworld.UI
+namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
     /// Settlement panel read model: costs, scan gate, and quoted rates.

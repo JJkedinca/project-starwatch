@@ -1,13 +1,13 @@
-using EndlessHeros.Core.Content;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Settlement;
-using EndlessHeros.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Content;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Settlement;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace EndlessHeros.Tests.EditMode.Settlement
+namespace ProjectStarwatch.Tests.EditMode.Settlement
 {
     /// <summary>
     /// EditMode coverage for a colony production quote.

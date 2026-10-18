@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Simulation
+namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
     /// Immutable simulation timestamp measured in seconds from run start.

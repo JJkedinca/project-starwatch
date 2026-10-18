@@ -2,9 +2,9 @@
 
 ## Overview
 
-EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-battle RTS combat (short-term top-down squad placeholders; target presentation is 2.5D isometric).
+ProjectStarwatch is a fantasy roguelike: FTL-style overworld adventure plus auto-battle RTS combat (short-term top-down squad placeholders; target presentation is 2.5D isometric).
 
-- **Active project:** [`EndlessHerosUnity/`](EndlessHerosUnity/) (Unity 6, URP).
+- **Active project:** [`Starwatch/`](Starwatch/) (Unity 6, URP).
 - **Legacy reference:** Unreal (`Source/`, `Content/`) is frozen for behavior/design reference only — do not extend it unless explicitly asked.
 - **Presentation (short-term battle):** full top-down camera; squads as selectable combat entities with up to 10–20 shape/icon members + world HP/energy bars. Continuous NavMesh battle space (no hex grid). Later: isometric + sprite art.
 - **Platform:** Desktop for iteration; architect for mobile (draw calls, pooling, quality tiers).
@@ -28,12 +28,12 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 
 ## Code Organization Guardrails
 
-- Game content lives under `EndlessHerosUnity/Assets/_Project/`.
-- Namespaces mirror folders: `EndlessHeros.Core`, `EndlessHeros.Battle`, `EndlessHeros.Overworld`, `EndlessHeros.UI`, `EndlessHeros.Data`, `EndlessHeros.Shared`.
+- Game content lives under `Starwatch/Assets/_Project/`.
+- Namespaces mirror folders: `ProjectStarwatch.Core`, `ProjectStarwatch.Battle`, `ProjectStarwatch.Overworld`, `ProjectStarwatch.UI`, `ProjectStarwatch.Data`, `ProjectStarwatch.Shared`.
 - If a change would add more than ~150 lines to one existing `.cs` file, pause and extract a helper/coordinator.
 - Keep managers/services orchestration-focused; move feature state machines into dedicated helpers.
 - Prefer clear type names (`Unit`, `RunManager`). Use an `EH` / `I` prefix only where it avoids collisions or marks engine-facing contracts.
-- Tests mirror production folders under `EndlessHerosUnity/Assets/_Project/Tests/` (see Tests / Build).
+- Tests mirror production folders under `Starwatch/Assets/_Project/Tests/` (see Tests / Build).
 
 ## DI and Patterns
 
@@ -76,7 +76,7 @@ EndlessHeros is a fantasy roguelike: FTL-style overworld adventure plus auto-bat
 
 ## Tests / Build
 
-- Tests live under `EndlessHerosUnity/Assets/_Project/Tests/` (`EditMode/` for pure logic, `PlayMode/` when Unity frame/scene lifetime is required).
+- Tests live under `Starwatch/Assets/_Project/Tests/` (`EditMode/` for pure logic, `PlayMode/` when Unity frame/scene lifetime is required).
 - **Every functional / abstractable type needs tests** — services, managers, registries, coordinators, catalog lookups, combat/resolve helpers, presenters’ logic (not thin MonoBehaviour views, pure DTOs/enums, or empty LifetimeScope shells). Add or extend tests in the same change as the production code.
 - UI tests target logic, not the visual tree. Test query/model builders, selection/navigation state, and presenter intent → service / domain event → refresh wiring (against a fake view). Do not assert on visual-tree element names, USS classes, or exact display strings, and do not test thin views. At most one end-to-end smoke test per screen.
 - Prefer EditMode tests; use PlayMode only when behavior depends on `Update`, scenes, physics, or NavMesh.

@@ -1,7 +1,7 @@
 using System;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 
-namespace EndlessHeros.Core.Run.Timeline
+namespace ProjectStarwatch.Core.Run.Timeline
 {
     /// <summary>
     /// Minimal timeline-owned fleet placeholder until the fleet slice lands.

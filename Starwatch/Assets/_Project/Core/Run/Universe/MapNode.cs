@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Run.Universe
+namespace ProjectStarwatch.Core.Run.Universe
 {
     /// <summary>
     /// Immutable runtime map node copied from authored scenario content.

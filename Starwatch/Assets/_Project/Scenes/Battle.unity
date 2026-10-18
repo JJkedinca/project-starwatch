@@ -147,7 +147,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa2428fe669775c40b8192d2fcfd2222, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Bootstrap.BattleLifetimeScope
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Bootstrap.BattleLifetimeScope
   parentReference:
     TypeName: 
   autoRun: 1

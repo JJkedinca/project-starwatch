@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 
-namespace EndlessHeros.Core.Run.Universe
+namespace ProjectStarwatch.Core.Run.Universe
 {
     /// <summary>
     /// Immutable universe map: nodes, undirected routes, and adjacency lookup.

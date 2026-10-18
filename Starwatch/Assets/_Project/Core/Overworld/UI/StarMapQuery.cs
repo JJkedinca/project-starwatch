@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Overworld;
-using EndlessHeros.Core.Run.Universe;
-using EndlessHeros.Overworld.Services;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Overworld;
+using ProjectStarwatch.Core.Run.Universe;
+using ProjectStarwatch.Overworld.Services;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Read model for the star map and the selected-node card.

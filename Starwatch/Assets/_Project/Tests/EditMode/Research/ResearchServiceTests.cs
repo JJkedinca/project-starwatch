@@ -1,19 +1,19 @@
 using System;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Effects;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Simulation;
-using EndlessHeros.Research;
-using EndlessHeros.Settlement;
-using EndlessHeros.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Effects;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Research;
+using ProjectStarwatch.Settlement;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace EndlessHeros.Tests.EditMode.Research
+namespace ProjectStarwatch.Tests.EditMode.Research
 {
     /// <summary>
     /// Offer rules, Science hand-off, and effect stacking.
@@ -84,7 +84,7 @@ namespace EndlessHeros.Tests.EditMode.Research
             var rejected = harness.Research.Start(harness.Run, Id("basic-energy"));
 
             Assert.That(rejected.Success, Is.False);
-            Assert.That(rejected.Error.Code, Is.EqualTo(EndlessHeros.Core.Commands.CommandErrorCode.NotAllowed));
+            Assert.That(rejected.Error.Code, Is.EqualTo(ProjectStarwatch.Core.Commands.CommandErrorCode.NotAllowed));
             Assert.That(harness.Run.Timeline.Research.ActiveId, Is.EqualTo(Id("basic-construction")));
         }
 
@@ -179,7 +179,7 @@ namespace EndlessHeros.Tests.EditMode.Research
             var rejected = harness.Research.Start(harness.Run, Id("free"));
 
             Assert.That(rejected.Success, Is.False);
-            Assert.That(rejected.Error.Code, Is.EqualTo(EndlessHeros.Core.Commands.CommandErrorCode.InvalidArgument));
+            Assert.That(rejected.Error.Code, Is.EqualTo(ProjectStarwatch.Core.Commands.CommandErrorCode.InvalidArgument));
             Assert.That(harness.Run.Timeline.Research.HasActive, Is.False);
         }
 
@@ -277,7 +277,7 @@ namespace EndlessHeros.Tests.EditMode.Research
             var rejected = harness.Research.Start(harness.Run, Id("ghost"));
 
             Assert.That(rejected.Success, Is.False);
-            Assert.That(rejected.Error.Code, Is.EqualTo(EndlessHeros.Core.Commands.CommandErrorCode.InvalidArgument));
+            Assert.That(rejected.Error.Code, Is.EqualTo(ProjectStarwatch.Core.Commands.CommandErrorCode.InvalidArgument));
             Assert.That(harness.Run.Timeline.Research.HasActive, Is.False);
 
             harness.Run.Timeline.Research.Start(Id("ghost"));
@@ -413,13 +413,13 @@ namespace EndlessHeros.Tests.EditMode.Research
             return Harness(RunTestFixture.CreateObjectDatabase(), 71, projects);
         }
 
-        private static ResearchHarness Harness(EndlessHeros.Core.Content.ObjectDatabaseSO database, params ResearchDefinitionSO[] projects)
+        private static ResearchHarness Harness(ProjectStarwatch.Core.Content.ObjectDatabaseSO database, params ResearchDefinitionSO[] projects)
         {
             return Harness(database, 71, projects);
         }
 
         private static ResearchHarness Harness(
-            EndlessHeros.Core.Content.ObjectDatabaseSO database,
+            ProjectStarwatch.Core.Content.ObjectDatabaseSO database,
             int seed,
             params ResearchDefinitionSO[] projects)
         {
@@ -435,9 +435,9 @@ namespace EndlessHeros.Tests.EditMode.Research
             var entityIds = new EntityIdFactory();
             var run = new RunState(
                 RunSeed.FromValue(seed),
-                new EndlessHeros.Core.Run.Universe.UniverseState("research", StartingEmpireDefinition.CreateDefault(), EndlessHeros.Core.Run.Universe.MapGraph.Empty),
+                new ProjectStarwatch.Core.Run.Universe.UniverseState("research", StartingEmpireDefinition.CreateDefault(), ProjectStarwatch.Core.Run.Universe.MapGraph.Empty),
                 new TimelineState(entityIds),
-                new EndlessHeros.Core.Run.Archive.RunArchive(),
+                new ProjectStarwatch.Core.Run.Archive.RunArchive(),
                 rewindIndex: 0,
                 new DeterministicRandom(seed),
                 entityIds);
@@ -474,7 +474,7 @@ namespace EndlessHeros.Tests.EditMode.Research
 
         private sealed class ResearchHarness
         {
-            public EndlessHeros.Core.Content.ObjectDatabaseSO Database { get; }
+            public ProjectStarwatch.Core.Content.ObjectDatabaseSO Database { get; }
 
             public EffectRegistry Effects { get; }
 
@@ -487,7 +487,7 @@ namespace EndlessHeros.Tests.EditMode.Research
             public RunState Run { get; }
 
             public ResearchHarness(
-                EndlessHeros.Core.Content.ObjectDatabaseSO database,
+                ProjectStarwatch.Core.Content.ObjectDatabaseSO database,
                 EffectRegistry effects,
                 EconomyService economy,
                 ProductionService production,

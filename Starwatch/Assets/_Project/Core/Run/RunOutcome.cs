@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Run
+namespace ProjectStarwatch.Core.Run
 {
     /// <summary>
     /// High-level result kinds for a timeline or complete run.

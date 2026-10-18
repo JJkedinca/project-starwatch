@@ -1,11 +1,11 @@
-using EndlessHeros.Core.Commands;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Commands;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Overworld.Services
+namespace ProjectStarwatch.Overworld.Services
 {
     /// <summary>
     /// Starts fleet travel when route and exploration rules allow.

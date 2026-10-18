@@ -1,6 +1,6 @@
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Run.Timeline;
 
-namespace EndlessHeros.Settlement
+namespace ProjectStarwatch.Settlement
 {
     /// <summary>
     /// One colony's output and upkeep for a single second. The quote owns both totals.

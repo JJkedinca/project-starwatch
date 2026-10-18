@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Distinguishes planetary star systems from other star-map locations such as belts and rifts.

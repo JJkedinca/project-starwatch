@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Research;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Research;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Research offers, the active project, and completed research. The stockpile button opens and closes it. One authored button per <see cref="ResearchOfferSelector.kSlotCount"/>.

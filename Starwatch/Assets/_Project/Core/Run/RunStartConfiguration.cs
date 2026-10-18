@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Run
+namespace ProjectStarwatch.Core.Run
 {
     /// <summary>
     /// Input data for starting a run from the main menu or development tools.

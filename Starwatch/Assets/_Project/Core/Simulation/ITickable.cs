@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Simulation
+namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
     /// Legacy alias for simulation systems. Prefer ISimulationSystem.

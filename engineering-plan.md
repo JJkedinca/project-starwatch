@@ -19,7 +19,7 @@ post-run progression remain outside the first implementation pass.
 ## Current Repository Status
 
 The active Unity project is `Starwatch/`. Gameplay content lives under
-`Starwatch/Assets/_Project/`. The namespace root remains `EndlessHeros`.
+`Starwatch/Assets/_Project/`. The namespace root remains `ProjectStarwatch`.
 
 The application shell is largely in place: Bootstrap → Main Menu → Start Run →
 Overworld, with project-scoped DI, a paused-until-run simulation clock, and a
@@ -1170,12 +1170,12 @@ Assets/_Project/
 
 Namespaces should mirror these folders according to the project conventions:
 
-- `EndlessHeros.Core`
-- `EndlessHeros.Overworld`
-- `EndlessHeros.Battle`
-- `EndlessHeros.UI`
-- `EndlessHeros.Data`
-- `EndlessHeros.Shared`
+- `ProjectStarwatch.Core`
+- `ProjectStarwatch.Overworld`
+- `ProjectStarwatch.Battle`
+- `ProjectStarwatch.UI`
+- `ProjectStarwatch.Data`
+- `ProjectStarwatch.Shared`
 
 ## Package and Project Prerequisites
 

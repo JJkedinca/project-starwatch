@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Content;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Effects;
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Content;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Effects;
+using ProjectStarwatch.Core.Run.Timeline;
 
-namespace EndlessHeros.Settlement
+namespace ProjectStarwatch.Settlement
 {
     /// <summary>
     /// Pure output and upkeep for one colony. Views and the tick both use this quote.

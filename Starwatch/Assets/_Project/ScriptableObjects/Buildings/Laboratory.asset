@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c8b4e1a27f3d4c6e9a0b5d2f81736450, type: 3}
   m_Name: Laboratory
-  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Data.BuildingDefinitionSO
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Data.BuildingDefinitionSO
   _id: laboratory
   _displayName: Laboratory
   _footprint: 2

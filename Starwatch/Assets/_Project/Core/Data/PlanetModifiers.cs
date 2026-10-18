@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Output multipliers for one planet. 1 is baseline. 0 counts as unset.

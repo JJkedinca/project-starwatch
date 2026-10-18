@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Run;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Run;
 
-namespace EndlessHeros.Core.Effects
+namespace ProjectStarwatch.Core.Effects
 {
     /// <summary>
     /// Active buffs rebuilt from completed research. This registry is not saved.

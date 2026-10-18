@@ -1,13 +1,13 @@
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using EndlessHeros.Core.Bootstrap;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Bootstrap;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace EndlessHeros.Tests.EditMode.Core
+namespace ProjectStarwatch.Tests.EditMode.Core
 {
     /// <summary>
     /// EditMode coverage for run-start clock reset and overlapping start guards.

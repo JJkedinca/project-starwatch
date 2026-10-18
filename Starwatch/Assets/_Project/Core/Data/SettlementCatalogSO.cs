@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// References the building assets available to colonies.
     /// </summary>
-    [CreateAssetMenu(fileName = "SettlementCatalog", menuName = "Endless Heros/Settlement Catalog")]
+    [CreateAssetMenu(fileName = "SettlementCatalog", menuName = "Starwatch/Settlement Catalog")]
     public sealed class SettlementCatalogSO : ScriptableObject
     {
         [Tooltip("Building assets included in this catalog.")]

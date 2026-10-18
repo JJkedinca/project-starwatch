@@ -1,8 +1,8 @@
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Run.Timeline;
 using NUnit.Framework;
 
-namespace EndlessHeros.Tests.EditMode.Core.Run
+namespace ProjectStarwatch.Tests.EditMode.Core.Run
 {
     /// <summary>
     /// EditMode coverage for per-resource totals.

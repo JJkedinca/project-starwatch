@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Side panel for the selected star system: summary and travel.

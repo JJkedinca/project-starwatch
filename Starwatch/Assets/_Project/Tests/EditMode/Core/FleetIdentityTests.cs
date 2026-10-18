@@ -1,9 +1,9 @@
 using System;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Timeline;
 using NUnit.Framework;
 
-namespace EndlessHeros.Tests.EditMode.Core
+namespace ProjectStarwatch.Tests.EditMode.Core
 {
     public sealed class FleetIdentityTests
     {

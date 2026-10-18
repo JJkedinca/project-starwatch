@@ -1,6 +1,6 @@
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Footprint, output multipliers, and deposits for the selected planet.

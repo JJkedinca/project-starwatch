@@ -1,6 +1,6 @@
 using System;
 
-namespace EndlessHeros.Core.Identifiers
+namespace ProjectStarwatch.Core.Identifiers
 {
     /// <summary>
     /// Stable runtime identity for mutable simulation entities such as fleets.

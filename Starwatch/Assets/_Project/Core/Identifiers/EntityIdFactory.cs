@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Identifiers
+namespace ProjectStarwatch.Core.Identifiers
 {
     /// <summary>
     /// Issues monotonically increasing EntityIds for the lifetime of a run.

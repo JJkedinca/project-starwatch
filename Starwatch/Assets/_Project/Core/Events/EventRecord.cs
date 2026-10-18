@@ -1,6 +1,6 @@
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Core.Events
+namespace ProjectStarwatch.Core.Events
 {
     /// <summary>
     /// One journaled domain event. The payload is the event that was published.

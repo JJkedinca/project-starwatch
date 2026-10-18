@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Authored set of planet definitions. Assigned on ObjectDatabaseSO.
     /// </summary>
-    [CreateAssetMenu(fileName = "PlanetDatabaseSO", menuName = "Endless Heros/Planet Database")]
+    [CreateAssetMenu(fileName = "PlanetDatabaseSO", menuName = "Starwatch/Planet Database")]
     public sealed class PlanetDatabaseSO : ScriptableObject
     {
         [SerializeField]

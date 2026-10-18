@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Found-outpost, found-colony, and abandon actions for the selected planet.

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace EndlessHeros.Core.Events
+namespace ProjectStarwatch.Core.Events
 {
     /// <summary>
     /// Ordered log of domain events for the active run.

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Shared settlement prices. Every playable faction uses these until a faction can override them.

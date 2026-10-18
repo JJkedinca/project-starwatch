@@ -1,6 +1,6 @@
-using EndlessHeros.Core.Data;
+using ProjectStarwatch.Core.Data;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Player-facing description of one research effect.

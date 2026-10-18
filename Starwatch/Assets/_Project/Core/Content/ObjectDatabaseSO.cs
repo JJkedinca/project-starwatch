@@ -1,14 +1,14 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
+using ProjectStarwatch.Core.Data;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Content
+namespace ProjectStarwatch.Core.Content
 {
     /// <summary>
     /// Lookup from stable content IDs to authored definitions.
     /// Assign source databases on the asset. Indexes are built on first use.
     /// </summary>
-    [CreateAssetMenu(fileName = "ObjectDatabaseSO", menuName = "Endless Heros/Object Database")]
+    [CreateAssetMenu(fileName = "ObjectDatabaseSO", menuName = "Starwatch/Object Database")]
     public sealed class ObjectDatabaseSO : ScriptableObject
     {
         [SerializeField]

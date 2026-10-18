@@ -3,7 +3,7 @@ using UnityEngine.UIElements;
 using VContainer;
 using VContainer.Unity;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Binds the overworld screen and gives each group the elements it owns.

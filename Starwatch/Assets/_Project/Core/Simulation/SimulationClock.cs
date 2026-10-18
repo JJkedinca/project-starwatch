@@ -1,6 +1,6 @@
 using System;
 
-namespace EndlessHeros.Core.Simulation
+namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
     /// Authoritative simulation clock. Tracks pause/speed and simulation time.

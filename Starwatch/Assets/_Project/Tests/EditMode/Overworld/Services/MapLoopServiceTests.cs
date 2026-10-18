@@ -1,16 +1,16 @@
-using EndlessHeros.Core.Commands;
-using EndlessHeros.Core.Content;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Overworld;
-using EndlessHeros.Overworld.Services;
-using EndlessHeros.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Commands;
+using ProjectStarwatch.Core.Content;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Overworld;
+using ProjectStarwatch.Overworld.Services;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace EndlessHeros.Tests.EditMode.Overworld.Services
+namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
 {
     /// <summary>
     /// EditMode coverage for explore / scan / travel / visibility loop.
@@ -182,7 +182,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.Services
             var result = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, frontier);
 
             Assert.That(result.Success, Is.False);
-            Assert.That(result.Error.Code, Is.EqualTo(EndlessHeros.Core.Commands.CommandErrorCode.InvalidRoute));
+            Assert.That(result.Error.Code, Is.EqualTo(ProjectStarwatch.Core.Commands.CommandErrorCode.InvalidRoute));
         }
     }
 }

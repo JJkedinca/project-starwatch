@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Content;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Overworld;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Universe;
-using EndlessHeros.Overworld.Services;
+using ProjectStarwatch.Core.Content;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Overworld;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Universe;
+using ProjectStarwatch.Overworld.Services;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Read model for the open star system and the selected planet.

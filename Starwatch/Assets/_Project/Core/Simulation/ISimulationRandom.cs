@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Simulation
+namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
     /// Injected randomness for game rules. Never use UnityEngine.Random in services.

@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8f5d2b0c3e7a4f9b0d1c2e3f40516272, type: 3}
   m_Name: ResearchCatalog
-  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Data.ResearchCatalogSO
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Data.ResearchCatalogSO
   _researches:
   - {fileID: 11400000, guid: 11aa0001bbcc4dde8ff0011223344501, type: 2}
   - {fileID: 11400000, guid: 11aa0001bbcc4dde8ff0011223344502, type: 2}

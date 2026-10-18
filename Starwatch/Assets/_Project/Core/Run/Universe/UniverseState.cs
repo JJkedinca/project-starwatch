@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
 
-namespace EndlessHeros.Core.Run.Universe
+namespace ProjectStarwatch.Core.Run.Universe
 {
     /// <summary>
     /// Fixed run-level universe: authored map graph and starting empire.

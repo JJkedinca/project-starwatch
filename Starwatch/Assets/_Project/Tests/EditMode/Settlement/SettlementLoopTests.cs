@@ -1,20 +1,20 @@
 using System;
-using EndlessHeros.Core.Commands;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Archive;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Run.Universe;
-using EndlessHeros.Core.Simulation;
-using EndlessHeros.Overworld.Services;
-using EndlessHeros.Settlement;
-using EndlessHeros.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Commands;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Archive;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Run.Universe;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Overworld.Services;
+using ProjectStarwatch.Settlement;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace EndlessHeros.Tests.EditMode.Settlement
+namespace ProjectStarwatch.Tests.EditMode.Settlement
 {
     /// <summary>
     /// EditMode coverage for outposts, the settlement curve, buildings, and the economy tick.

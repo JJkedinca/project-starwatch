@@ -1,8 +1,8 @@
-using EndlessHeros.Core.Run;
+using ProjectStarwatch.Core.Run;
 using VContainer;
 using VContainer.Unity;
 
-namespace EndlessHeros.Core.Bootstrap
+namespace ProjectStarwatch.Core.Bootstrap
 {
     /// <summary>
     /// Scene scope for MainMenu. Registers run-start services and the menu presenter entry point.

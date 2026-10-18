@@ -1,10 +1,10 @@
 using System;
 using Cysharp.Threading.Tasks;
-using EndlessHeros.Core.Bootstrap;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Bootstrap;
+using ProjectStarwatch.Core.Simulation;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Run
+namespace ProjectStarwatch.Core.Run
 {
     /// <summary>
     /// Main-menu command handler that creates a run and requests the overworld scene.

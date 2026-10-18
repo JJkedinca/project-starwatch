@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Simulation;
-using EndlessHeros.Overworld.Services;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Overworld.Services;
 
-namespace EndlessHeros.Overworld.Systems
+namespace ProjectStarwatch.Overworld.Systems
 {
     /// <summary>
     /// Completes due fleet arrivals and explores the destination. Stepped by SimulationLoop, not Unity Update.

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// One map node: where it sits, what kind it is, and how it is drawn.

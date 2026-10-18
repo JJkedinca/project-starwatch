@@ -1,6 +1,6 @@
 using System;
 
-namespace EndlessHeros.Core.Identifiers
+namespace ProjectStarwatch.Core.Identifiers
 {
     /// <summary>
     /// Stable identifier for authored content definitions (systems, ships, techs).

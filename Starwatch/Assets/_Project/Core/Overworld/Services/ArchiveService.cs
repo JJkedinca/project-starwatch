@@ -1,7 +1,7 @@
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Archive;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Archive;
 
-namespace EndlessHeros.Overworld.Services
+namespace ProjectStarwatch.Overworld.Services
 {
     /// <summary>
     /// Thin façade for map-knowledge writes on the run archive.

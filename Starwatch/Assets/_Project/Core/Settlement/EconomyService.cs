@@ -1,12 +1,12 @@
 using System;
-using EndlessHeros.Core.Content;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Content;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Settlement
+namespace ProjectStarwatch.Settlement
 {
     /// <summary>
     /// Applies one empire-wide production and upkeep step to the timeline ledger.

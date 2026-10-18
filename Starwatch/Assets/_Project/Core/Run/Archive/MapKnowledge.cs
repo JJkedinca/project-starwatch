@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 
-namespace EndlessHeros.Core.Run.Archive
+namespace ProjectStarwatch.Core.Run.Archive
 {
     /// <summary>
     /// Persistent map discoveries for one observer. Survives timeline rewind.

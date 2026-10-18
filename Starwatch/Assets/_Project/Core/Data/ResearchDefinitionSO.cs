@@ -1,13 +1,13 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// One research project and the effect it grants when completed.
     /// </summary>
-    [CreateAssetMenu(fileName = "Research", menuName = "Endless Heros/Research")]
+    [CreateAssetMenu(fileName = "Research", menuName = "Starwatch/Research")]
     public sealed class ResearchDefinitionSO : ScriptableObject
     {
         [Tooltip("Stable content id used by commands and the archive. This is not the asset file name.")]

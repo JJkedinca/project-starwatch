@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Events
+namespace ProjectStarwatch.Core.Events
 {
     /// <summary>
     /// Closed set of domain events recorded in the journal and published across systems.

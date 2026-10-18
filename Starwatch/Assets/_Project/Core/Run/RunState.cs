@@ -1,11 +1,11 @@
 using System;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Archive;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Run.Universe;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Archive;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Run.Universe;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Core.Run
+namespace ProjectStarwatch.Core.Run
 {
     /// <summary>
     /// Aggregate root for one campaign attempt. Holds seed plus the three

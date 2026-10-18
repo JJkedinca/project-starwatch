@@ -1,6 +1,6 @@
 using VContainer;
 
-namespace EndlessHeros.Core.Bootstrap
+namespace ProjectStarwatch.Core.Bootstrap
 {
     /// <summary>
     /// Scene scope for the additive Battle presentation. Owns battle-only

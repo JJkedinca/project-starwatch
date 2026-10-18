@@ -1,7 +1,7 @@
 using UnityEngine;
 using VContainer.Unity;
 
-namespace EndlessHeros.Core.Bootstrap
+namespace ProjectStarwatch.Core.Bootstrap
 {
     /// <summary>
     /// Base lifetime scope for scene containers. Automatically parents to the

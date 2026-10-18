@@ -1,8 +1,8 @@
-using EndlessHeros.Overworld.UI;
+using ProjectStarwatch.Overworld.UI;
 using VContainer;
 using VContainer.Unity;
 
-namespace EndlessHeros.Core.Bootstrap
+namespace ProjectStarwatch.Core.Bootstrap
 {
     /// <summary>
     /// Scene scope for Overworld. Registers the shared selection and the group presenters.

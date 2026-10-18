@@ -1,4 +1,4 @@
-namespace EndlessHeros.Overworld
+namespace ProjectStarwatch.Overworld
 {
     /// <summary>
     /// Fog / host-explored / scanned state for a planet.

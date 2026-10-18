@@ -1,13 +1,13 @@
-using EndlessHeros.Core.Effects;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Simulation;
-using EndlessHeros.Overworld.Services;
-using EndlessHeros.Overworld.Systems;
-using EndlessHeros.Research;
-using EndlessHeros.Settlement;
+using ProjectStarwatch.Core.Effects;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Overworld.Services;
+using ProjectStarwatch.Overworld.Systems;
+using ProjectStarwatch.Research;
+using ProjectStarwatch.Settlement;
 
-namespace EndlessHeros.Tests.EditMode.Core
+namespace ProjectStarwatch.Tests.EditMode.Core
 {
     /// <summary>
     /// Services wired the way the overworld plays: travel resolves, then the economy settles.

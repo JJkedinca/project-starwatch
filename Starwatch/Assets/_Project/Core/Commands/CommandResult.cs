@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Commands
+namespace ProjectStarwatch.Core.Commands
 {
     /// <summary>
     /// Success/failure result for a player command with no payload.

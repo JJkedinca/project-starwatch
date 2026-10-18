@@ -1,10 +1,10 @@
-using EndlessHeros.Core.Commands;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Commands;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Overworld.Services
+namespace ProjectStarwatch.Overworld.Services
 {
     /// <summary>
     /// Reveals a map node when a fleet is there. Planets stay unscanned until a manual scan.

@@ -1,4 +1,4 @@
-namespace EndlessHeros.Overworld
+namespace ProjectStarwatch.Overworld
 {
     /// <summary>
     /// Fog / explored / fleet-present state for a map graph node.

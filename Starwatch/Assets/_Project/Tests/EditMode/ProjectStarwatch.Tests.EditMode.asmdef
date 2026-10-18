@@ -1,8 +1,8 @@
 {
-    "name": "EndlessHeros.Tests.EditMode",
-    "rootNamespace": "EndlessHeros.Tests.EditMode",
+    "name": "ProjectStarwatch.Tests.EditMode",
+    "rootNamespace": "ProjectStarwatch.Tests.EditMode",
     "references": [
-        "EndlessHeros.Core",
+        "ProjectStarwatch.Core",
         "UniTask",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

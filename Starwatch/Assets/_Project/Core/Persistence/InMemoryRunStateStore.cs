@@ -1,6 +1,6 @@
-using EndlessHeros.Core.Run;
+using ProjectStarwatch.Core.Run;
 
-namespace EndlessHeros.Core.Persistence
+namespace ProjectStarwatch.Core.Persistence
 {
     /// <summary>
     /// First-slice IRunStateStore that keeps run state in process memory only.

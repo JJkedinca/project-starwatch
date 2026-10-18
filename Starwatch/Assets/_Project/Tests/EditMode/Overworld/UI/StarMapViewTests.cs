@@ -1,12 +1,12 @@
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Overworld;
-using EndlessHeros.Overworld.UI;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Overworld;
+using ProjectStarwatch.Overworld.UI;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Tests.EditMode.Overworld.UI
+namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
     /// EditMode coverage for StarMapView node lifecycle and fog state.

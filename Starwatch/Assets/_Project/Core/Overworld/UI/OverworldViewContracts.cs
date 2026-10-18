@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Timeline;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Star map surface and the selected-node card.

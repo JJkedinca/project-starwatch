@@ -1,6 +1,6 @@
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 
-namespace EndlessHeros.Core.Run.Archive
+namespace ProjectStarwatch.Core.Run.Archive
 {
     /// <summary>
     /// Persistent within-run knowledge and unlocks that survive timeline resets.
