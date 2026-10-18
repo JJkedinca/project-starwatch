@@ -53,6 +53,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(65));
+            run.Timeline.TryRemoveColony(ContentId.From("home-prime"));
             var view = new FakeStockpileView();
             var presenter = new StockpilePresenter(view, stack.Manager, new StockpileQuery(), stack.Events);
             presenter.Start();

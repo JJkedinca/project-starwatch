@@ -26,6 +26,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(51));
+            RemoveStarterHome(run);
             var home = ContentId.From("home-prime");
             var moon = ContentId.From("home-moon");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -48,6 +49,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(52));
+            RemoveStarterHome(run);
             var moon = ContentId.From("home-moon");
             var home = ContentId.From("home-prime");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -69,6 +71,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(53));
+            RemoveStarterHome(run);
             var home = ContentId.From("home-prime");
             var forge = ContentId.From("forge-world");
 
@@ -87,7 +90,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         }
 
         [Test]
-        public void Place_EnforcesFootprintAndAllowsAnOffSpecializationBuilding()
+        public void Place_AllowsEveryCatalogBuildingWithinTheFootprint()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(54));
@@ -100,13 +103,15 @@ namespace EndlessHeros.Tests.EditMode.Settlement
             var power = ContentId.From("power-plant");
             var first = stack.Buildings.Place(run, forge, industry);
             var offSpec = stack.Buildings.Place(run, forge, lab);
-            var overFootprint = stack.Buildings.Place(run, forge, power);
+            var powerPlant = stack.Buildings.Place(run, forge, power);
+            var extractor = stack.Buildings.Place(run, forge, ContentId.From("extractor"));
 
             Assert.That(first.Success, Is.True);
             Assert.That(offSpec.Success, Is.True);
-            Assert.That(overFootprint.Success, Is.False);
+            Assert.That(powerPlant.Success, Is.True);
+            Assert.That(extractor.Success, Is.True);
             Assert.That(run.Timeline.TryGetColony(forge, out var colony), Is.True);
-            Assert.That(colony.Buildings, Has.Count.EqualTo(2));
+            Assert.That(colony.Buildings, Has.Count.EqualTo(4));
         }
 
         [Test]
@@ -114,6 +119,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(55));
+            RemoveStarterHome(run);
             var home = ContentId.From("home-prime");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
             stack.Settlement.FoundColony(run, ObserverId.Player, home);
@@ -133,6 +139,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(56));
+            RemoveStarterHome(run);
             var home = ContentId.From("home-prime");
             var forge = ContentId.From("forge-world");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -215,6 +222,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(58));
+            RemoveStarterHome(run);
             var home = ContentId.From("home-prime");
             var missing = stack.Settlement.Abandon(run, home);
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -242,6 +250,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(57));
+            RemoveStarterHome(run);
             var home = ContentId.From("home-prime");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
             stack.Settlement.FoundColony(run, ObserverId.Player, home);
@@ -258,6 +267,7 @@ namespace EndlessHeros.Tests.EditMode.Settlement
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(59));
+            RemoveStarterHome(run);
             var home = ContentId.From("home-prime");
             var industry = ContentId.From("industry-works");
             stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
@@ -267,8 +277,6 @@ namespace EndlessHeros.Tests.EditMode.Settlement
 
             var timeline = stack.Manager.RecreateTimeline(1);
             Assert.That(timeline, Is.SameAs(run.Timeline));
-            Assert.That(stack.Settlement.FoundColony(run, ObserverId.Player, home).Success, Is.True);
-            Assert.That(stack.Buildings.Place(run, home, industry).Success, Is.True);
             var industryAfter = run.Timeline.Resources.Get(ResourceKind.Industry);
             var energyAfter = run.Timeline.Resources.Get(ResourceKind.Energy);
 
@@ -276,6 +284,32 @@ namespace EndlessHeros.Tests.EditMode.Settlement
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industryAfter));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(energyAfter));
+        }
+
+        [Test]
+        public void VerticalSlice_StartsWithALevelOneHomeColonyAndOneOfEachBuilding()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(60));
+            var home = ContentId.From("home-prime");
+            var catalog = RunTestFixture.CreateObjectDatabase().SettlementCatalog;
+
+            Assert.That(run.Timeline.TryGetColony(home, out var colony), Is.True);
+            Assert.That(colony.Presence, Is.EqualTo(ColonyPresence.Colony));
+            Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(80));
+            Assert.That(colony.Buildings, Has.Count.EqualTo(catalog.Buildings.Count));
+            for (var i = 0; i < catalog.Buildings.Count; i++)
+            {
+                var definition = catalog.Buildings[i];
+                var placed = colony.FindBuilding(definition.Id);
+                Assert.That(placed, Is.Not.Null);
+                Assert.That(placed.Level, Is.EqualTo(1));
+            }
+        }
+
+        private static void RemoveStarterHome(RunState run)
+        {
+            run.Timeline.TryRemoveColony(ContentId.From("home-prime"));
         }
 
         private static (SettlementService Settlement, RunState Run) CreateRunOnGraph(

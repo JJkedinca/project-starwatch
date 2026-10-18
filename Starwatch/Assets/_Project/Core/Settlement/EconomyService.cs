@@ -1,5 +1,6 @@
 using System;
 using EndlessHeros.Core.Content;
+using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Core.Run.Timeline;
@@ -19,6 +20,11 @@ namespace EndlessHeros.Settlement
         private readonly ResourceInventory _output = new();
         private readonly ResourceInventory _upkeep = new();
         private readonly ResourceInventory _outputRemainder = new();
+
+        /// <summary>
+        /// Science produced by the last <see cref="ApplyTick"/> attempt. Zero when that second granted nothing.
+        /// </summary>
+        public float ProducedScience { get; private set; }
 
         public EconomyService(
             ObjectDatabaseSO objectDatabase,
@@ -45,6 +51,7 @@ namespace EndlessHeros.Settlement
         /// </summary>
         public void ApplyTick(RunState run)
         {
+            ProducedScience = 0f;
             if (run == null)
             {
                 return;
@@ -62,13 +69,21 @@ namespace EndlessHeros.Settlement
                 _upkeep.Add(quote.Upkeep);
             }
 
-            if (!_output.HasAny() && !_upkeep.HasAny())
+            var science = _output.Get(ResourceKind.Science);
+            _output.Remove(ResourceKind.Science);
+            if (!_output.HasAny() && !_upkeep.HasAny() && science <= 0f)
             {
                 return;
             }
 
             var ledger = run.Timeline.Resources;
             if (!ledger.TrySpend(_upkeep))
+            {
+                return;
+            }
+
+            ProducedScience = science;
+            if (!_output.HasAny() && !_upkeep.HasAny())
             {
                 return;
             }

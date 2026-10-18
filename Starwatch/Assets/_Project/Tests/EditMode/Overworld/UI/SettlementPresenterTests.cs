@@ -24,6 +24,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(34));
             var prime = ContentId.From("home-prime");
+            run.Timeline.TryRemoveColony(prime);
             var selection = new OverworldSelection();
             selection.EnterSystem(ContentId.From("home-system"));
             selection.SelectPlanet(prime);
@@ -103,6 +104,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(61));
             var prime = ContentId.From("home-prime");
+            run.Timeline.TryRemoveColony(prime);
             var selection = new OverworldSelection();
             selection.EnterSystem(ContentId.From("home-system"));
             selection.SelectPlanet(prime);

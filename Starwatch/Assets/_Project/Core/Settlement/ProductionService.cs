@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using EndlessHeros.Core.Content;
 using EndlessHeros.Core.Data;
+using EndlessHeros.Core.Effects;
 using EndlessHeros.Core.Run.Timeline;
 
 namespace EndlessHeros.Settlement
@@ -12,8 +13,9 @@ namespace EndlessHeros.Settlement
     internal sealed class ProductionService
     {
         private readonly SettlementCatalogSO _catalog;
+        private readonly IEffectQuery _effects;
 
-        public ProductionService(ObjectDatabaseSO objectDatabase)
+        public ProductionService(ObjectDatabaseSO objectDatabase, IEffectQuery effects = null)
         {
             if (objectDatabase == null)
             {
@@ -22,6 +24,7 @@ namespace EndlessHeros.Settlement
 
             _catalog = objectDatabase.SettlementCatalog
                 ?? throw new ArgumentNullException(nameof(objectDatabase.SettlementCatalog));
+            _effects = effects;
         }
 
         /// <summary>
@@ -51,7 +54,8 @@ namespace EndlessHeros.Settlement
         }
 
         /// <summary>
-        /// Level-1 output of every catalog building after this planet's modifiers and deposits.
+        /// Level-1 output of every catalog building after this planet's modifiers, deposits,
+        /// and the empire's completed-research output multipliers.
         /// </summary>
         public ResourceInventory ModifiedBase(PlanetDefinition planet)
         {
@@ -71,7 +75,7 @@ namespace EndlessHeros.Settlement
             return totals;
         }
 
-        private static void AddRates(
+        private void AddRates(
             ResourceInventory inventory,
             IReadOnlyList<ResourceAmount> rates,
             int level,
@@ -96,7 +100,7 @@ namespace EndlessHeros.Settlement
             }
         }
 
-        private static float Multiplier(PlanetDefinition planet, ResourceKind kind)
+        private float Multiplier(PlanetDefinition planet, ResourceKind kind)
         {
             var multiplier = planet != null ? planet.Modifiers.Multiplier(kind) : 1f;
             if (planet != null && planet.HasDeposit(kind))
@@ -104,7 +108,13 @@ namespace EndlessHeros.Settlement
                 multiplier += SettlementCosts.DepositMultiplierBonus;
             }
 
-            return multiplier;
+            var research = _effects != null ? _effects.OutputMultiplier(kind) : 1f;
+            if (research <= 0f)
+            {
+                research = 1f;
+            }
+
+            return multiplier * research;
         }
 
         private enum PlanetScale

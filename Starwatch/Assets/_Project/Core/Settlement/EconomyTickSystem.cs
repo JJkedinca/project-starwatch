@@ -13,6 +13,7 @@ namespace EndlessHeros.Settlement
         internal const float kIntervalSeconds = 1f;
 
         private readonly EconomyService _economy;
+        private Action _afterSecond;
         private RunState _run;
         private float _elapsedSeconds;
 
@@ -37,6 +38,14 @@ namespace EndlessHeros.Settlement
             ResetStep();
         }
 
+        /// <summary>
+        /// Runs after each settled economy second so research can take that second's Science.
+        /// </summary>
+        internal void AfterEachSecond(Action callback)
+        {
+            _afterSecond = callback;
+        }
+
         public void OnSimulationTick(GameTime time, float tickDeltaSeconds)
         {
             _ = time;
@@ -50,6 +59,7 @@ namespace EndlessHeros.Settlement
             {
                 _elapsedSeconds -= kIntervalSeconds;
                 _economy.ApplyTick(_run);
+                _afterSecond?.Invoke();
             }
         }
 

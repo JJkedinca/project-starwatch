@@ -18,6 +18,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(35));
+            run.Timeline.TryRemoveColony(ContentId.From("home-prime"));
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
 
@@ -56,6 +57,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(37));
+            run.Timeline.TryRemoveColony(ContentId.From("home-prime"));
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
             var homePrime = ContentId.From("home-prime");
@@ -131,6 +133,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(62));
+            run.Timeline.TryRemoveColony(ContentId.From("home-prime"));
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
             var homePrime = ContentId.From("home-prime");
@@ -155,6 +158,7 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(38));
+            run.Timeline.TryRemoveColony(ContentId.From("home-prime"));
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
             var homePrime = ContentId.From("home-prime");

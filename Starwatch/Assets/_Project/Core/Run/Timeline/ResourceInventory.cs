@@ -34,6 +34,14 @@ namespace EndlessHeros.Core.Run.Timeline
         }
 
         /// <summary>
+        /// Drops one kind so it is not deposited with the other totals.
+        /// </summary>
+        public void Remove(ResourceKind kind)
+        {
+            _amounts.Remove(kind);
+        }
+
+        /// <summary>
         /// Adds a fractional amount. Non-positive amounts are ignored.
         /// </summary>
         public void Add(ResourceKind kind, float amount)

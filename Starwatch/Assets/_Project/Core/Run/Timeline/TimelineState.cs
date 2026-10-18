@@ -21,6 +21,8 @@ namespace EndlessHeros.Core.Run.Timeline
 
         public ResourceLedger Resources { get; } = new();
 
+        public ResearchProgress Research { get; } = new();
+
         private readonly List<FleetPlaceholderState> _fleets = new();
         private readonly List<ActiveTravel> _activeTravels = new();
         private readonly List<ColonyState> _colonies = new();

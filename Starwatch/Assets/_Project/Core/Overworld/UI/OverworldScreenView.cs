@@ -18,6 +18,8 @@ namespace EndlessHeros.Overworld.UI
 
         internal StockpileBarView Stockpile { get; } = new();
 
+        internal ResearchPanelView Research { get; } = new();
+
         [SerializeField]
         private UIDocument _document;
 
@@ -85,14 +87,18 @@ namespace EndlessHeros.Overworld.UI
             var planetInspection = root.Q<VisualElement>("planet-detail");
             var settlement = root.Q<VisualElement>("settlement-panel");
             var stockpile = root.Q<VisualElement>("stockpile-bar");
+            var research = root.Q<VisualElement>("research-panel");
+            var researchEntry = stockpile != null ? stockpile.Q<Button>("stockpile-research") : null;
             if (mapSurface == null
                 || starSystem == null
                 || starSystemInspection == null
                 || planetInspection == null
                 || settlement == null
-                || stockpile == null)
+                || stockpile == null
+                || research == null
+                || researchEntry == null)
             {
-                Debug.LogError("OverworldScreenView could not find the map, star system, settlement, or stockpile roots.");
+                Debug.LogError("OverworldScreenView could not find the map, star system, settlement, research, or stockpile roots.");
                 return;
             }
 
@@ -100,6 +106,7 @@ namespace EndlessHeros.Overworld.UI
             StarSystem.Bind(starSystem, planetInspection, mapSurface, title);
             Settlement.Bind(settlement);
             Stockpile.Bind(stockpile);
+            Research.Bind(research, researchEntry);
             if (_status != null)
             {
                 _status.Changed += OnStatus;

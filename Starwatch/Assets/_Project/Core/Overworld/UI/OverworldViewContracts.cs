@@ -65,4 +65,14 @@ namespace EndlessHeros.Overworld.UI
     {
         void Apply(ResourceInventory stockpile);
     }
+
+    /// <summary>
+    /// Empire research offers and the active project.
+    /// </summary>
+    internal interface IResearchView
+    {
+        event Action<ContentId> StartRequested;
+
+        void Apply(ResearchPanelModel model);
+    }
 }

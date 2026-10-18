@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using EndlessHeros.Core.Identifiers;
 
 namespace EndlessHeros.Core.Run.Archive
@@ -15,15 +14,14 @@ namespace EndlessHeros.Core.Run.Archive
         public MapKnowledge PlayerMapKnowledge { get; }
 
         /// <summary>
-        /// Completed within-run research unlocks. Phase 3 fills this.
+        /// Completed within-run research. Survives a timeline reset.
         /// </summary>
-        public IReadOnlyCollection<ContentId> CompletedResearchIds => _completedResearchIds;
-
-        private readonly HashSet<ContentId> _completedResearchIds = new();
+        public ResearchKnowledge Research { get; }
 
         public RunArchive()
         {
             PlayerMapKnowledge = new MapKnowledge(ObserverId.Player);
+            Research = new ResearchKnowledge();
         }
 
         /// <summary>
@@ -33,14 +31,6 @@ namespace EndlessHeros.Core.Run.Archive
         public bool TryAddExploredNode(ContentId nodeId)
         {
             return PlayerMapKnowledge.TryAddExploredNode(nodeId);
-        }
-
-        /// <summary>
-        /// Adds completed research when non-empty. Returns true only when newly added.
-        /// </summary>
-        public bool TryAddCompletedResearch(ContentId researchId)
-        {
-            return !researchId.IsEmpty && _completedResearchIds.Add(researchId);
         }
 
         /// <summary>

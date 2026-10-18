@@ -11,7 +11,6 @@ namespace EndlessHeros.Overworld.UI
     {
         private Label _industry;
         private Label _energy;
-        private Label _science;
         private Label _strategic;
 
         /// <summary>
@@ -26,7 +25,6 @@ namespace EndlessHeros.Overworld.UI
 
             _industry = root.Q<Label>("stockpile-industry");
             _energy = root.Q<Label>("stockpile-energy");
-            _science = root.Q<Label>("stockpile-science");
             _strategic = root.Q<Label>("stockpile-strategic");
             Apply(null);
         }
@@ -38,7 +36,6 @@ namespace EndlessHeros.Overworld.UI
         {
             Set(_industry, Whole(stockpile, ResourceKind.Industry));
             Set(_energy, Whole(stockpile, ResourceKind.Energy));
-            Set(_science, Whole(stockpile, ResourceKind.Science));
             Set(_strategic, Whole(stockpile, ResourceKind.Strategic));
         }
 

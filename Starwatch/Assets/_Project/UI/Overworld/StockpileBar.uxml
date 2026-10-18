@@ -10,12 +10,9 @@
             <ui:Label name="stockpile-energy" text="0" class="stockpile-amount" />
         </ui:VisualElement>
         <ui:VisualElement class="stockpile-item">
-            <ui:Label text="Science" class="stockpile-caption" />
-            <ui:Label name="stockpile-science" text="0" class="stockpile-amount" />
-        </ui:VisualElement>
-        <ui:VisualElement class="stockpile-item">
             <ui:Label text="Strategic" class="stockpile-caption" />
             <ui:Label name="stockpile-strategic" text="0" class="stockpile-amount" />
         </ui:VisualElement>
+        <ui:Button name="stockpile-research" text="No Active Research" class="stockpile-research" />
     </ui:VisualElement>
 </ui:UXML>

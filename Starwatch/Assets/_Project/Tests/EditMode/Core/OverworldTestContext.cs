@@ -1,8 +1,10 @@
+using EndlessHeros.Core.Effects;
 using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Core.Simulation;
 using EndlessHeros.Overworld.Services;
 using EndlessHeros.Overworld.Systems;
+using EndlessHeros.Research;
 using EndlessHeros.Settlement;
 
 namespace EndlessHeros.Tests.EditMode.Core
@@ -38,6 +40,10 @@ namespace EndlessHeros.Tests.EditMode.Core
 
         public EconomyService Economy { get; }
 
+        public ResearchService Research { get; }
+
+        public EffectRegistry Effects { get; }
+
         public OverworldTestContext(
             RunManager manager,
             ExplorationService exploration,
@@ -51,7 +57,9 @@ namespace EndlessHeros.Tests.EditMode.Core
             DomainEventBus events,
             SettlementService settlement,
             BuildingService buildings,
-            EconomyService economy)
+            EconomyService economy,
+            ResearchService research,
+            EffectRegistry effects)
         {
             Manager = manager;
             Exploration = exploration;
@@ -66,6 +74,8 @@ namespace EndlessHeros.Tests.EditMode.Core
             Settlement = settlement;
             Buildings = buildings;
             Economy = economy;
+            Research = research;
+            Effects = effects;
         }
     }
 }
