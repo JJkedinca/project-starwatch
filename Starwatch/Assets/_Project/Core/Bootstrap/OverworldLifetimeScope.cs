@@ -23,6 +23,7 @@ namespace EndlessHeros.Core.Bootstrap
             builder.Register<StarSystemQuery>(Lifetime.Scoped);
             builder.Register<SettlementQuery>(Lifetime.Scoped);
             builder.Register<StockpileQuery>(Lifetime.Scoped);
+            builder.Register<ResearchQuery>(Lifetime.Scoped);
             builder.Register<IStarMapView>(
                 resolver => resolver.Resolve<OverworldScreenView>().StarMap,
                 Lifetime.Scoped);
@@ -35,10 +36,14 @@ namespace EndlessHeros.Core.Bootstrap
             builder.Register<IStockpileView>(
                 resolver => resolver.Resolve<OverworldScreenView>().Stockpile,
                 Lifetime.Scoped);
+            builder.Register<IResearchView>(
+                resolver => resolver.Resolve<OverworldScreenView>().Research,
+                Lifetime.Scoped);
             builder.Register<StarMapPresenter>(Lifetime.Scoped);
             builder.Register<StarSystemPresenter>(Lifetime.Scoped);
             builder.Register<SettlementPresenter>(Lifetime.Scoped);
             builder.Register<StockpilePresenter>(Lifetime.Scoped);
+            builder.Register<ResearchPresenter>(Lifetime.Scoped);
             builder.RegisterEntryPoint<OverworldScreenBinder>(Lifetime.Scoped);
         }
     }

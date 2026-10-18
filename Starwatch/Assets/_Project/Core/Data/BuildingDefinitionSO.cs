@@ -59,6 +59,33 @@ namespace EndlessHeros.Core.Data
 
         public IReadOnlyList<ResourceBundle> UpgradeCosts => _upgradeCosts;
 
+        private void OnValidate()
+        {
+            WarnIfSciencePriced(_upkeep, "upkeep");
+            WarnIfSciencePriced(BuildCost.Amounts, "build cost");
+            if (_upgradeCosts == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < _upgradeCosts.Count; i++)
+            {
+                WarnIfSciencePriced(_upgradeCosts[i].Amounts, "upgrade cost");
+            }
+        }
+
+        private void WarnIfSciencePriced(IReadOnlyList<ResourceAmount> amounts, string slot)
+        {
+            if (ResourceAmount.Total(amounts, ResourceKind.Science) <= 0f)
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                $"{name} prices {slot} in Science, which is not a stockpile and cannot be paid.",
+                this);
+        }
+
         /// <summary>
         /// Cost to raise a building from <paramref name="currentLevel"/> to the next level.
         /// Index 0 is the upgrade from level 1 to 2.

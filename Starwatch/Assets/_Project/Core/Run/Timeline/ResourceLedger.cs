@@ -23,7 +23,6 @@ namespace EndlessHeros.Core.Run.Timeline
         {
             Add(ResourceKind.Industry, resources.Industry);
             Add(ResourceKind.Energy, resources.Energy);
-            Add(ResourceKind.Science, resources.Science);
             Add(ResourceKind.Strategic, resources.Strategic);
         }
 

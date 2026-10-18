@@ -1,7 +1,9 @@
 using System;
+using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Identifiers;
 using EndlessHeros.Core.Run.Archive;
 using EndlessHeros.Core.Run.Universe;
+using UnityEngine;
 
 namespace EndlessHeros.Core.Run.Timeline
 {
@@ -41,8 +43,46 @@ namespace EndlessHeros.Core.Run.Timeline
             }
 
             timeline.Resources.Grant(startingEmpire.StartingResources);
+            SeedStartingSettlements(timeline, startingEmpire);
 
             return timeline;
+        }
+
+        /// <summary>
+        /// Places the empire's authored settlements. The stockpile is not charged.
+        /// </summary>
+        private static void SeedStartingSettlements(TimelineState timeline, StartingEmpireDefinition empire)
+        {
+            var settlements = empire.StartingSettlements;
+            for (var i = 0; i < settlements.Count; i++)
+            {
+                var settlement = settlements[i];
+                if (settlement.PlanetId.IsEmpty)
+                {
+                    Debug.LogWarning("TimelineFactory skipped a starting settlement with no planet.");
+                    continue;
+                }
+
+                var presence = settlement.IsColony ? ColonyPresence.Colony : ColonyPresence.Outpost;
+                var colony = new ColonyState(settlement.PlanetId, presence);
+                var buildings = settlement.Buildings;
+                for (var buildingIndex = 0; buildingIndex < buildings.Count; buildingIndex++)
+                {
+                    var building = buildings[buildingIndex];
+                    if (building.BuildingId.IsEmpty)
+                    {
+                        continue;
+                    }
+
+                    colony.AddBuilding(new ColonyBuildingState(building.BuildingId, building.Level));
+                }
+
+                if (!timeline.TryAddColony(colony))
+                {
+                    Debug.LogWarning(
+                        $"TimelineFactory could not place the starting settlement on '{settlement.PlanetId.Value}'.");
+                }
+            }
         }
     }
 }

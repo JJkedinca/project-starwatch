@@ -1,5 +1,7 @@
+using System;
 using EndlessHeros.Core.Content;
 using EndlessHeros.Core.Data;
+using EndlessHeros.Core.Effects;
 using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Core.Run.Timeline;
@@ -7,6 +9,7 @@ using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Core.Simulation;
 using EndlessHeros.Overworld.Services;
 using EndlessHeros.Overworld.Systems;
+using EndlessHeros.Research;
 using EndlessHeros.Settlement;
 using UnityEngine;
 
@@ -25,8 +28,10 @@ namespace EndlessHeros.Tests.EditMode.Core
                 "Assets/_Project/ScriptableObjects/PlanetDatabase.asset");
             var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<SettlementCatalogSO>(
                 "Assets/_Project/ScriptableObjects/SettlementCatalog.asset");
+            var research = UnityEditor.AssetDatabase.LoadAssetAtPath<ResearchCatalogSO>(
+                "Assets/_Project/ScriptableObjects/ResearchCatalog.asset");
             var database = ScriptableObject.CreateInstance<ObjectDatabaseSO>();
-            database.AssignDatabases(starSystems, planets, catalog);
+            database.AssignDatabases(starSystems, planets, catalog, research);
             return database;
         }
 
@@ -52,16 +57,21 @@ namespace EndlessHeros.Tests.EditMode.Core
             var route = new RouteService();
             var archive = new ArchiveService();
             var exploration = new ExplorationService(archive, route, events, clock);
-            var sensor = new SensorService(archive, objectDatabase, events, clock);
             var travel = new TravelService(route, clock, events);
             var visibility = new VisibilityService();
             var travelSystem = new TravelSystem(exploration, events);
-            var production = new ProductionService(objectDatabase);
+            var effects = new EffectRegistry();
+            var production = new ProductionService(objectDatabase, effects);
             var economy = new EconomyService(objectDatabase, production, events, clock);
+            var research = new ResearchService(objectDatabase, effects, events, clock);
+            var economyTick = new EconomyTickSystem(economy);
+            var researchTick = new ResearchTickSystem(research, economyTick);
+            var sensor = new SensorService(archive, objectDatabase, events, clock);
             var settlement = new SettlementService(objectDatabase, events, clock);
             var buildings = new BuildingService(objectDatabase, events, clock);
             loop.Register(travelSystem);
-            loop.Register(new EconomyTickSystem(economy));
+            loop.Register(economyTick);
+            loop.Register(researchTick);
             return new OverworldTestContext(
                 manager: manager,
                 exploration: exploration,
@@ -75,7 +85,21 @@ namespace EndlessHeros.Tests.EditMode.Core
                 events: events,
                 settlement: settlement,
                 buildings: buildings,
-                economy: economy);
+                economy: economy,
+                research: research,
+                effects: effects);
+        }
+
+        internal static StartingEmpireDefinition UnsettledVerticalSlice()
+        {
+            var database = CreateObjectDatabase();
+            if (!database.TryGetScenario(VerticalSliceScenarioFactory.ScenarioId, out var scenario)
+                || scenario.StartingEmpire == null)
+            {
+                throw new InvalidOperationException("The vertical slice scenario is missing.");
+            }
+
+            return scenario.StartingEmpire.WithoutSettlements();
         }
     }
 }

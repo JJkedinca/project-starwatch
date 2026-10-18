@@ -123,11 +123,12 @@ namespace EndlessHeros.Tests.EditMode.Core
             var loop = new SimulationLoop(clock);
             var system = new CountingSystem();
             loop.Register(system);
+            var database = RunTestFixture.CreateObjectDatabase();
             var timelineFactory = new TimelineFactory();
             var manager = new RunManager(
                 timelineFactory,
                 new UniverseLoader(timelineFactory),
-                RunTestFixture.CreateObjectDatabase(),
+                database,
                 new EventJournal(),
                 loop);
             var run = manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(10));

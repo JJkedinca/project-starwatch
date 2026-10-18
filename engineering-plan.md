@@ -842,7 +842,8 @@ battles. Invasion directors and rewind still wait.
 
 ### Deferred
 
-- Invasion schedule, sabotage, outcome evaluator → Phase 5 / 6
+- Different weapon capabilities, battle simulation, retreat, and debris. Phase 4 is fleets and travel first. Weapon variety waits until after a polish pass on the map, settlement, research, fleet, and travel loop.
+- Invasion schedule, sabotage, outcome evaluator → Phase 5 / 6, after that polish pass
 - Full faction sortie AI beyond a simple authored opposing fleet → later
 - Rewind of damaged fleets / debris → Phase 6 (keep fleet state timeline-owned)
 

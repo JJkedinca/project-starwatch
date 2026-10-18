@@ -202,7 +202,7 @@ Technology chains should be relatively shallow. A progression such as Warp I →
 
 The player should not be expected to complete every branch in one timeline. A 1.5-hour timeline should contain a few meaningful research decisions, while the full run reveals and exploits deeper options. The exact number and duration of projects require balance testing.
 
-Research projects are one-way commitments in the initial design. Players cannot pause, abandon, or redirect an active project for now. The consequences of committing to the wrong project can be tuned later if this proves too restrictive.
+An active project can be switched. Confirming another offer drops the current progress and starts that project. Players cannot pause a project, or clear it without starting a replacement.
 
 ## Research Across Rewinds
 

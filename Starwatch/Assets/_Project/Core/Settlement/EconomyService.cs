@@ -1,5 +1,6 @@
 using System;
 using EndlessHeros.Core.Content;
+using EndlessHeros.Core.Data;
 using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Run;
 using EndlessHeros.Core.Run.Timeline;
@@ -19,6 +20,11 @@ namespace EndlessHeros.Settlement
         private readonly ResourceInventory _output = new();
         private readonly ResourceInventory _upkeep = new();
         private readonly ResourceInventory _outputRemainder = new();
+
+        /// <summary>
+        /// Science produced by the last <see cref="ApplyTick"/> attempt. Zero when that second granted nothing.
+        /// </summary>
+        public float ProducedScience { get; private set; }
 
         public EconomyService(
             ObjectDatabaseSO objectDatabase,
@@ -41,13 +47,26 @@ namespace EndlessHeros.Settlement
         }
 
         /// <summary>
-        /// Pays upkeep and grants whole output when the ledger can cover every colony. A fraction of output stays for the next second. Unpaid upkeep leaves that fraction unchanged.
+        /// Pays one second of upkeep and grants that second's whole output when the ledger can cover every colony.
+        /// A fraction of output stays for the next second. Unpaid upkeep leaves that fraction unchanged.
         /// </summary>
         public void ApplyTick(RunState run)
         {
+            if (SettleSecond(run))
+            {
+                PublishChanged();
+            }
+        }
+
+        /// <summary>
+        /// Settles one second without notifying listeners. Returns true when the ledger changed.
+        /// </summary>
+        internal bool SettleSecond(RunState run)
+        {
+            ProducedScience = 0f;
             if (run == null)
             {
-                return;
+                return false;
             }
 
             _output.Clear();
@@ -62,21 +81,34 @@ namespace EndlessHeros.Settlement
                 _upkeep.Add(quote.Upkeep);
             }
 
-            if (!_output.HasAny() && !_upkeep.HasAny())
+            var science = _output.Get(ResourceKind.Science);
+            _output.Remove(ResourceKind.Science);
+            if (!_output.HasAny() && !_upkeep.HasAny() && science <= 0f)
             {
-                return;
+                return false;
             }
 
             var ledger = run.Timeline.Resources;
             if (!ledger.TrySpend(_upkeep))
             {
-                return;
+                return false;
+            }
+
+            ProducedScience = science;
+            if (!_output.HasAny() && !_upkeep.HasAny())
+            {
+                return false;
             }
 
             _outputRemainder.Add(_output);
             _outputRemainder.DepositFlooredInto(ledger);
             _outputRemainder.RetainFraction();
-            _events.Publish(new ResourceChangedEvent(_clock.CurrentTime));
+            return true;
+        }
+
+        internal void PublishChanged()
+        {
+            _events?.Publish(new ResourceChangedEvent(_clock != null ? _clock.CurrentTime : GameTime.Zero));
         }
     }
 }

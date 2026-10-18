@@ -174,4 +174,40 @@ namespace EndlessHeros.Core.Events
             Time = time;
         }
     }
+
+    /// <summary>
+    /// The player started the one active research project.
+    /// </summary>
+    public readonly struct ResearchStartedEvent : IDomainEvent
+    {
+        public GameTime Time { get; }
+
+        public ContentId ResearchId { get; }
+
+        public GameEventType EventType => GameEventType.ResearchStarted;
+
+        public ResearchStartedEvent(GameTime time, ContentId researchId)
+        {
+            Time = time;
+            ResearchId = researchId;
+        }
+    }
+
+    /// <summary>
+    /// A research project finished and its effect is now active.
+    /// </summary>
+    public readonly struct ResearchCompletedEvent : IDomainEvent
+    {
+        public GameTime Time { get; }
+
+        public ContentId ResearchId { get; }
+
+        public GameEventType EventType => GameEventType.ResearchCompleted;
+
+        public ResearchCompletedEvent(GameTime time, ContentId researchId)
+        {
+            Time = time;
+            ResearchId = researchId;
+        }
+    }
 }

@@ -28,5 +28,6 @@ namespace EndlessHeros.Core.Events
         FleetTravelStarted = 20,
         BuildingChanged = 21,
         SettlementAbandoned = 22,
+        ResearchStarted = 23,
     }
 }

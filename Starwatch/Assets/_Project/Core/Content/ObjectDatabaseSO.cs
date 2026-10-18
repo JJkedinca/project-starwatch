@@ -20,6 +20,9 @@ namespace EndlessHeros.Core.Content
         [field: SerializeField]
         public SettlementCatalogSO SettlementCatalog { get; private set; }
 
+        [field: SerializeField]
+        public ResearchCatalogSO ResearchCatalog { get; private set; }
+
         private Dictionary<string, ScenarioDefinition> _scenarios = new();
         public IReadOnlyDictionary<string, ScenarioDefinition> Scenarios => _scenarios;
 
@@ -69,12 +72,22 @@ namespace EndlessHeros.Core.Content
         internal void AssignDatabases(
             StarSystemDatabaseSO starSystemDatabase,
             PlanetDatabaseSO planetDatabase,
-            SettlementCatalogSO settlementCatalog = null)
+            SettlementCatalogSO settlementCatalog = null,
+            ResearchCatalogSO researchCatalog = null)
         {
             _starSystemDatabase = starSystemDatabase;
             _planetDatabase = planetDatabase;
             SettlementCatalog = settlementCatalog;
+            ResearchCatalog = researchCatalog;
             _indexed = false;
+        }
+
+        /// <summary>
+        /// Points a runtime instance at a research catalog. Used by EditMode tests.
+        /// </summary>
+        internal void AssignResearchCatalog(ResearchCatalogSO researchCatalog)
+        {
+            ResearchCatalog = researchCatalog;
         }
 
         /// <summary>
@@ -116,7 +129,10 @@ namespace EndlessHeros.Core.Content
                 return;
             }
 
-            AddScenario(VerticalSliceScenarioFactory.Create(_starSystemDatabase, _planetDatabase));
+            AddScenario(VerticalSliceScenarioFactory.Create(
+                _starSystemDatabase,
+                _planetDatabase,
+                SettlementCatalog));
             _indexed = _scenarios.Count > 0;
         }
 

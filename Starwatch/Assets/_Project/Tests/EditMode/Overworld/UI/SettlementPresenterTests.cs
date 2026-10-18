@@ -22,7 +22,10 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         public void FoundOutpost_UpdatesThePanelAndPostsSuccess()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(34));
+            var run = stack.Manager.CreateRun(
+                "authored-vertical-slice",
+                RunSeed.FromValue(34),
+                RunTestFixture.UnsettledVerticalSlice());
             var prime = ContentId.From("home-prime");
             var selection = new OverworldSelection();
             selection.EnterSystem(ContentId.From("home-system"));
@@ -101,7 +104,10 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         public void Scan_RevealsTheSelectedPlanetWithoutReselecting()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(61));
+            var run = stack.Manager.CreateRun(
+                "authored-vertical-slice",
+                RunSeed.FromValue(61),
+                RunTestFixture.UnsettledVerticalSlice());
             var prime = ContentId.From("home-prime");
             var selection = new OverworldSelection();
             selection.EnterSystem(ContentId.From("home-system"));

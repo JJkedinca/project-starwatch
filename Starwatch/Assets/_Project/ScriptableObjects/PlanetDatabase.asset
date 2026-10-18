@@ -22,7 +22,7 @@ MonoBehaviour:
       _energyMultiplier: 1
       _scienceMultiplier: 1
       _strategicMultiplier: 1
-    _footprintBudget: 4
+    _footprintBudget: 10
     _deposits: []
   - _id: home-moon
     _systemId: home-system
@@ -33,7 +33,7 @@ MonoBehaviour:
       _energyMultiplier: 1
       _scienceMultiplier: 1
       _strategicMultiplier: 1
-    _footprintBudget: 2
+    _footprintBudget: 10
     _deposits: []
   - _id: forge-world
     _systemId: forge-system
@@ -44,7 +44,7 @@ MonoBehaviour:
       _energyMultiplier: 1
       _scienceMultiplier: 1
       _strategicMultiplier: 1
-    _footprintBudget: 4
+    _footprintBudget: 10
     _deposits:
     - 3
   - _id: forge-inner-belt
@@ -56,7 +56,7 @@ MonoBehaviour:
       _energyMultiplier: 1
       _scienceMultiplier: 1
       _strategicMultiplier: 2
-    _footprintBudget: 2
+    _footprintBudget: 10
     _deposits:
     - 3
   - _id: frontier-world
@@ -68,7 +68,7 @@ MonoBehaviour:
       _energyMultiplier: 1
       _scienceMultiplier: 1
       _strategicMultiplier: 1
-    _footprintBudget: 3
+    _footprintBudget: 10
     _deposits: []
   - _id: relic-world
     _systemId: relic-system
@@ -79,7 +79,7 @@ MonoBehaviour:
       _energyMultiplier: 1
       _scienceMultiplier: 2
       _strategicMultiplier: 1
-    _footprintBudget: 3
+    _footprintBudget: 10
     _deposits: []
   - _id: relic-outpost
     _systemId: relic-system
@@ -90,5 +90,5 @@ MonoBehaviour:
       _energyMultiplier: 1
       _scienceMultiplier: 2
       _strategicMultiplier: 1
-    _footprintBudget: 1
+    _footprintBudget: 10
     _deposits: []

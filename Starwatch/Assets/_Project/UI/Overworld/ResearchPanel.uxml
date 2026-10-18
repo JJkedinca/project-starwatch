@@ -1,0 +1,28 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="research-panel" class="research-panel">
+        <ui:VisualElement class="research-column">
+            <ui:Label text="Available" class="research-caption" />
+            <ui:VisualElement name="research-offers" class="research-offers">
+                <ui:Button name="research-offer-0" class="research-offer" />
+                <ui:Button name="research-offer-1" class="research-offer" />
+                <ui:Button name="research-offer-2" class="research-offer" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="research-column">
+            <ui:Label text="Active" class="research-caption" />
+            <ui:Label name="research-active" text="" class="research-line" />
+            <ui:Label name="research-dropped" text="" class="research-line" />
+        </ui:VisualElement>
+        <ui:VisualElement class="research-column">
+            <ui:Label text="Completed" class="research-caption" />
+            <ui:Label name="research-completed" text="" class="research-line" />
+        </ui:VisualElement>
+        <ui:Label name="research-hover" text="" class="research-hover" />
+        <ui:VisualElement name="research-confirm" class="research-confirm">
+            <ui:Label name="research-confirm-message" text="Switch research? Progress on the current project will be lost." class="research-line" />
+            <ui:Button name="research-confirm-yes" text="Switch" class="research-confirm-button" />
+            <ui:Button name="research-confirm-no" text="Cancel" class="research-confirm-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

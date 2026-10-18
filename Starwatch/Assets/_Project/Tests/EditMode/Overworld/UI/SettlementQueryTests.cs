@@ -17,7 +17,10 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         public void Describe_UnscannedPlanetOffersAnOutpostAndHidesTheColony()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(35));
+            var run = stack.Manager.CreateRun(
+                "authored-vertical-slice",
+                RunSeed.FromValue(35),
+                RunTestFixture.UnsettledVerticalSlice());
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
 
@@ -55,7 +58,10 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         public void Describe_QuotesPlacedProductionAndTheNextColonyPrice()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(37));
+            var run = stack.Manager.CreateRun(
+                "authored-vertical-slice",
+                RunSeed.FromValue(37),
+                RunTestFixture.UnsettledVerticalSlice());
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
             var homePrime = ContentId.From("home-prime");
@@ -130,7 +136,10 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         public void Describe_UpgradeRaisesProductionAndLeavesBase()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(62));
+            var run = stack.Manager.CreateRun(
+                "authored-vertical-slice",
+                RunSeed.FromValue(62),
+                RunTestFixture.UnsettledVerticalSlice());
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
             var homePrime = ContentId.From("home-prime");
@@ -154,7 +163,10 @@ namespace EndlessHeros.Tests.EditMode.Overworld.UI
         public void Describe_DisablesActionsTheCommandWouldReject()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(38));
+            var run = stack.Manager.CreateRun(
+                "authored-vertical-slice",
+                RunSeed.FromValue(38),
+                RunTestFixture.UnsettledVerticalSlice());
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
             var homePrime = ContentId.From("home-prime");

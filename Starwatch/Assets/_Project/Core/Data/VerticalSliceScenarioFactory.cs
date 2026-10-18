@@ -19,7 +19,8 @@ namespace EndlessHeros.Core.Data
         /// </summary>
         public static ScenarioDefinition Create(
             StarSystemDatabaseSO starSystemDatabase,
-            PlanetDatabaseSO planetDatabase)
+            PlanetDatabaseSO planetDatabase,
+            SettlementCatalogSO settlementCatalog = null)
         {
             var home = ContentId.From("home-system");
             var forge = ContentId.From("forge-system");
@@ -44,7 +45,8 @@ namespace EndlessHeros.Core.Data
                 home,
                 ContentId.From("starter-screen"),
                 starterShipCount: 3,
-                new StartingResources(industry: 80, energy: 40));
+                new StartingResources(industry: 80, energy: 40),
+                HomeColony(settlementCatalog));
 
             var planets = planetDatabase != null
                 ? planetDatabase.Planets
@@ -58,6 +60,34 @@ namespace EndlessHeros.Core.Data
                 routes,
                 planets);
             return definition;
+        }
+
+        private static List<StartingSettlement> HomeColony(SettlementCatalogSO catalog)
+        {
+            var buildings = new List<StartingBuilding>();
+            var catalogBuildings = catalog != null ? catalog.Buildings : null;
+            if (catalogBuildings == null)
+            {
+                Debug.LogWarning("VerticalSliceScenarioFactory has no settlement catalog, so the home colony has no buildings.");
+            }
+            else
+            {
+                for (var i = 0; i < catalogBuildings.Count; i++)
+                {
+                    var building = catalogBuildings[i];
+                    if (building == null || building.Id.IsEmpty)
+                    {
+                        continue;
+                    }
+
+                    buildings.Add(new StartingBuilding(building.Id, 1));
+                }
+            }
+
+            return new List<StartingSettlement>
+            {
+                new(ContentId.From("home-prime"), isColony: true, buildings),
+            };
         }
 
         private static List<MapNodeDefinition> BuildNodes(

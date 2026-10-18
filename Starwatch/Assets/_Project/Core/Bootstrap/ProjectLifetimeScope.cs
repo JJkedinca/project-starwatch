@@ -1,4 +1,5 @@
 using EndlessHeros.Core.Content;
+using EndlessHeros.Core.Effects;
 using EndlessHeros.Core.Events;
 using EndlessHeros.Core.Persistence;
 using EndlessHeros.Core.Run;
@@ -7,6 +8,7 @@ using EndlessHeros.Core.Run.Universe;
 using EndlessHeros.Core.Simulation;
 using EndlessHeros.Overworld.Services;
 using EndlessHeros.Overworld.Systems;
+using EndlessHeros.Research;
 using EndlessHeros.Settlement;
 using UnityEngine;
 using VContainer;
@@ -71,9 +73,13 @@ namespace EndlessHeros.Core.Bootstrap
             builder.Register<SensorService>(Lifetime.Singleton);
             builder.Register<TravelService>(Lifetime.Singleton);
             builder.Register<TravelSystem>(Lifetime.Singleton);
+            builder.Register<EffectRegistry>(Lifetime.Singleton);
+            builder.Register<IEffectQuery>(resolver => resolver.Resolve<EffectRegistry>(), Lifetime.Singleton);
             builder.Register<ProductionService>(Lifetime.Singleton);
             builder.Register<EconomyService>(Lifetime.Singleton);
             builder.Register<EconomyTickSystem>(Lifetime.Singleton);
+            builder.Register<ResearchService>(Lifetime.Singleton);
+            builder.Register<ResearchTickSystem>(Lifetime.Singleton);
             builder.Register<SettlementService>(Lifetime.Singleton);
             builder.Register<BuildingService>(Lifetime.Singleton);
             builder.Register<RunManager>(Lifetime.Singleton);
@@ -83,9 +89,11 @@ namespace EndlessHeros.Core.Bootstrap
             builder.RegisterBuildCallback(container =>
             {
                 var loop = container.Resolve<SimulationLoop>();
-                // Deterministic order: travel resolution after clock advance (more systems append later).
+                var economyTick = container.Resolve<EconomyTickSystem>();
+                // Travel, then economy. ResearchTickSystem is registered for run and timeline notifications.
                 loop.Register(container.Resolve<TravelSystem>());
-                loop.Register(container.Resolve<EconomyTickSystem>());
+                loop.Register(economyTick);
+                loop.Register(container.Resolve<ResearchTickSystem>());
                 _updateManager.Configure(loop);
             });
         }

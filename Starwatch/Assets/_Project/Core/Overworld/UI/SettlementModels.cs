@@ -54,7 +54,8 @@ namespace EndlessHeros.Overworld.UI
     }
 
     /// <summary>
-    /// Scanned planet yield. Base is level-1 output with modifiers applied. Production is the placed buildings.
+    /// Scanned planet yield. Base is level-1 output with planet modifiers, deposits, and research multipliers applied.
+    /// Production is the placed buildings.
     /// </summary>
     internal readonly struct PlanetEconomy
     {
