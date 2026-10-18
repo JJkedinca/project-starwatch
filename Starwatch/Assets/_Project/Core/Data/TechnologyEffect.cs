@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// What a completed project grants. One project carries one effect.

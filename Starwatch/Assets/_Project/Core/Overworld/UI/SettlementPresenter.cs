@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Commands;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Settlement;
+using ProjectStarwatch.Core.Commands;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Settlement;
 using VContainer.Unity;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Settlement intents. Rebuilds the panel for the open system.

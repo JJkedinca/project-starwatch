@@ -1,8 +1,8 @@
-using EndlessHeros.Core.Data;
-using EndlessHeros.Overworld.UI;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Overworld.UI;
 using NUnit.Framework;
 
-namespace EndlessHeros.Tests.EditMode.Overworld.UI
+namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
     /// Effect copy shown when the player hovers a research project.

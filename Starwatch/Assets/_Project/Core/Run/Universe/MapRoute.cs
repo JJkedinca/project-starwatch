@@ -1,7 +1,7 @@
 using System;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 
-namespace EndlessHeros.Core.Run.Universe
+namespace ProjectStarwatch.Core.Run.Universe
 {
     /// <summary>
     /// Undirected travel edge between two map nodes with a simulation duration.

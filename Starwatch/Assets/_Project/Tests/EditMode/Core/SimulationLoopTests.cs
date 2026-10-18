@@ -1,11 +1,11 @@
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Run.Universe;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Run.Universe;
+using ProjectStarwatch.Core.Simulation;
 using NUnit.Framework;
 
-namespace EndlessHeros.Tests.EditMode.Core
+namespace ProjectStarwatch.Tests.EditMode.Core
 {
     /// <summary>
     /// EditMode coverage for fixed-rate SimulationLoop ordering and catch-up.

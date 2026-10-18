@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Run;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Run;
 using VContainer.Unity;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Empire stockpile. Resource changes refresh the bar on the map and in a star system.

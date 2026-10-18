@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Authored map node used by ScenarioDefinition factories and assets.

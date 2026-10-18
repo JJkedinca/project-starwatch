@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Authored grouping for a research project. It does not change offer rules.

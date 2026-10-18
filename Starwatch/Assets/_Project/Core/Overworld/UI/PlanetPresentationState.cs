@@ -1,6 +1,6 @@
-using EndlessHeros.Overworld;
+using ProjectStarwatch.Overworld;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Presentation snapshot for one planet icon in the star system.

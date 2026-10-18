@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Draws one known route as a line on the map surface.

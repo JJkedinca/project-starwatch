@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Content;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Settlement;
+using ProjectStarwatch.Core.Content;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Settlement;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Builds the research panel from the stored offers, the catalog, and the last Science hand-off.

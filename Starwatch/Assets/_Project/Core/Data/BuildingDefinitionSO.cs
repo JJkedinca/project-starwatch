@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Authored building. Footprint is per building. Level scales every output and upkeep entry.
     /// </summary>
-    [CreateAssetMenu(fileName = "Building", menuName = "Endless Heros/Building")]
+    [CreateAssetMenu(fileName = "Building", menuName = "Starwatch/Building")]
     public sealed class BuildingDefinitionSO : ScriptableObject
     {
         private static readonly IReadOnlyList<ResourceAmount> EmptyRates = Array.Empty<ResourceAmount>();

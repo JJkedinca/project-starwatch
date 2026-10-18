@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Research
+namespace ProjectStarwatch.Research
 {
     /// <summary>
     /// Picks at most three offers. A pinned project takes a slot, then the rest are shuffled.

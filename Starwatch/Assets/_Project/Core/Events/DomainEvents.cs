@@ -1,7 +1,7 @@
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Core.Events
+namespace ProjectStarwatch.Core.Events
 {
     /// <summary>
     /// Whether a fleet leg has departed or reached its destination.

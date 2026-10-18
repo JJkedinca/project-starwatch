@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Run;
+using ProjectStarwatch.Core.Run;
 
-namespace EndlessHeros.Core.Simulation
+namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
     /// Fixed-rate simulation driver. Accumulates real time, advances the clock in

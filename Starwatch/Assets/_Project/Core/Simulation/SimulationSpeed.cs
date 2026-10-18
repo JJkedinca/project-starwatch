@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Simulation
+namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
     /// Discrete simulation playback speeds, including pause.

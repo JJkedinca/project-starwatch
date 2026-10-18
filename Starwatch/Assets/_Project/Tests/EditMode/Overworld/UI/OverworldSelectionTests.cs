@@ -1,8 +1,8 @@
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Overworld.UI;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Overworld.UI;
 using NUnit.Framework;
 
-namespace EndlessHeros.Tests.EditMode.Overworld.UI
+namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
     /// Selection rules shared by the star map, star system, and settlement presenters.

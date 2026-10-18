@@ -1,9 +1,9 @@
 using System;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Run.Timeline;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Four resource amounts for one planet panel.

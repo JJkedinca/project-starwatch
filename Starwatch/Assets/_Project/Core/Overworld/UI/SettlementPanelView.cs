@@ -1,8 +1,8 @@
 using System;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Settlement panel. Planet base, current production, and the other planet sections appear for the selected planet.

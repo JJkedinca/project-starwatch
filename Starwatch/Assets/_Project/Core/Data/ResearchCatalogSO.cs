@@ -1,13 +1,13 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Every research definition in the game. A run keeps its own list of currently available projects.
     /// </summary>
-    [CreateAssetMenu(fileName = "ResearchCatalog", menuName = "Endless Heros/Research Catalog")]
+    [CreateAssetMenu(fileName = "ResearchCatalog", menuName = "Starwatch/Research Catalog")]
     public sealed class ResearchCatalogSO : ScriptableObject
     {
         [Tooltip("Every research in the game, in offer-draw order before the shuffle.")]

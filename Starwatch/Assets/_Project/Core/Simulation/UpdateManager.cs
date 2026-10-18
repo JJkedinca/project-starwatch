@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace EndlessHeros.Core.Simulation
+namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
     /// Single Unity Update owner. Feeds real-time delta into SimulationLoop;

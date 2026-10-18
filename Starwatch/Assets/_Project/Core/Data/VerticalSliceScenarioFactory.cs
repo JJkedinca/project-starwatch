@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Builds the deterministic authored-vertical-slice scenario for Phase 1.

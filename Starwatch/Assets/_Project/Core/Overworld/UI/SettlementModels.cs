@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Timeline;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Settlement panel snapshot. Hidden while the star map is showing.

@@ -1,6 +1,6 @@
-using EndlessHeros.Core.Data;
+using ProjectStarwatch.Core.Data;
 
-namespace EndlessHeros.Core.Effects
+namespace ProjectStarwatch.Core.Effects
 {
     /// <summary>
     /// Read-only capabilities and output multipliers from completed research.

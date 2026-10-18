@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
+using ProjectStarwatch.Core.Identifiers;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Applies a <see cref="StarMapModel"/> to the map surface and the selected-node card.

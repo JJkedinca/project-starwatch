@@ -1,7 +1,7 @@
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Core.Run.Timeline
+namespace ProjectStarwatch.Core.Run.Timeline
 {
     /// <summary>
     /// Timeline-owned in-progress fleet travel leg.

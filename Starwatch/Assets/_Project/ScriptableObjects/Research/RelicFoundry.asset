@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e4c1a9b2d6f4e8a9c0b1d2e3f405161, type: 3}
   m_Name: RelicFoundry
-  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Data.ResearchDefinitionSO
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Data.ResearchDefinitionSO
   _id: relic-foundry
   _displayName: Relic Foundry
   _domain: 5

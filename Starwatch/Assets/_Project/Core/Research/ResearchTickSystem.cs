@@ -1,9 +1,9 @@
 using System;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Simulation;
-using EndlessHeros.Settlement;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Settlement;
 
-namespace EndlessHeros.Research
+namespace ProjectStarwatch.Research
 {
     /// <summary>
     /// Hears run and timeline changes from the simulation loop. Science is taken from

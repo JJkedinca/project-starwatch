@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Bootstrap
+namespace ProjectStarwatch.Core.Bootstrap
 {
     /// <summary>
     /// Stable identifiers for the application's authored scenes.

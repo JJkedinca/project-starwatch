@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace EndlessHeros.Core.Events
+namespace ProjectStarwatch.Core.Events
 {
     /// <summary>
     /// Domain event bus. Services publish after they commit state. The bus appends

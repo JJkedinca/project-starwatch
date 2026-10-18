@@ -1,8 +1,8 @@
-using EndlessHeros.Overworld.UI;
+using ProjectStarwatch.Overworld.UI;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace EndlessHeros.Tests.EditMode.Overworld.UI
+namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
     /// EditMode coverage for map coordinate conversion.

@@ -1,9 +1,9 @@
 using System;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Overworld;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Overworld;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Flat planet icon button for the star-system planet strip.

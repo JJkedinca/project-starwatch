@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Simulation;
-using EndlessHeros.Overworld.UI;
-using EndlessHeros.Settlement;
-using EndlessHeros.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Overworld.UI;
+using ProjectStarwatch.Settlement;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 
-namespace EndlessHeros.Tests.EditMode.Overworld.UI
+namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
     /// Settlement presenter against a fake view. Resource ticks rebuild only this panel.

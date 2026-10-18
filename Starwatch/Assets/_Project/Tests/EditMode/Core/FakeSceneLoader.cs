@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using EndlessHeros.Core.Bootstrap;
+using ProjectStarwatch.Core.Bootstrap;
 
-namespace EndlessHeros.Tests.EditMode.Core
+namespace ProjectStarwatch.Tests.EditMode.Core
 {
     /// <summary>
     /// Test double for ISceneLoader that records loads without touching Unity scenes.

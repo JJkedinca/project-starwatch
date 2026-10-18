@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Simulation;
-using EndlessHeros.Overworld.UI;
-using EndlessHeros.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Overworld.UI;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 
-namespace EndlessHeros.Tests.EditMode.Overworld.UI
+namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
     /// Star map presenter against a fake view: enter, select, and travel.

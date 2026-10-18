@@ -1,8 +1,8 @@
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Empire stockpile for the bar on the star map and in a star system.

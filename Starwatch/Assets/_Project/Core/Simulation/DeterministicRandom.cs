@@ -1,6 +1,6 @@
 using System;
 
-namespace EndlessHeros.Core.Simulation
+namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
     /// Seeded System.Random wrapper so scenario and combat rolls are reproducible.

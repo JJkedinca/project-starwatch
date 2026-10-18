@@ -1,8 +1,8 @@
 using System;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Settlement
+namespace ProjectStarwatch.Settlement
 {
     /// <summary>
     /// Settles colony rates every simulation second, then notifies listeners once every <see cref="kIntervalSeconds"/> seconds.

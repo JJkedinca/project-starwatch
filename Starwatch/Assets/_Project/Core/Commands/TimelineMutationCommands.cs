@@ -1,8 +1,8 @@
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Archive;
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Archive;
+using ProjectStarwatch.Core.Run.Timeline;
 
-namespace EndlessHeros.Core.Commands
+namespace ProjectStarwatch.Core.Commands
 {
     /// <summary>
     /// Tiny command helpers used to prove CommandResult and timeline isolation in Phase 0.

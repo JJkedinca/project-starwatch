@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Core.Bootstrap
+namespace ProjectStarwatch.Core.Bootstrap
 {
     /// <summary>
     /// Thin UI Toolkit bridge for the main menu. Raises intents and exposes

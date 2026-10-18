@@ -1,6 +1,6 @@
 using System;
 
-namespace EndlessHeros.Core.Identifiers
+namespace ProjectStarwatch.Core.Identifiers
 {
     /// <summary>
     /// Stable identity for a knowledge/visibility observer (player or faction).

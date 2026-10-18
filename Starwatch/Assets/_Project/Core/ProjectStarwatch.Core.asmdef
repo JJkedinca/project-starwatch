@@ -1,6 +1,6 @@
 {
-    "name": "EndlessHeros.Core",
-    "rootNamespace": "EndlessHeros.Core",
+    "name": "ProjectStarwatch.Core",
+    "rootNamespace": "ProjectStarwatch.Core",
     "references": [
         "VContainer",
         "UniTask",

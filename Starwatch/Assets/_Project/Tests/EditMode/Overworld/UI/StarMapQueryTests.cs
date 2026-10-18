@@ -1,13 +1,13 @@
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Universe;
-using EndlessHeros.Overworld;
-using EndlessHeros.Overworld.Services;
-using EndlessHeros.Overworld.UI;
-using EndlessHeros.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Universe;
+using ProjectStarwatch.Overworld;
+using ProjectStarwatch.Overworld.Services;
+using ProjectStarwatch.Overworld.UI;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 
-namespace EndlessHeros.Tests.EditMode.Overworld.UI
+namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
     /// Star map read model: routes, node cards, and whether a system can be opened.

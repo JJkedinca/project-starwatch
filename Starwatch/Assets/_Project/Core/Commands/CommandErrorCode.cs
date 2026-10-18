@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Commands
+namespace ProjectStarwatch.Core.Commands
 {
     /// <summary>
     /// Stable machine-readable reasons a player command was rejected.

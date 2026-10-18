@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Run
+namespace ProjectStarwatch.Core.Run
 {
     /// <summary>
     /// Deterministic seed used for scenario generation, offers, and combat rolls.

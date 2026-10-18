@@ -1,6 +1,6 @@
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Core.Events
+namespace ProjectStarwatch.Core.Events
 {
     /// <summary>
     /// A fact that already happened. Publishers send it after state is committed.

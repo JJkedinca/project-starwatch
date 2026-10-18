@@ -1,20 +1,20 @@
-using EndlessHeros.Core.Content;
-using EndlessHeros.Core.Effects;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Persistence;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Run.Universe;
-using EndlessHeros.Core.Simulation;
-using EndlessHeros.Overworld.Services;
-using EndlessHeros.Overworld.Systems;
-using EndlessHeros.Research;
-using EndlessHeros.Settlement;
+using ProjectStarwatch.Core.Content;
+using ProjectStarwatch.Core.Effects;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Persistence;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Run.Universe;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Overworld.Services;
+using ProjectStarwatch.Overworld.Systems;
+using ProjectStarwatch.Research;
+using ProjectStarwatch.Settlement;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
-namespace EndlessHeros.Core.Bootstrap
+namespace ProjectStarwatch.Core.Bootstrap
 {
     /// <summary>
     /// Root VContainer scope for services that must survive scene transitions,

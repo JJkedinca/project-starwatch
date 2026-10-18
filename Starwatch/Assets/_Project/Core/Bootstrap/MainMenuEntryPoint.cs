@@ -1,10 +1,10 @@
 using System;
 using Cysharp.Threading.Tasks;
-using EndlessHeros.Core.Run;
+using ProjectStarwatch.Core.Run;
 using UnityEngine;
 using VContainer.Unity;
 
-namespace EndlessHeros.Core.Bootstrap
+namespace ProjectStarwatch.Core.Bootstrap
 {
     /// <summary>
     /// Main-menu presenter entry point. Binds UI events to run-start and quit intents.

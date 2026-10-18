@@ -1,6 +1,6 @@
 using System;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Header status line. Any presenter can post a message without knowing who paints it.

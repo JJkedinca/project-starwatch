@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Resources of the base settlement loop. Values are contiguous from zero.

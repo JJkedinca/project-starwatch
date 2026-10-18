@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 
-namespace EndlessHeros.Core.Bootstrap
+namespace ProjectStarwatch.Core.Bootstrap
 {
     /// <summary>
     /// Abstraction over Unity scene loading so SceneFlow can be tested without

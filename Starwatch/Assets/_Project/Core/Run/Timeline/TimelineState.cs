@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Simulation;
 
-namespace EndlessHeros.Core.Run.Timeline
+namespace ProjectStarwatch.Core.Run.Timeline
 {
     /// <summary>
     /// Mutable empire state for the current timeline attempt. Resets on rewind.

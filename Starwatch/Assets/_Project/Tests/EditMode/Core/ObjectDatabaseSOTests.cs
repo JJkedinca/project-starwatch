@@ -1,8 +1,8 @@
-using EndlessHeros.Core.Content;
+using ProjectStarwatch.Core.Content;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace EndlessHeros.Tests.EditMode.Core
+namespace ProjectStarwatch.Tests.EditMode.Core
 {
     public sealed class ObjectDatabaseSOTests
     {

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Data
+namespace ProjectStarwatch.Core.Data
 {
     /// <summary>
     /// Opening stockpile for one playable faction. Each faction carries its own.

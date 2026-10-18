@@ -22,7 +22,7 @@ Different weapon capabilities wait until after that polish pass. Phase 4 does no
 
 ## Unity — Backlog
 
-- Split UI Toolkit presentation out of `EndlessHeros.Core` into its own assembly once Overworld/UI surface grows enough that domain/application vs presentation boundaries matter.
+- Split UI Toolkit presentation out of `ProjectStarwatch.Core` into its own assembly once Overworld/UI surface grows enough that domain/application vs presentation boundaries matter.
 
 ## Unity — Deferred from Phase 3
 

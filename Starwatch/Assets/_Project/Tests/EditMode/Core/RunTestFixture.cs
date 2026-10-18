@@ -1,19 +1,19 @@
 using System;
-using EndlessHeros.Core.Content;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Effects;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Run.Universe;
-using EndlessHeros.Core.Simulation;
-using EndlessHeros.Overworld.Services;
-using EndlessHeros.Overworld.Systems;
-using EndlessHeros.Research;
-using EndlessHeros.Settlement;
+using ProjectStarwatch.Core.Content;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Effects;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Run.Universe;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Overworld.Services;
+using ProjectStarwatch.Overworld.Systems;
+using ProjectStarwatch.Research;
+using ProjectStarwatch.Settlement;
 using UnityEngine;
 
-namespace EndlessHeros.Tests.EditMode.Core
+namespace ProjectStarwatch.Tests.EditMode.Core
 {
     /// <summary>
     /// Shared construction helpers for EditMode run/overworld tests.

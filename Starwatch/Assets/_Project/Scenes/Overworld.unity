@@ -230,7 +230,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d422cd5045b403448008a19e5525bc3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Bootstrap.OverworldLifetimeScope
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Bootstrap.OverworldLifetimeScope
   parentReference:
     TypeName: 
   autoRun: 1
@@ -279,7 +279,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50607, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Overworld.UI.OverworldScreenView
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Overworld.UI.OverworldScreenView
   _document: {fileID: 1823050627}
 --- !u!114 &1823050627
 MonoBehaviour:

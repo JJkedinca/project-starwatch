@@ -1,13 +1,13 @@
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace EndlessHeros.Tests.EditMode.Core
+namespace ProjectStarwatch.Tests.EditMode.Core
 {
     /// <summary>
     /// EditMode coverage for RunManager run-creation contracts.

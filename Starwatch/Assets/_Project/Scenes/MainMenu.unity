@@ -147,7 +147,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f5a4e2c98fb9db4b9a6ed59886b950a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Bootstrap.MainMenuLifetimeScope
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Bootstrap.MainMenuLifetimeScope
   parentReference:
     TypeName: 
   autoRun: 1
@@ -196,7 +196,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d7bb760c0741e849ac9c6383cd13622, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: EndlessHeros.Core::EndlessHeros.Core.Bootstrap.MainMenuViewBridge
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Bootstrap.MainMenuViewBridge
   _document: {fileID: 1823050627}
 --- !u!114 &1823050627
 MonoBehaviour:

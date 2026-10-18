@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
+using ProjectStarwatch.Core.Data;
 
-namespace EndlessHeros.Core.Run.Timeline
+namespace ProjectStarwatch.Core.Run.Timeline
 {
     /// <summary>
     /// Timeline-owned stockpile of whole resources. Spend is all-or-nothing across the quoted cost.

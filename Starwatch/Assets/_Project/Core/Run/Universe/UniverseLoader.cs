@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Archive;
-using EndlessHeros.Core.Run.Timeline;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Archive;
+using ProjectStarwatch.Core.Run.Timeline;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Run.Universe
+namespace ProjectStarwatch.Core.Run.Universe
 {
     /// <summary>
     /// Loads a ScenarioDefinition into UniverseState and seeds starter timeline/archive.

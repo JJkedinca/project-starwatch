@@ -1,6 +1,6 @@
 using UnityEngine.UIElements;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Presence of the selected planet. Rates live on the production panel.

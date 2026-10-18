@@ -1,9 +1,9 @@
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Archive;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Overworld;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Archive;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Overworld;
 
-namespace EndlessHeros.Overworld.Services
+namespace ProjectStarwatch.Overworld.Services
 {
     /// <summary>
     /// Fog / explored / scanned queries over archive knowledge and timeline presence.

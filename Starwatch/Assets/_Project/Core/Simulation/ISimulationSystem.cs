@@ -1,6 +1,6 @@
-using EndlessHeros.Core.Run;
+using ProjectStarwatch.Core.Run;
 
-namespace EndlessHeros.Core.Simulation
+namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
     /// Contract for systems stepped by SimulationLoop in a fixed, deterministic order.

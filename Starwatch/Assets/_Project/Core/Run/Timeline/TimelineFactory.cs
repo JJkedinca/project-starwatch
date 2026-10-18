@@ -1,11 +1,11 @@
 using System;
-using EndlessHeros.Core.Data;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run.Archive;
-using EndlessHeros.Core.Run.Universe;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run.Archive;
+using ProjectStarwatch.Core.Run.Universe;
 using UnityEngine;
 
-namespace EndlessHeros.Core.Run.Timeline
+namespace ProjectStarwatch.Core.Run.Timeline
 {
     /// <summary>
     /// Builds a fresh timeline from universe setup and archive unlocks without

@@ -1,17 +1,17 @@
 using System;
-using EndlessHeros.Core.Commands;
-using EndlessHeros.Core.Events;
-using EndlessHeros.Core.Identifiers;
-using EndlessHeros.Core.Run;
-using EndlessHeros.Core.Run.Archive;
-using EndlessHeros.Core.Run.Timeline;
-using EndlessHeros.Core.Simulation;
+using ProjectStarwatch.Core.Commands;
+using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Archive;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Simulation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using EntityId = EndlessHeros.Core.Identifiers.EntityId;
+using EntityId = ProjectStarwatch.Core.Identifiers.EntityId;
 
-namespace EndlessHeros.Tests.EditMode.Core
+namespace ProjectStarwatch.Tests.EditMode.Core
 {
     /// <summary>
     /// EditMode coverage for universe / timeline / archive isolation.

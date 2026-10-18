@@ -1,4 +1,4 @@
-namespace EndlessHeros.Core.Commands
+namespace ProjectStarwatch.Core.Commands
 {
     /// <summary>
     /// Structured rejection for a player command.

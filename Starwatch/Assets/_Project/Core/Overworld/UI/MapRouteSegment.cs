@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace EndlessHeros.Overworld.UI
+namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Authored map-space endpoints for one visible route segment.
