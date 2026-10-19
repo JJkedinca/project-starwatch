@@ -74,11 +74,34 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             selection.EnterSystem(ContentId.From("home-system"));
             selection.SelectPlanet(ContentId.From("home-prime"));
 
+            selection.SelectFleet(new EntityId(4));
             selection.Clear();
 
             Assert.That(selection.InStarSystem, Is.False);
             Assert.That(selection.SelectedNodeId.IsEmpty, Is.True);
             Assert.That(selection.SelectedPlanetId.IsEmpty, Is.True);
+            Assert.That(selection.SelectedFleetId.IsNone, Is.True);
+        }
+
+        [Test]
+        public void SelectFleet_StaysSelectedAcrossTheMapAndTheSystem()
+        {
+            var selection = new OverworldSelection();
+            var home = ContentId.From("home-system");
+            var fleetId = new EntityId(7);
+            var raises = 0;
+            selection.Changed += () => raises++;
+
+            selection.SelectFleet(fleetId);
+            selection.EnterSystem(home);
+            selection.SelectPlanet(ContentId.From("home-prime"));
+            selection.BackToMap();
+            selection.SelectNode(home);
+            selection.SelectFleet(fleetId);
+
+            Assert.That(selection.SelectedFleetId, Is.EqualTo(fleetId));
+            Assert.That(selection.InStarSystem, Is.False);
+            Assert.That(raises, Is.EqualTo(4));
         }
 
         [Test]

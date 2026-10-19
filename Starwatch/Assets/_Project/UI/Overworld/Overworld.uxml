@@ -8,8 +8,10 @@
     <ui:Template name="ColonyStatus" src="ColonyStatus.uxml" />
     <ui:Template name="SettlementCommitment" src="SettlementCommitment.uxml" />
     <ui:Template name="BuildingList" src="BuildingList.uxml" />
+    <ui:Template name="ShipyardSection" src="ShipyardSection.uxml" />
     <ui:Template name="StockpileBar" src="StockpileBar.uxml" />
     <ui:Template name="ResearchPanel" src="ResearchPanel.uxml" />
+    <ui:Template name="FleetPanel" src="FleetPanel.uxml" />
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="header" class="header">
             <ui:Label name="title" text="Star Map" class="title" />
@@ -23,6 +25,7 @@
             </ui:VisualElement>
             <ui:VisualElement name="inspection-panel" class="inspection-panel">
                 <ui:Instance template="StarSystemInspection" />
+                <ui:Instance template="FleetPanel" />
                 <ui:Instance template="PlanetInspection" />
                 <ui:ScrollView name="settlement-panel" class="settlement-panel" mode="Vertical" vertical-scroller-visibility="AlwaysVisible">
                     <ui:VisualElement name="planet-figures" class="planet-figures">
@@ -39,6 +42,7 @@
                     <ui:Instance template="ColonyStatus" />
                     <ui:Instance template="SettlementCommitment" />
                     <ui:Instance template="BuildingList" />
+                    <ui:Instance template="ShipyardSection" />
                 </ui:ScrollView>
             </ui:VisualElement>
         </ui:VisualElement>

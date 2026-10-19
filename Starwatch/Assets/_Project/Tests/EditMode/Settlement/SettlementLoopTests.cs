@@ -311,12 +311,27 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             Assert.That(run.Timeline.TryGetColony(home, out var colony), Is.True);
             Assert.That(colony.Presence, Is.EqualTo(ColonyPresence.Colony));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(80));
-            Assert.That(colony.Buildings, Has.Count.EqualTo(catalog.Buildings.Count));
+            Assert.That(colony.Buildings, Has.Count.EqualTo(4));
             for (var i = 0; i < catalog.Buildings.Count; i++)
             {
                 var definition = catalog.Buildings[i];
                 var placed = colony.FindBuilding(definition.Id);
-                Assert.That(placed, Is.Not.Null);
+                var produces = false;
+                for (var rate = 0; rate < definition.Output.Count; rate++)
+                {
+                    if (definition.Output[rate].Amount > 0f)
+                    {
+                        produces = true;
+                        break;
+                    }
+                }
+
+                if (!produces)
+                {
+                    Assert.That(placed, Is.Null);
+                    continue;
+                }
+
                 Assert.That(placed.Level, Is.EqualTo(1));
             }
         }

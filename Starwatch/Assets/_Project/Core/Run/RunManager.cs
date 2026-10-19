@@ -24,6 +24,7 @@ namespace ProjectStarwatch.Core.Run
         private readonly UniverseLoader _universeLoader;
         private readonly ObjectDatabaseSO _objectDatabase;
         private readonly EventJournal _eventJournal;
+        private readonly DomainEventBus _events;
         private readonly SimulationLoop _simulationLoop;
         private RunState _currentRun;
 
@@ -32,12 +33,14 @@ namespace ProjectStarwatch.Core.Run
             UniverseLoader universeLoader,
             ObjectDatabaseSO objectDatabase,
             EventJournal eventJournal,
+            DomainEventBus events,
             SimulationLoop simulationLoop)
         {
             _timelineFactory = timelineFactory ?? throw new ArgumentNullException(nameof(timelineFactory));
             _universeLoader = universeLoader ?? throw new ArgumentNullException(nameof(universeLoader));
             _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
             _eventJournal = eventJournal ?? throw new ArgumentNullException(nameof(eventJournal));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
             _simulationLoop = simulationLoop ?? throw new ArgumentNullException(nameof(simulationLoop));
         }
 
@@ -106,6 +109,7 @@ namespace ProjectStarwatch.Core.Run
             }
 
             _simulationLoop.NotifyTimelineReset();
+            _events.Publish(new RewindCompletedEvent(_simulationLoop.Clock.CurrentTime, rewindIndex));
             return timeline;
         }
 

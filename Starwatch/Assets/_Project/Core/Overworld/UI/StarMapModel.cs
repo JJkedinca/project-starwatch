@@ -37,7 +37,7 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     internal readonly struct StarMapCardModel
     {
-        public static StarMapCardModel Empty { get; } = new(false, string.Empty, string.Empty, false);
+        public static StarMapCardModel Empty { get; } = new(false, string.Empty, string.Empty, false, false, 0f);
 
         public bool HasSelection { get; }
 
@@ -47,12 +47,24 @@ namespace ProjectStarwatch.Overworld.UI
 
         public bool CanTravel { get; }
 
-        public StarMapCardModel(bool hasSelection, string title, string summary, bool canTravel)
+        public bool HasArrival { get; }
+
+        public float ArrivalSeconds { get; }
+
+        public StarMapCardModel(
+            bool hasSelection,
+            string title,
+            string summary,
+            bool canTravel,
+            bool hasArrival,
+            float arrivalSeconds)
         {
             HasSelection = hasSelection;
             Title = title ?? string.Empty;
             Summary = summary ?? string.Empty;
             CanTravel = canTravel;
+            HasArrival = hasArrival;
+            ArrivalSeconds = arrivalSeconds;
         }
     }
 
@@ -68,7 +80,10 @@ namespace ProjectStarwatch.Overworld.UI
             false,
             string.Empty,
             string.Empty,
-            false);
+            false,
+            false,
+            0f,
+            Array.Empty<FleetChoiceModel>());
 
         public bool HasRun { get; }
 
@@ -84,6 +99,12 @@ namespace ProjectStarwatch.Overworld.UI
 
         public bool CanTravel { get; }
 
+        public bool HasArrival { get; }
+
+        public float ArrivalSeconds { get; }
+
+        public IReadOnlyList<FleetChoiceModel> Fleets { get; }
+
         public StarMapModel(
             bool hasRun,
             IReadOnlyList<StarMapNodeModel> nodes,
@@ -91,7 +112,10 @@ namespace ProjectStarwatch.Overworld.UI
             bool hasSelection,
             string title,
             string summary,
-            bool canTravel)
+            bool canTravel,
+            bool hasArrival,
+            float arrivalSeconds,
+            IReadOnlyList<FleetChoiceModel> fleets)
         {
             HasRun = hasRun;
             Nodes = nodes ?? Array.Empty<StarMapNodeModel>();
@@ -100,6 +124,9 @@ namespace ProjectStarwatch.Overworld.UI
             Title = title ?? string.Empty;
             Summary = summary ?? string.Empty;
             CanTravel = canTravel;
+            HasArrival = hasArrival;
+            ArrivalSeconds = arrivalSeconds;
+            Fleets = fleets ?? Array.Empty<FleetChoiceModel>();
         }
     }
 }

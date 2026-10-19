@@ -20,6 +20,10 @@ namespace ProjectStarwatch.Overworld.UI
 
         internal ResearchPanelView Research { get; } = new();
 
+        internal FleetPanelView FleetPanel { get; } = new();
+
+        internal ShipyardSectionView Shipyard { get; } = new();
+
         [SerializeField]
         private UIDocument _document;
 
@@ -89,6 +93,8 @@ namespace ProjectStarwatch.Overworld.UI
             var stockpile = root.Q<VisualElement>("stockpile-bar");
             var research = root.Q<VisualElement>("research-panel");
             var researchEntry = stockpile != null ? stockpile.Q<Button>("stockpile-research") : null;
+            var fleetPanel = root.Q<VisualElement>("fleet-panel");
+            var shipyard = root.Q<VisualElement>("shipyard-section");
             if (mapSurface == null
                 || starSystem == null
                 || starSystemInspection == null
@@ -96,9 +102,11 @@ namespace ProjectStarwatch.Overworld.UI
                 || settlement == null
                 || stockpile == null
                 || research == null
-                || researchEntry == null)
+                || researchEntry == null
+                || fleetPanel == null
+                || shipyard == null)
             {
-                Debug.LogError("OverworldScreenView could not find the map, star system, settlement, research, or stockpile roots.");
+                Debug.LogError("OverworldScreenView could not find the map, star system, fleet, settlement, research, or stockpile roots.");
                 return;
             }
 
@@ -107,6 +115,8 @@ namespace ProjectStarwatch.Overworld.UI
             Settlement.Bind(settlement);
             Stockpile.Bind(stockpile);
             Research.Bind(research, researchEntry);
+            FleetPanel.Bind(fleetPanel);
+            Shipyard.Bind(shipyard);
             if (_status != null)
             {
                 _status.Changed += OnStatus;
@@ -136,6 +146,8 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly SettlementPresenter _settlement;
         private readonly StockpilePresenter _stockpile;
         private readonly ResearchPresenter _research;
+        private readonly FleetPanelPresenter _fleetPanel;
+        private readonly ShipyardPresenter _shipyard;
 
         public OverworldScreenBinder(
             OverworldScreenView screen,
@@ -143,7 +155,9 @@ namespace ProjectStarwatch.Overworld.UI
             StarSystemPresenter system,
             SettlementPresenter settlement,
             StockpilePresenter stockpile,
-            ResearchPresenter research)
+            ResearchPresenter research,
+            FleetPanelPresenter fleetPanel,
+            ShipyardPresenter shipyard)
         {
             _screen = screen;
             _map = map;
@@ -151,6 +165,8 @@ namespace ProjectStarwatch.Overworld.UI
             _settlement = settlement;
             _stockpile = stockpile;
             _research = research;
+            _fleetPanel = fleetPanel;
+            _shipyard = shipyard;
         }
 
         public void Start()
@@ -161,6 +177,8 @@ namespace ProjectStarwatch.Overworld.UI
             _settlement.Start();
             _stockpile.Start();
             _research.Start();
+            _fleetPanel.Start();
+            _shipyard.Start();
         }
     }
 }

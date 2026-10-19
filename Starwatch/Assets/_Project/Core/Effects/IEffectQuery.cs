@@ -13,5 +13,10 @@ namespace ProjectStarwatch.Core.Effects
         /// Combined research multiplier for this resource. Missing effects return 1.
         /// </summary>
         float OutputMultiplier(ResourceKind kind);
+
+        /// <summary>
+        /// Combined research multiplier for travel time. Missing effects return 1. Route time is divided by this.
+        /// </summary>
+        float TravelSpeedMultiplier();
     }
 }

@@ -3,6 +3,8 @@
     <ui:VisualElement name="star-system-inspection" class="star-system-inspection">
         <ui:Label name="inspection-title" text="Select a star system" class="inspection-title" />
         <ui:Label name="inspection-summary" text="" class="inspection-summary" />
-        <ui:Button name="travel-button" text="Travel" class="action-button" />
+        <ui:Label text="Fleets" class="fleet-list-caption" />
+        <ui:VisualElement name="fleet-list" class="fleet-list" />
+        <ui:Label name="travel-arrival" text="" class="travel-arrival" />
     </ui:VisualElement>
 </ui:UXML>

@@ -13,6 +13,8 @@ namespace ProjectStarwatch.Overworld.UI
     {
         public event Action<ContentId> NodeClicked;
 
+        public event Action<ContentId> NodeRightClicked;
+
         private VisualElement _mapSurface;
         private VisualElement _routeLayer;
         private readonly Dictionary<ContentId, MapNodeView> _nodesById = new();
@@ -70,6 +72,7 @@ namespace ProjectStarwatch.Overworld.UI
                 var node = validNodes[i];
                 var view = new MapNodeView(node.NodeId, node.Kind);
                 view.Clicked += id => NodeClicked?.Invoke(id);
+                view.RightClicked += id => NodeRightClicked?.Invoke(id);
                 view.SetMapPosition(node.MapPosition, _scale, _originOffset);
                 _nodesById[node.NodeId] = view;
                 _mapSurface.Add(view.Root);

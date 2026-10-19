@@ -16,11 +16,16 @@ namespace ProjectStarwatch.Overworld.UI
     {
         private readonly VisibilityService _visibility;
         private readonly ObjectDatabaseSO _objectDatabase;
+        private readonly FleetListQuery _fleets;
 
-        public StarSystemQuery(VisibilityService visibility, ObjectDatabaseSO objectDatabase)
+        public StarSystemQuery(
+            VisibilityService visibility,
+            ObjectDatabaseSO objectDatabase,
+            FleetListQuery fleets)
         {
             _visibility = visibility ?? throw new ArgumentNullException(nameof(visibility));
             _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
+            _fleets = fleets ?? throw new ArgumentNullException(nameof(fleets));
         }
 
         /// <summary>
@@ -53,6 +58,7 @@ namespace ProjectStarwatch.Overworld.UI
                 true,
                 NodeLabel(node),
                 planets,
+                _fleets.AtLocation(run, node.Id, selection.SelectedFleetId),
                 showDetail,
                 detail,
                 StarSystemStatus(planets.Count));

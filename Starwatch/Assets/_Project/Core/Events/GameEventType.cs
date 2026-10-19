@@ -29,5 +29,9 @@ namespace ProjectStarwatch.Core.Events
         BuildingChanged = 21,
         SettlementAbandoned = 22,
         ResearchStarted = 23,
+        ShipQueued = 24,
+        FleetCreated = 25,
+        FleetMerged = 26,
+        FleetSplit = 27,
     }
 }

@@ -123,21 +123,16 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         }
 
         [Test]
-        public void FleetPlaceholderState_RejectsInvalidConstruction()
+        public void FleetState_RejectsInvalidConstruction()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                new FleetPlaceholderState(
-                    new EntityId(1),
-                    ContentId.From("screen"),
-                    shipCount: 0,
-                    ContentId.From("home")));
+                new ShipStack(ContentId.From("screen"), 0));
 
             Assert.Throws<ArgumentException>(() =>
-                new FleetPlaceholderState(
+                new FleetState(
                     new EntityId(1),
-                    ContentId.From("screen"),
-                    shipCount: 1,
-                    ContentId.From(" ")));
+                    ContentId.From(" "),
+                    new[] { new ShipStack(ContentId.From("screen"), 1) }));
         }
 
         [Test]

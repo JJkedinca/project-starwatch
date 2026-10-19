@@ -16,11 +16,13 @@ namespace ProjectStarwatch.Overworld.UI
     {
         private readonly VisibilityService _visibility;
         private readonly TravelService _travel;
+        private readonly FleetListQuery _fleets;
 
-        public StarMapQuery(VisibilityService visibility, TravelService travel)
+        public StarMapQuery(VisibilityService visibility, TravelService travel, FleetListQuery fleets)
         {
             _visibility = visibility ?? throw new ArgumentNullException(nameof(visibility));
             _travel = travel ?? throw new ArgumentNullException(nameof(travel));
+            _fleets = fleets ?? throw new ArgumentNullException(nameof(fleets));
         }
 
         /// <summary>
@@ -34,6 +36,7 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             var selectedNodeId = selection == null ? default : selection.SelectedNodeId;
+            var selectedFleetId = selection == null ? EntityId.None : selection.SelectedFleetId;
             var inStarSystem = selection != null && selection.InStarSystem;
             List<StarMapNodeModel> nodes = new();
             foreach (var node in run.Universe.MapGraph.Nodes)
@@ -50,7 +53,7 @@ namespace ProjectStarwatch.Overworld.UI
                     NodeState(run, node, selectedNodeId)));
             }
 
-            var card = DescribeCard(run, selectedNodeId, inStarSystem);
+            var card = DescribeCard(run, selectedNodeId, inStarSystem, selectedFleetId);
             return new StarMapModel(
                 true,
                 nodes,
@@ -58,7 +61,10 @@ namespace ProjectStarwatch.Overworld.UI
                 card.HasSelection,
                 card.Title,
                 card.Summary,
-                card.CanTravel);
+                card.CanTravel,
+                card.HasArrival,
+                card.ArrivalSeconds,
+                _fleets.All(run, selectedFleetId));
         }
 
         /// <summary>
@@ -73,30 +79,6 @@ namespace ProjectStarwatch.Overworld.UI
 
             return run.Archive.TryGetMapKnowledge(ObserverId.Player, out var knowledge)
                 && knowledge.HasExploredNode(nodeId);
-        }
-
-        /// <summary>
-        /// First fleet that can start travel to the destination.
-        /// </summary>
-        internal bool TryFindFleetForDestination(RunState run, ContentId destinationNodeId, out EntityId fleetId)
-        {
-            fleetId = EntityId.None;
-            if (run == null)
-            {
-                return false;
-            }
-
-            var fleets = run.Timeline.Fleets;
-            for (var i = 0; i < fleets.Count; i++)
-            {
-                if (_travel.CanStartTravel(run, ObserverId.Player, fleets[i].Id, destinationNodeId))
-                {
-                    fleetId = fleets[i].Id;
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         internal List<MapRouteSegment> KnownRoutes(RunState run)
@@ -154,7 +136,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return StarMapCardModel.Empty;
             }
 
-            return DescribeCard(run, selection.SelectedNodeId, selection.InStarSystem);
+            return DescribeCard(run, selection.SelectedNodeId, selection.InStarSystem, selection.SelectedFleetId);
         }
 
         internal void AppendNode(
@@ -198,7 +180,11 @@ namespace ProjectStarwatch.Overworld.UI
             }
         }
 
-        private StarMapCardModel DescribeCard(RunState run, ContentId selectedNodeId, bool inStarSystem)
+        private StarMapCardModel DescribeCard(
+            RunState run,
+            ContentId selectedNodeId,
+            bool inStarSystem,
+            EntityId selectedFleetId)
         {
             if (selectedNodeId.IsEmpty || !run.Universe.MapGraph.TryGetNode(selectedNodeId, out var node))
             {
@@ -206,16 +192,20 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             var visibility = _visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, node.Id);
-            var canTravel = TryFindFleetForDestination(run, node.Id, out _);
+            var arrivalSeconds = 0f;
+            var hasArrival = !selectedFleetId.IsNone
+                && _travel.TryGetTripSeconds(run, ObserverId.Player, selectedFleetId, node.Id, out arrivalSeconds);
             if (visibility == MapNodeVisibility.Hidden)
             {
                 return new StarMapCardModel(
                     true,
                     "Uncharted space",
-                    canTravel
+                    hasArrival
                         ? "Known route. Travel here to enter."
                         : "Hidden until a fleet arrives by a known route.",
-                    canTravel);
+                    hasArrival,
+                    hasArrival,
+                    hasArrival ? arrivalSeconds : 0f);
             }
 
             var kindLabel = node.Kind == MapNodeKind.System ? "Star system" : "Non-system node";
@@ -232,7 +222,13 @@ namespace ProjectStarwatch.Overworld.UI
                     : "\nOpen to inspect.";
             }
 
-            return new StarMapCardModel(true, NodeLabel(node), summary, canTravel);
+            return new StarMapCardModel(
+                true,
+                NodeLabel(node),
+                summary,
+                hasArrival,
+                hasArrival,
+                hasArrival ? arrivalSeconds : 0f);
         }
 
         private bool IsKnownNeighbor(RunState run, ContentId nodeId)

@@ -11,6 +11,7 @@ namespace ProjectStarwatch.Core.Data
         None = 0,
         Capability = 1,
         OutputMultiplier = 2,
+        TravelSpeed = 3,
     }
 
     /// <summary>
@@ -19,7 +20,7 @@ namespace ProjectStarwatch.Core.Data
     [Serializable]
     public struct TechnologyEffect
     {
-        [Tooltip("Capability id is stored for later phases. Output multiplier changes production now.")]
+        [Tooltip("Capability id is stored until a system reads it. Output multiplier changes production. Travel speed changes route time.")]
         [field: SerializeField]
         public TechnologyEffectKind Kind { get; private set; }
 
@@ -31,7 +32,7 @@ namespace ProjectStarwatch.Core.Data
         [field: SerializeField]
         public ResourceKind Resource { get; private set; }
 
-        [Tooltip("Multiplies that resource's output. 1.1 is a small bonus. Values at or below 0 are ignored.")]
+        [Tooltip("Output multiplier, or travel speed multiplier. 1.1 is a small bonus. Values at or below 0 are ignored.")]
         [field: SerializeField]
         public float Multiplier { get; private set; }
 
@@ -51,6 +52,11 @@ namespace ProjectStarwatch.Core.Data
         public static TechnologyEffect Output(ResourceKind resource, float multiplier)
         {
             return new TechnologyEffect(TechnologyEffectKind.OutputMultiplier, string.Empty, resource, multiplier);
+        }
+
+        public static TechnologyEffect TravelSpeed(float multiplier)
+        {
+            return new TechnologyEffect(TechnologyEffectKind.TravelSpeed, string.Empty, ResourceKind.Industry, multiplier);
         }
     }
 }

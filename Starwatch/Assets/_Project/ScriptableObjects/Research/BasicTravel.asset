@@ -18,7 +18,7 @@ MonoBehaviour:
   _pointCost: 40
   _prerequisiteIds: []
   _effect:
-    <Kind>k__BackingField: 1
-    <CapabilityId>k__BackingField: travel-i
+    <Kind>k__BackingField: 3
+    <CapabilityId>k__BackingField: 
     <Resource>k__BackingField: 0
-    <Multiplier>k__BackingField: 0
+    <Multiplier>k__BackingField: 1.25

@@ -24,6 +24,9 @@ namespace ProjectStarwatch.Core.Bootstrap
             builder.Register<SettlementQuery>(Lifetime.Scoped);
             builder.Register<StockpileQuery>(Lifetime.Scoped);
             builder.Register<ResearchQuery>(Lifetime.Scoped);
+            builder.Register<FleetPanelQuery>(Lifetime.Scoped);
+            builder.Register<FleetListQuery>(Lifetime.Scoped);
+            builder.Register<ShipyardQuery>(Lifetime.Scoped);
             builder.Register<IStarMapView>(
                 resolver => resolver.Resolve<OverworldScreenView>().StarMap,
                 Lifetime.Scoped);
@@ -39,11 +42,19 @@ namespace ProjectStarwatch.Core.Bootstrap
             builder.Register<IResearchView>(
                 resolver => resolver.Resolve<OverworldScreenView>().Research,
                 Lifetime.Scoped);
+            builder.Register<IFleetPanelView>(
+                resolver => resolver.Resolve<OverworldScreenView>().FleetPanel,
+                Lifetime.Scoped);
+            builder.Register<IShipyardView>(
+                resolver => resolver.Resolve<OverworldScreenView>().Shipyard,
+                Lifetime.Scoped);
             builder.Register<StarMapPresenter>(Lifetime.Scoped);
             builder.Register<StarSystemPresenter>(Lifetime.Scoped);
             builder.Register<SettlementPresenter>(Lifetime.Scoped);
             builder.Register<StockpilePresenter>(Lifetime.Scoped);
             builder.Register<ResearchPresenter>(Lifetime.Scoped);
+            builder.Register<FleetPanelPresenter>(Lifetime.Scoped);
+            builder.Register<ShipyardPresenter>(Lifetime.Scoped);
             builder.RegisterEntryPoint<OverworldScreenBinder>(Lifetime.Scoped);
         }
     }

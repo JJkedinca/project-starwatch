@@ -1,18 +1,15 @@
-using System;
 using UnityEngine.UIElements;
 
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Side panel for the selected star system: summary and travel.
+    /// Side panel for the selected star system: summary and arrival time.
     /// </summary>
     internal sealed class StarSystemInspectionView
     {
-        public event Action TravelClicked;
-
         private Label _title;
         private Label _summary;
-        private Button _travelButton;
+        private Label _arrival;
 
         /// <summary>
         /// Binds the StarSystemInspection.uxml root.
@@ -26,11 +23,7 @@ namespace ProjectStarwatch.Overworld.UI
 
             _title = root.Q<Label>("inspection-title");
             _summary = root.Q<Label>("inspection-summary");
-            _travelButton = root.Q<Button>("travel-button");
-            if (_travelButton != null)
-            {
-                _travelButton.clicked += () => TravelClicked?.Invoke();
-            }
+            _arrival = root.Q<Label>("travel-arrival");
         }
 
         /// <summary>
@@ -48,13 +41,13 @@ namespace ProjectStarwatch.Overworld.UI
                 _summary.text = string.Empty;
             }
 
-            SetTravelEnabled(false);
+            SetArrival(false, 0f);
         }
 
         /// <summary>
         /// Updates labels for the selected node.
         /// </summary>
-        public void ShowNode(string title, string summary, bool canTravel)
+        public void ShowNode(string title, string summary, bool hasArrival, float arrivalSeconds)
         {
             if (_title != null)
             {
@@ -66,15 +59,18 @@ namespace ProjectStarwatch.Overworld.UI
                 _summary.text = summary ?? string.Empty;
             }
 
-            SetTravelEnabled(canTravel);
+            SetArrival(hasArrival, arrivalSeconds);
         }
 
-        private void SetTravelEnabled(bool enabled)
+        private void SetArrival(bool hasArrival, float arrivalSeconds)
         {
-            if (_travelButton != null)
+            if (_arrival == null)
             {
-                _travelButton.SetEnabled(enabled);
+                return;
             }
+
+            _arrival.text = hasArrival ? "Arrives in " + arrivalSeconds.ToString("0.#") + "s" : string.Empty;
+            _arrival.style.display = hasArrival ? DisplayStyle.Flex : DisplayStyle.None;
         }
     }
 }

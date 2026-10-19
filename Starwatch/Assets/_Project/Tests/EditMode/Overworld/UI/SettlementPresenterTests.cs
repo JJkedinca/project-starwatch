@@ -58,15 +58,18 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             selection.SelectPlanet(ContentId.From("home-prime"));
             var map = new FakeStarMapView();
             var settlement = new FakeSettlementView();
+            var database = RunTestFixture.CreateObjectDatabase();
+            var fleets = new FleetListQuery(database, stack.Effects);
             var mapPresenter = new StarMapPresenter(
                 map,
                 selection,
                 new OverworldStatus(),
                 stack.Manager,
                 stack.Travel,
-                new StarMapQuery(stack.Visibility, stack.Travel),
-                new StarSystemQuery(stack.Visibility, RunTestFixture.CreateObjectDatabase()),
-                stack.Events);
+                new StarMapQuery(stack.Visibility, stack.Travel, fleets),
+                new StarSystemQuery(stack.Visibility, database, fleets),
+                stack.Events,
+                fleets);
             var settlementPresenter = CreatePresenter(settlement, selection, new OverworldStatus(), stack);
             mapPresenter.Start();
             settlementPresenter.Start();
@@ -191,7 +194,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 remove { }
             }
 
-            public event Action TravelRequested
+            public event Action<EntityId> FleetSelected
+            {
+                add { }
+                remove { }
+            }
+
+            public event Action<ContentId> TravelRequested
             {
                 add { }
                 remove { }
@@ -202,6 +211,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             public void Apply(StarMapModel model)
             {
                 ApplyCount++;
+            }
+
+            public void ApplyFleets(IReadOnlyList<FleetChoiceModel> fleets)
+            {
             }
 
             public void ApplyNodes(IReadOnlyList<StarMapNodeModel> nodes)

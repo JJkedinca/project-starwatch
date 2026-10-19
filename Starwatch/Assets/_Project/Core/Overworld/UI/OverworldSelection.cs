@@ -4,8 +4,9 @@ using ProjectStarwatch.Core.Identifiers;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Which overworld surface is open, and which node and planet are selected.
+    /// Which overworld surface is open, and which node, planet, and fleet are selected.
     /// Presenters read this and change it. They do not call each other.
+    /// The fleet stays selected across the map and the open system.
     /// </summary>
     internal sealed class OverworldSelection
     {
@@ -16,6 +17,8 @@ namespace ProjectStarwatch.Overworld.UI
         public ContentId SelectedNodeId { get; private set; }
 
         public ContentId SelectedPlanetId { get; private set; }
+
+        public EntityId SelectedFleetId { get; private set; }
 
         public bool InStarSystem => Mode == OverworldViewMode.StarSystem;
 
@@ -49,7 +52,21 @@ namespace ProjectStarwatch.Overworld.UI
         }
 
         /// <summary>
-        /// Closes the star system and clears the planet. The node stays selected.
+        /// Selects a fleet on the map or in a system. The node and planet stay as they are.
+        /// </summary>
+        public void SelectFleet(EntityId fleetId)
+        {
+            if (SelectedFleetId == fleetId)
+            {
+                return;
+            }
+
+            SelectedFleetId = fleetId;
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// Closes the star system and clears the planet. The node and fleet stay selected.
         /// </summary>
         public void BackToMap()
         {
@@ -61,6 +78,18 @@ namespace ProjectStarwatch.Overworld.UI
         /// </summary>
         public void Clear()
         {
+            var clearFleet = !SelectedFleetId.IsNone;
+            SelectedFleetId = EntityId.None;
+            if (Mode == OverworldViewMode.StarMap && SelectedNodeId.IsEmpty && SelectedPlanetId.IsEmpty)
+            {
+                if (clearFleet)
+                {
+                    Changed?.Invoke();
+                }
+
+                return;
+            }
+
             Set(OverworldViewMode.StarMap, default, default);
         }
 

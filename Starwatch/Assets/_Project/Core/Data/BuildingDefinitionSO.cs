@@ -45,6 +45,10 @@ namespace ProjectStarwatch.Core.Data
         [SerializeField]
         private List<ResourceBundle> _upgradeCosts = new();
 
+        [Tooltip("A colony with this building can queue ships. Placing it does not require research.")]
+        [SerializeField]
+        private bool _enablesShipConstruction;
+
         public ContentId Id => ContentId.From(_id);
 
         public string DisplayName => _displayName ?? string.Empty;
@@ -56,6 +60,8 @@ namespace ProjectStarwatch.Core.Data
         public IReadOnlyList<ResourceAmount> Upkeep => _upkeep ?? EmptyRates;
 
         public int MaxLevel => _maxLevel < 1 ? 1 : _maxLevel;
+
+        public bool EnablesShipConstruction => _enablesShipConstruction;
 
         public IReadOnlyList<ResourceBundle> UpgradeCosts => _upgradeCosts;
 

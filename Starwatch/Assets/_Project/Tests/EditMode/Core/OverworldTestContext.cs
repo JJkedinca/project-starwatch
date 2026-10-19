@@ -4,6 +4,7 @@ using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Overworld.Services;
 using ProjectStarwatch.Overworld.Systems;
+using ProjectStarwatch.Fleet;
 using ProjectStarwatch.Research;
 using ProjectStarwatch.Settlement;
 
@@ -44,6 +45,10 @@ namespace ProjectStarwatch.Tests.EditMode.Core
 
         public EffectRegistry Effects { get; }
 
+        public FleetService Fleets { get; }
+
+        public ShipProductionService ShipProduction { get; }
+
         public OverworldTestContext(
             RunManager manager,
             ExplorationService exploration,
@@ -59,7 +64,9 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             BuildingService buildings,
             EconomyService economy,
             ResearchService research,
-            EffectRegistry effects)
+            EffectRegistry effects,
+            FleetService fleets,
+            ShipProductionService shipProduction)
         {
             Manager = manager;
             Exploration = exploration;
@@ -76,6 +83,8 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             Economy = economy;
             Research = research;
             Effects = effects;
+            Fleets = fleets;
+            ShipProduction = shipProduction;
         }
     }
 }

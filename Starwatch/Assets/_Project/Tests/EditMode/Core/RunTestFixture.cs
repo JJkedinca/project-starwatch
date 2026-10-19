@@ -9,6 +9,7 @@ using ProjectStarwatch.Core.Run.Universe;
 using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Overworld.Services;
 using ProjectStarwatch.Overworld.Systems;
+using ProjectStarwatch.Fleet;
 using ProjectStarwatch.Research;
 using ProjectStarwatch.Settlement;
 using UnityEngine;
@@ -30,8 +31,10 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 "Assets/_Project/ScriptableObjects/SettlementCatalog.asset");
             var research = UnityEditor.AssetDatabase.LoadAssetAtPath<ResearchCatalogSO>(
                 "Assets/_Project/ScriptableObjects/ResearchCatalog.asset");
+            var ships = UnityEditor.AssetDatabase.LoadAssetAtPath<ShipCatalogSO>(
+                "Assets/_Project/ScriptableObjects/ShipCatalog.asset");
             var database = ScriptableObject.CreateInstance<ObjectDatabaseSO>();
-            database.AssignDatabases(starSystems, planets, catalog, research);
+            database.AssignDatabases(starSystems, planets, catalog, research, ships);
             return database;
         }
 
@@ -41,7 +44,13 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             journal = journal ?? new EventJournal();
             var timelineFactory = new TimelineFactory();
             var loader = new UniverseLoader(timelineFactory);
-            return new RunManager(timelineFactory, loader, objectDatabase, journal, new SimulationLoop(new SimulationClock()));
+            return new RunManager(
+                timelineFactory,
+                loader,
+                objectDatabase,
+                journal,
+                new DomainEventBus(journal),
+                new SimulationLoop(new SimulationClock()));
         }
 
         internal static OverworldTestContext CreateOverworldStack()
@@ -53,14 +62,14 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var loop = new SimulationLoop(clock);
             var timelineFactory = new TimelineFactory();
             var loader = new UniverseLoader(timelineFactory);
-            var manager = new RunManager(timelineFactory, loader, objectDatabase, journal, loop);
+            var manager = new RunManager(timelineFactory, loader, objectDatabase, journal, events, loop);
             var route = new RouteService();
             var archive = new ArchiveService();
+            var effects = new EffectRegistry();
             var exploration = new ExplorationService(archive, route, events, clock);
-            var travel = new TravelService(route, clock, events);
+            var travel = new TravelService(route, clock, events, effects, objectDatabase);
             var visibility = new VisibilityService();
             var travelSystem = new TravelSystem(exploration, events);
-            var effects = new EffectRegistry();
             var production = new ProductionService(objectDatabase, effects);
             var economy = new EconomyService(objectDatabase, production, events, clock);
             var research = new ResearchService(objectDatabase, effects, events, clock);
@@ -69,9 +78,13 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var sensor = new SensorService(archive, objectDatabase, events, clock);
             var settlement = new SettlementService(objectDatabase, events, clock);
             var buildings = new BuildingService(objectDatabase, events, clock);
+            var fleets = new FleetService(events, clock);
+            var shipProduction = new ShipProductionService(objectDatabase, effects, events, clock);
+            var shipProductionSystem = new ShipProductionSystem(objectDatabase, fleets, shipProduction, events);
             loop.Register(travelSystem);
             loop.Register(economyTick);
             loop.Register(researchTick);
+            loop.Register(shipProductionSystem);
             return new OverworldTestContext(
                 manager: manager,
                 exploration: exploration,
@@ -87,7 +100,9 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 buildings: buildings,
                 economy: economy,
                 research: research,
-                effects: effects);
+                effects: effects,
+                fleets: fleets,
+                shipProduction: shipProduction);
         }
 
         internal static StartingEmpireDefinition UnsettledVerticalSlice()

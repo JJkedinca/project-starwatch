@@ -210,4 +210,130 @@ namespace ProjectStarwatch.Core.Events
             ResearchId = researchId;
         }
     }
+
+    /// <summary>
+    /// A ship was paid for and added to a colony queue.
+    /// </summary>
+    public readonly struct ShipQueuedEvent : IDomainEvent
+    {
+        public GameTime Time { get; }
+
+        public ContentId PlanetId { get; }
+
+        public ContentId ClassId { get; }
+
+        public GameEventType EventType => GameEventType.ShipQueued;
+
+        public ShipQueuedEvent(GameTime time, ContentId planetId, ContentId classId)
+        {
+            Time = time;
+            PlanetId = planetId;
+            ClassId = classId;
+        }
+    }
+
+    /// <summary>
+    /// A queued ship finished and joined a fleet.
+    /// </summary>
+    public readonly struct ShipConstructionCompletedEvent : IDomainEvent
+    {
+        public GameTime Time { get; }
+
+        public ContentId PlanetId { get; }
+
+        public ContentId ClassId { get; }
+
+        public EntityId FleetId { get; }
+
+        public GameEventType EventType => GameEventType.ShipConstructionCompleted;
+
+        public ShipConstructionCompletedEvent(GameTime time, ContentId planetId, ContentId classId, EntityId fleetId)
+        {
+            Time = time;
+            PlanetId = planetId;
+            ClassId = classId;
+            FleetId = fleetId;
+        }
+    }
+
+    /// <summary>
+    /// A new fleet was created at a node.
+    /// </summary>
+    public readonly struct FleetCreatedEvent : IDomainEvent
+    {
+        public GameTime Time { get; }
+
+        public EntityId FleetId { get; }
+
+        public ContentId LocationId { get; }
+
+        public GameEventType EventType => GameEventType.FleetCreated;
+
+        public FleetCreatedEvent(GameTime time, EntityId fleetId, ContentId locationId)
+        {
+            Time = time;
+            FleetId = fleetId;
+            LocationId = locationId;
+        }
+    }
+
+    /// <summary>
+    /// The source fleet was folded into the target and removed.
+    /// </summary>
+    public readonly struct FleetMergedEvent : IDomainEvent
+    {
+        public GameTime Time { get; }
+
+        public EntityId TargetFleetId { get; }
+
+        public EntityId SourceFleetId { get; }
+
+        public GameEventType EventType => GameEventType.FleetMerged;
+
+        public FleetMergedEvent(GameTime time, EntityId targetFleetId, EntityId sourceFleetId)
+        {
+            Time = time;
+            TargetFleetId = targetFleetId;
+            SourceFleetId = sourceFleetId;
+        }
+    }
+
+    /// <summary>
+    /// The timeline was replaced. Fleet ids from the previous timeline are gone.
+    /// </summary>
+    public readonly struct RewindCompletedEvent : IDomainEvent
+    {
+        public GameTime Time { get; }
+
+        public int RewindIndex { get; }
+
+        public GameEventType EventType => GameEventType.RewindCompleted;
+
+        public RewindCompletedEvent(GameTime time, int rewindIndex)
+        {
+            Time = time;
+            RewindIndex = rewindIndex;
+        }
+    }
+
+    /// <summary>
+    /// Ships left one fleet and formed another at the same node.
+    /// </summary>
+    public readonly struct FleetSplitEvent : IDomainEvent
+    {
+        public GameTime Time { get; }
+
+        public EntityId SourceFleetId { get; }
+
+        public EntityId NewFleetId { get; }
+
+        public GameEventType EventType => GameEventType.FleetSplit;
+
+        public FleetSplitEvent(GameTime time, EntityId sourceFleetId, EntityId newFleetId)
+        {
+            Time = time;
+            SourceFleetId = sourceFleetId;
+            NewFleetId = newFleetId;
+        }
+    }
 }

@@ -39,7 +39,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(45));
             var database = RunTestFixture.CreateObjectDatabase();
-            var query = new StarSystemQuery(stack.Visibility, database);
+            var query = new StarSystemQuery(
+                stack.Visibility,
+                database,
+                new FleetListQuery(database, stack.Effects));
             var home = RequireNode(run, ContentId.From("home-system"));
             var prime = ContentId.From("home-prime");
             Assert.That(database.TryGetPlanet(prime.Value, out var planet), Is.True);
@@ -72,7 +75,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
         private static StarSystemQuery CreateQuery(OverworldTestContext stack)
         {
-            return new StarSystemQuery(stack.Visibility, RunTestFixture.CreateObjectDatabase());
+            var database = RunTestFixture.CreateObjectDatabase();
+            return new StarSystemQuery(
+                stack.Visibility,
+                database,
+                new FleetListQuery(database, stack.Effects));
         }
 
         private static MapNode RequireNode(RunState run, ContentId nodeId)

@@ -45,9 +45,16 @@ namespace ProjectStarwatch.Overworld.UI
         {
             _view.BackRequested += OnBackRequested;
             _view.PlanetSelected += OnPlanetSelected;
+            _view.FleetSelected += OnFleetSelected;
             _view.ScanRequested += OnScanRequested;
             _selection.Changed += OnSelectionChanged;
             _subscriptions.Add(_events.Subscribe<MapKnowledgeChangedEvent>(OnMapKnowledgeChanged));
+            _subscriptions.Add(_events.Subscribe<FleetTravelEvent>(_ => RefreshRoster()));
+            _subscriptions.Add(_events.Subscribe<FleetCreatedEvent>(_ => RefreshRoster()));
+            _subscriptions.Add(_events.Subscribe<FleetMergedEvent>(_ => RefreshRoster()));
+            _subscriptions.Add(_events.Subscribe<FleetSplitEvent>(_ => RefreshRoster()));
+            _subscriptions.Add(_events.Subscribe<ShipConstructionCompletedEvent>(_ => RefreshRoster()));
+            _subscriptions.Add(_events.Subscribe<RewindCompletedEvent>(OnRewind));
             Refresh();
         }
 
@@ -55,6 +62,7 @@ namespace ProjectStarwatch.Overworld.UI
         {
             _view.BackRequested -= OnBackRequested;
             _view.PlanetSelected -= OnPlanetSelected;
+            _view.FleetSelected -= OnFleetSelected;
             _view.ScanRequested -= OnScanRequested;
             _selection.Changed -= OnSelectionChanged;
             for (var i = 0; i < _subscriptions.Count; i++)
@@ -82,6 +90,11 @@ namespace ProjectStarwatch.Overworld.UI
         private void OnPlanetSelected(ContentId planetId)
         {
             _selection.SelectPlanet(planetId);
+        }
+
+        private void OnFleetSelected(EntityId fleetId)
+        {
+            _selection.SelectFleet(fleetId);
         }
 
         private void OnScanRequested(ContentId planetId)
@@ -117,6 +130,27 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void OnSelectionChanged()
         {
+            Refresh();
+        }
+
+        private void OnRewind(RewindCompletedEvent _)
+        {
+            if (!_selection.SelectedFleetId.IsNone)
+            {
+                _selection.SelectFleet(EntityId.None);
+            }
+        }
+
+        private void RefreshRoster()
+        {
+            var selected = _selection.SelectedFleetId;
+            var run = CurrentRun();
+            if (!selected.IsNone && (run == null || !run.Timeline.TryGetFleet(selected, out _)))
+            {
+                _selection.SelectFleet(EntityId.None);
+                return;
+            }
+
             Refresh();
         }
 

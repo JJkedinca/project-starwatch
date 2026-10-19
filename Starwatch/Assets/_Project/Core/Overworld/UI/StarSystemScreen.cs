@@ -13,6 +13,8 @@ namespace ProjectStarwatch.Overworld.UI
 
         public event Action<ContentId> PlanetSelected;
 
+        public event Action<EntityId> FleetSelected;
+
         public event Action<ContentId> ScanRequested;
 
         private readonly StarSystemView _system = new();
@@ -29,6 +31,7 @@ namespace ProjectStarwatch.Overworld.UI
             _system.Bind(starSystem);
             _system.BackClicked += ClickBack;
             _system.PlanetClicked += ClickPlanet;
+            _system.FleetClicked += ClickFleet;
             _planet.Bind(planetDetail);
             _planet.ScanClicked += ClickScan;
         }
@@ -52,6 +55,7 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             _system.Show(model.Title, model.Planets);
+            _system.SetFleets(model.Fleets);
             if (model.ShowPlanetDetail)
             {
                 _planet.ShowPlanet(model.PlanetDetail);
@@ -70,6 +74,11 @@ namespace ProjectStarwatch.Overworld.UI
         internal void ClickPlanet(ContentId planetId)
         {
             PlanetSelected?.Invoke(planetId);
+        }
+
+        internal void ClickFleet(EntityId fleetId)
+        {
+            FleetSelected?.Invoke(fleetId);
         }
 
         internal void ClickScan(ContentId planetId)

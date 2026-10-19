@@ -6,6 +6,7 @@ using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Core.Run.Universe;
 using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Fleet;
 using ProjectStarwatch.Overworld.Services;
 using ProjectStarwatch.Overworld.Systems;
 using ProjectStarwatch.Research;
@@ -82,6 +83,9 @@ namespace ProjectStarwatch.Core.Bootstrap
             builder.Register<ResearchTickSystem>(Lifetime.Singleton);
             builder.Register<SettlementService>(Lifetime.Singleton);
             builder.Register<BuildingService>(Lifetime.Singleton);
+            builder.Register<FleetService>(Lifetime.Singleton);
+            builder.Register<ShipProductionService>(Lifetime.Singleton);
+            builder.Register<ShipProductionSystem>(Lifetime.Singleton);
             builder.Register<RunManager>(Lifetime.Singleton);
             builder.Register<IRunStateStore, InMemoryRunStateStore>(Lifetime.Singleton);
 
@@ -90,10 +94,11 @@ namespace ProjectStarwatch.Core.Bootstrap
             {
                 var loop = container.Resolve<SimulationLoop>();
                 var economyTick = container.Resolve<EconomyTickSystem>();
-                // Travel, then economy. ResearchTickSystem is registered for run and timeline notifications.
+                // Travel, then economy, then research, then ship production.
                 loop.Register(container.Resolve<TravelSystem>());
                 loop.Register(economyTick);
                 loop.Register(container.Resolve<ResearchTickSystem>());
+                loop.Register(container.Resolve<ShipProductionSystem>());
                 _updateManager.Configure(loop);
             });
         }
