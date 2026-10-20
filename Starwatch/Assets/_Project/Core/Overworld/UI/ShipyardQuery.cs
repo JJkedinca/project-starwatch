@@ -12,6 +12,7 @@ namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Buildable classes and the queue for a colony that has a shipyard.
+    /// The starting colony can build ships before its planet is scanned.
     /// </summary>
     internal sealed class ShipyardQuery
     {

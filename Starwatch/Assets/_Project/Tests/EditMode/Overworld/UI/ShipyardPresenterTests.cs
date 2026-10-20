@@ -46,6 +46,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Start();
 
             var screen = FindClass(view.Model, ContentId.From("starter-screen"));
+            Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.False);
             Assert.That(view.Model.IsShown, Is.True);
             Assert.That(screen.IsLocked, Is.True);
             Assert.That(screen.UnlockResearchId, Is.EqualTo(ContentId.From("basic-fleet")));

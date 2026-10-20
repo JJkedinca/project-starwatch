@@ -1,7 +1,7 @@
 using System;
 using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Events;
-using ProjectStarwatch.Core.Identifiers;
+using EntityId = ProjectStarwatch.Core.Identifiers.EntityId;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Core.Simulation;

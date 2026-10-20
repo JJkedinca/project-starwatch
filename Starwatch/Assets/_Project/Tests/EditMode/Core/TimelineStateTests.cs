@@ -169,6 +169,40 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         }
 
         [Test]
+        public void TrySetFleetLocation_RejectsATravelingFleet()
+        {
+            var timeline = new TimelineState(new EntityIdFactory());
+            var home = ContentId.From("home-system");
+            var forge = ContentId.From("forge-system");
+            Assert.That(
+                timeline.Fleets.TryAddFleet(ContentId.From("screen"), shipCount: 1, home, out var fleetId),
+                Is.True);
+            Assert.That(
+                timeline.Fleets.TryStartTravel(new ActiveTravel(
+                    fleetId,
+                    home,
+                    forge,
+                    GameTime.Zero,
+                    new GameTime(3d))),
+                Is.True);
+
+            Assert.That(timeline.Fleets.TrySetFleetLocation(fleetId, forge), Is.False);
+            Assert.That(timeline.Fleets.TryGetFleet(fleetId, out var fleet), Is.True);
+            Assert.That(fleet.LocationSystemId, Is.EqualTo(home));
+            Assert.That(timeline.Fleets.IsFleetTraveling(fleetId), Is.True);
+            Assert.That(timeline.Fleets.HasTravelingFleetAt(home), Is.True);
+            Assert.That(timeline.Fleets.HasFleetAt(forge), Is.False);
+            Assert.That(timeline.Fleets.ActiveTravels, Has.Count.EqualTo(1));
+
+            System.Collections.Generic.List<ActiveTravel> completed = new();
+            Assert.That(timeline.Fleets.CompleteArrivals(new GameTime(3d), completed), Is.EqualTo(1));
+            Assert.That(timeline.Fleets.TryGetFleet(fleetId, out fleet), Is.True);
+            Assert.That(fleet.LocationSystemId, Is.EqualTo(forge));
+            Assert.That(timeline.Fleets.IsFleetTraveling(fleetId), Is.False);
+            Assert.That(timeline.Fleets.ActiveTravels, Is.Empty);
+        }
+
+        [Test]
         public void DuplicateClassStacks_CombineAndRemoveOnlyTheRequestedCount()
         {
             var timeline = new TimelineState(new EntityIdFactory());

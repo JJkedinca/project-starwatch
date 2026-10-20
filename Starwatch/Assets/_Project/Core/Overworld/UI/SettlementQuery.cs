@@ -27,6 +27,8 @@ namespace ProjectStarwatch.Overworld.UI
 
         /// <summary>
         /// Stockpile for the empire, and the selected planet's resources, development, commitment, and buildings.
+        /// Development stays hidden until the planet is scanned. Founding a colony waits for that scan.
+        /// The starting colony is already founded, so it can place buildings and use a shipyard before the scan.
         /// </summary>
         internal SettlementPanelModel Describe(RunState run, OverworldSelection selection)
         {

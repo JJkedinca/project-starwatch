@@ -232,15 +232,20 @@ namespace ProjectStarwatch.Core.Run.Timeline
         }
 
         /// <summary>
-        /// Replaces a fleet's location with a validated new immutable instance.
+        /// Moves an idle fleet. A traveling fleet stays on its departure system until arrival.
         /// </summary>
         public bool TrySetFleetLocation(EntityId fleetId, ContentId locationSystemId)
         {
-            if (locationSystemId.IsEmpty)
+            if (locationSystemId.IsEmpty || IsFleetTraveling(fleetId))
             {
                 return false;
             }
 
+            return SetLocation(fleetId, locationSystemId);
+        }
+
+        private bool SetLocation(EntityId fleetId, ContentId locationSystemId)
+        {
             for (var i = 0; i < _fleets.Count; i++)
             {
                 var existing = _fleets[i];
@@ -339,7 +344,7 @@ namespace ProjectStarwatch.Core.Run.Timeline
                     continue;
                 }
 
-                if (TrySetFleetLocation(travel.FleetId, travel.ToNodeId))
+                if (SetLocation(travel.FleetId, travel.ToNodeId))
                 {
                     completedBuffer?.Add(travel);
                     completed++;

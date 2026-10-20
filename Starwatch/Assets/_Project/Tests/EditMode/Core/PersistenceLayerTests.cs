@@ -25,7 +25,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var universeNodeCount = run.Universe.NodeIds.Count;
             var archiveExploreCount = run.Archive.PlayerMapKnowledge.ExploredNodeIds.Count;
 
-            var result = TimelineMutationCommands.AddPlaceholderFleet(
+            var result = TimelineMutationCommands.AddFleet(
                 run.Timeline,
                 ContentId.From("extra-fleet"),
                 shipCount: 1,
@@ -64,7 +64,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
 
             var oldTimeline = run.Timeline;
             var oldFleets = oldTimeline.Fleets;
-            TimelineMutationCommands.AddPlaceholderFleet(
+            TimelineMutationCommands.AddFleet(
                 oldTimeline,
                 ContentId.From("old-only"),
                 shipCount: 1,

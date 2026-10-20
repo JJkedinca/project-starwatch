@@ -1,4 +1,4 @@
-using ProjectStarwatch.Core.Data
+using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Overworld.UI;
 using NUnit.Framework;

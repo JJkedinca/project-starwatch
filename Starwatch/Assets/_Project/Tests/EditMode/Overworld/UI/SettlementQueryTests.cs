@@ -55,6 +55,22 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         }
 
         [Test]
+        public void Describe_StartingColonyCanBuildWhileDevelopmentStaysHidden()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(92));
+            var database = RunTestFixture.CreateObjectDatabase();
+            var query = new SettlementQuery(database, new ProductionService(database));
+            var homePrime = ContentId.From("home-prime");
+
+            var model = query.Describe(run, Viewing("home-system", homePrime));
+
+            Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(homePrime), Is.False);
+            Assert.That(model.Economy.IsRevealed, Is.False);
+            Assert.That(BuildingRow(model, "industry-works").CanPlace, Is.True);
+        }
+
+        [Test]
         public void Describe_QuotesPlacedProductionAndTheNextColonyPrice()
         {
             var stack = RunTestFixture.CreateOverworldStack();
