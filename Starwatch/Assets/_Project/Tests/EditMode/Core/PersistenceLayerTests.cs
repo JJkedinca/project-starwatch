@@ -25,7 +25,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var universeNodeCount = run.Universe.NodeIds.Count;
             var archiveExploreCount = run.Archive.PlayerMapKnowledge.ExploredNodeIds.Count;
 
-            var result = TimelineMutationCommands.AddPlaceholderFleet(
+            var result = TimelineMutationCommands.AddFleet(
                 run.Timeline,
                 ContentId.From("extra-fleet"),
                 shipCount: 1,
@@ -64,7 +64,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
 
             var oldTimeline = run.Timeline;
             var oldFleets = oldTimeline.Fleets;
-            TimelineMutationCommands.AddPlaceholderFleet(
+            TimelineMutationCommands.AddFleet(
                 oldTimeline,
                 ContentId.From("old-only"),
                 shipCount: 1,
@@ -111,7 +111,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         {
             var timeline = new TimelineState(new EntityIdFactory());
 
-            var added = timeline.TryAddFleet(
+            var added = timeline.Fleets.TryAddFleet(
                 ContentId.From("screen"),
                 shipCount: 1,
                 ContentId.From(" "),
@@ -123,21 +123,16 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         }
 
         [Test]
-        public void FleetPlaceholderState_RejectsInvalidConstruction()
+        public void Fleet_RejectsInvalidConstruction()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                new FleetPlaceholderState(
-                    new EntityId(1),
-                    ContentId.From("screen"),
-                    shipCount: 0,
-                    ContentId.From("home")));
+                new ShipStack(ContentId.From("screen"), 0));
 
             Assert.Throws<ArgumentException>(() =>
-                new FleetPlaceholderState(
+                new FleetComposition(
                     new EntityId(1),
-                    ContentId.From("screen"),
-                    shipCount: 1,
-                    ContentId.From(" ")));
+                    ContentId.From(" "),
+                    new[] { new ShipStack(ContentId.From("screen"), 1) }));
         }
 
         [Test]

@@ -11,12 +11,12 @@ namespace ProjectStarwatch.Research
     /// </summary>
     internal sealed class ResearchTickSystem : ISimulationSystem
     {
-        private readonly ResearchService _research;
+        private readonly ResearchService _researchService;
         private RunState _run;
 
-        public ResearchTickSystem(ResearchService research, EconomyTickSystem economyTick)
+        public ResearchTickSystem(ResearchService researchService, EconomyTickSystem economyTick)
         {
-            _research = research ?? throw new ArgumentNullException(nameof(research));
+            _researchService = researchService ?? throw new ArgumentNullException(nameof(researchService));
             if (economyTick == null)
             {
                 throw new ArgumentNullException(nameof(economyTick));
@@ -28,12 +28,12 @@ namespace ProjectStarwatch.Research
         public void OnRunChanged(RunState run)
         {
             _run = run;
-            _research.OnRunStarted(run);
+            _researchService.OnRunStarted(run);
         }
 
         public void OnTimelineReset()
         {
-            _research.OnRunStarted(_run);
+            _researchService.OnRunStarted(_run);
         }
 
         public void OnSimulationTick(GameTime time, float tickDeltaSeconds)
@@ -53,7 +53,7 @@ namespace ProjectStarwatch.Research
                 return;
             }
 
-            _research.ApplyScience(_run, science);
+            _researchService.ApplyScience(_run, science);
         }
     }
 }

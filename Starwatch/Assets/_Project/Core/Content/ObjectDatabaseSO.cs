@@ -23,6 +23,9 @@ namespace ProjectStarwatch.Core.Content
         [field: SerializeField]
         public ResearchCatalogSO ResearchCatalog { get; private set; }
 
+        [field: SerializeField]
+        public ShipCatalogSO ShipCatalog { get; private set; }
+
         private Dictionary<string, ScenarioDefinition> _scenarios = new();
         public IReadOnlyDictionary<string, ScenarioDefinition> Scenarios => _scenarios;
 
@@ -67,18 +70,45 @@ namespace ProjectStarwatch.Core.Content
         }
 
         /// <summary>
+        /// Resolves an authored star system or non-system node by content id value.
+        /// </summary>
+        public bool TryGetStarSystem(string systemId, out StarSystemDefinition definition)
+        {
+            definition = null;
+            var systems = _starSystemDatabase != null ? _starSystemDatabase.StarSystems : null;
+            if (string.IsNullOrWhiteSpace(systemId) || systems == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < systems.Count; i++)
+            {
+                var system = systems[i];
+                if (system != null && system.Id.Value == systemId)
+                {
+                    definition = system;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Points a runtime instance at the authored databases. Used by EditMode tests.
         /// </summary>
         internal void AssignDatabases(
             StarSystemDatabaseSO starSystemDatabase,
             PlanetDatabaseSO planetDatabase,
             SettlementCatalogSO settlementCatalog = null,
-            ResearchCatalogSO researchCatalog = null)
+            ResearchCatalogSO researchCatalog = null,
+            ShipCatalogSO shipCatalog = null)
         {
             _starSystemDatabase = starSystemDatabase;
             _planetDatabase = planetDatabase;
             SettlementCatalog = settlementCatalog;
             ResearchCatalog = researchCatalog;
+            ShipCatalog = shipCatalog;
             _indexed = false;
         }
 
@@ -88,6 +118,14 @@ namespace ProjectStarwatch.Core.Content
         internal void AssignResearchCatalog(ResearchCatalogSO researchCatalog)
         {
             ResearchCatalog = researchCatalog;
+        }
+
+        /// <summary>
+        /// Points a runtime instance at a ship catalog. Used by EditMode tests.
+        /// </summary>
+        internal void AssignShipCatalog(ShipCatalogSO shipCatalog)
+        {
+            ShipCatalog = shipCatalog;
         }
 
         /// <summary>

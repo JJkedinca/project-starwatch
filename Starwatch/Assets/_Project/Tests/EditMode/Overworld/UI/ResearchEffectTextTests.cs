@@ -32,9 +32,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var none = ResearchEffectText.Describe(default);
             var blankCapability = ResearchEffectText.Describe(TechnologyEffect.Capability(" "));
             var ignoredMultiplier = ResearchEffectText.Describe(TechnologyEffect.Output(ResourceKind.Energy, 0f));
+            var travel = ResearchEffectText.Describe(TechnologyEffect.TravelSpeed(1.25f));
 
             Assert.That(blankCapability, Is.EqualTo(none));
             Assert.That(ignoredMultiplier, Is.EqualTo(none));
+            Assert.That(travel, Does.Contain("25"));
             Assert.That(none, Is.Not.EqualTo(ResearchEffectText.Describe(TechnologyEffect.Capability("travel-i"))));
         }
     }

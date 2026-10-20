@@ -203,19 +203,16 @@ Add:
 Success means research changes the player's economic or fleet plan instead of
 acting as a sequence of automatic upgrades.
 
-### Phase 4: Fleet and battle loop
+### Phase 4: Fleet and travel loop
 
 Add:
 
-- Three initial ship roles.
-- Fleet composition and explicit merge orders.
-- Automatic targeting and range behavior.
-- Shield, armor, hull, damage, retreat, and repair states.
-- Station or planetary defenses.
-- Battle results and debris.
+- Three ship classes built at a shipyard.
+- One build queue per colony.
+- Explicit fleet merge and split.
+- Travel time from the slowest class and from research.
 
-Success means different compositions produce understandable advantages and a
-retreat or defense decision can preserve part of a damaged fleet.
+Success means composing a fleet changes how fast it travels, and a shipyard turns research into ships on the map.
 
 ### Phase 5: Invasion loop
 

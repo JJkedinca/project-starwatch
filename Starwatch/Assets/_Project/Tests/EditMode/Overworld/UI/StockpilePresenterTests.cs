@@ -60,7 +60,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var presenter = new StockpilePresenter(view, stack.Manager, new StockpileQuery(), stack.Events);
             presenter.Start();
 
-            stack.Settlement.FoundOutpost(run, ObserverId.Player, ContentId.From("home-prime"));
+            stack.SettlementService.FoundOutpost(run, ObserverId.Player, ContentId.From("home-prime"));
 
             Assert.That(view.Stockpile.GetWhole(ResourceKind.Industry), Is.EqualTo(70));
             presenter.Dispose();

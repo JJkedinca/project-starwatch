@@ -13,12 +13,12 @@ namespace ProjectStarwatch.Overworld.UI
     internal sealed class ResearchQuery
     {
         private readonly ObjectDatabaseSO _database;
-        private readonly EconomyService _economy;
+        private readonly EconomyService _economyService;
 
-        public ResearchQuery(ObjectDatabaseSO database, EconomyService economy)
+        public ResearchQuery(ObjectDatabaseSO database, EconomyService economyService)
         {
             _database = database;
-            _economy = economy;
+            _economyService = economyService;
         }
 
         public ResearchPanelModel Describe(RunState run)
@@ -62,7 +62,7 @@ namespace ProjectStarwatch.Overworld.UI
             catalog = _database.ResearchCatalog;
             progress = run.Timeline.Research;
             active = progress.HasActive && catalog.TryGet(progress.ActiveId, out var project) ? project : null;
-            science = _economy != null ? _economy.ProducedScience : 0f;
+            science = _economyService != null ? _economyService.ProducedScience : 0f;
             return true;
         }
 

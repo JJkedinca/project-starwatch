@@ -16,7 +16,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(80));
-            var query = new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.Economy);
+            var query = new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService);
 
             var idle = query.Describe(run);
 
@@ -25,7 +25,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(idle.Offers, Has.Count.EqualTo(3));
             Assert.That(idle.Offers[0].CanStart, Is.True);
 
-            stack.Economy.ApplyTick(run);
+            stack.EconomyService.ApplyTick(run);
 
             var dropped = query.Describe(run);
 
@@ -44,7 +44,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(database.ResearchCatalog.TryGet(id, out var project), Is.True);
             run.Archive.Research.TryAdd(id);
 
-            var model = new ResearchQuery(database, stack.Economy).Describe(run);
+            var model = new ResearchQuery(database, stack.EconomyService).Describe(run);
 
             Assert.That(model.CompletedNames, Does.Contain(project.DisplayName));
             Assert.That(model.CompletedTooltip, Does.Contain(project.DisplayName));
@@ -57,7 +57,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(85));
             var database = RunTestFixture.CreateObjectDatabase();
-            var model = new ResearchQuery(database, stack.Economy).Describe(run);
+            var model = new ResearchQuery(database, stack.EconomyService).Describe(run);
 
             Assert.That(model.Offers, Is.Not.Empty);
             for (var i = 0; i < model.Offers.Count; i++)
@@ -78,8 +78,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 view,
                 status,
                 stack.Manager,
-                stack.Research,
-                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.Economy),
+                stack.ResearchService,
+                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService),
                 stack.Events);
             presenter.Start();
             var first = view.Model.Offers[0].Id;
@@ -118,14 +118,14 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 view,
                 new OverworldStatus(),
                 stack.Manager,
-                stack.Research,
-                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.Economy),
+                stack.ResearchService,
+                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService),
                 stack.Events);
             presenter.Start();
             var afterStart = view.ApplyCount;
 
-            stack.Research.ApplyScience(stack.Manager.CurrentRun, 0f);
-            stack.Research.ApplyScience(stack.Manager.CurrentRun, 0f);
+            stack.ResearchService.ApplyScience(stack.Manager.CurrentRun, 0f);
+            stack.ResearchService.ApplyScience(stack.Manager.CurrentRun, 0f);
 
             Assert.That(view.ApplyCount, Is.EqualTo(afterStart));
 
@@ -133,8 +133,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(view.ApplyCount, Is.EqualTo(afterStart + 1));
 
-            stack.Economy.ApplyTick(stack.Manager.CurrentRun);
-            stack.Research.ApplyScience(stack.Manager.CurrentRun, stack.Economy.ProducedScience);
+            stack.EconomyService.ApplyTick(stack.Manager.CurrentRun);
+            stack.ResearchService.ApplyScience(stack.Manager.CurrentRun, stack.EconomyService.ProducedScience);
 
             Assert.That(view.ApplyCount, Is.EqualTo(afterStart + 2));
             Assert.That(view.Model.ScienceDropped, Is.True);
@@ -151,8 +151,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 view,
                 new OverworldStatus(),
                 stack.Manager,
-                stack.Research,
-                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.Economy),
+                stack.ResearchService,
+                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService),
                 stack.Events);
             presenter.Start();
             var first = view.Model.Offers[0].Id;
@@ -161,7 +161,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(view.PromptedId, Is.EqualTo(view.Model.Offers[0].Id));
 
-            stack.Research.ApplyScience(run, 1000f);
+            stack.ResearchService.ApplyScience(run, 1000f);
 
             Assert.That(run.Timeline.Research.HasActive, Is.False);
             Assert.That(view.PromptedId.IsEmpty, Is.True);

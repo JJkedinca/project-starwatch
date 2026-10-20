@@ -125,11 +125,13 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             loop.Register(system);
             var database = RunTestFixture.CreateObjectDatabase();
             var timelineFactory = new TimelineFactory();
+            var journal = new EventJournal();
             var manager = new RunManager(
                 timelineFactory,
                 new UniverseLoader(timelineFactory),
                 database,
-                new EventJournal(),
+                journal,
+                new DomainEventBus(journal),
                 loop);
             var run = manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(10));
 

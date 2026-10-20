@@ -1,9 +1,12 @@
 using ProjectStarwatch.Core.Commands;
+using ProjectStarwatch.Core.Content;
+using ProjectStarwatch.Core.Effects;
 using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Fleet;
 
 namespace ProjectStarwatch.Overworld.Services
 {
@@ -15,12 +18,21 @@ namespace ProjectStarwatch.Overworld.Services
         private readonly RouteService _routeService;
         private readonly SimulationClock _clock;
         private readonly DomainEventBus _events;
+        private readonly IEffectQuery _effectQuery;
+        private readonly ObjectDatabaseSO _database;
 
-        public TravelService(RouteService routeService, SimulationClock clock, DomainEventBus events)
+        public TravelService(
+            RouteService routeService,
+            SimulationClock clock,
+            DomainEventBus events,
+            IEffectQuery effectQuery,
+            ObjectDatabaseSO database)
         {
             _routeService = routeService;
             _clock = clock;
             _events = events ?? throw new System.ArgumentNullException(nameof(events));
+            _effectQuery = effectQuery;
+            _database = database;
         }
 
         /// <summary>
@@ -48,7 +60,7 @@ namespace ProjectStarwatch.Overworld.Services
             var arrive = depart.Add(duration);
             var travel = new ActiveTravel(fleetId, fleet.LocationSystemId, destinationNodeId, depart, arrive);
 
-            if (!run.Timeline.TryStartTravel(travel))
+            if (!run.Timeline.Fleets.TryStartTravel(travel))
             {
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "Travel could not start.");
             }
@@ -94,12 +106,25 @@ namespace ProjectStarwatch.Overworld.Services
             return EvaluateTravel(run, observerId, fleetId, destinationNodeId, out _, out _).Success;
         }
 
+        /// <summary>
+        /// Seconds until the selected fleet would arrive, when the leg is allowed.
+        /// </summary>
+        public bool TryGetTripSeconds(
+            RunState run,
+            ObserverId observerId,
+            EntityId fleetId,
+            ContentId destinationNodeId,
+            out float seconds)
+        {
+            return EvaluateTravel(run, observerId, fleetId, destinationNodeId, out _, out seconds).Success;
+        }
+
         private CommandResult EvaluateTravel(
             RunState run,
             ObserverId observerId,
             EntityId fleetId,
             ContentId destinationNodeId,
-            out FleetPlaceholderState fleet,
+            out FleetComposition fleet,
             out float duration)
         {
             fleet = null;
@@ -114,12 +139,12 @@ namespace ProjectStarwatch.Overworld.Services
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Destination is required.");
             }
 
-            if (!run.Timeline.TryGetFleet(fleetId, out fleet))
+            if (!run.Timeline.Fleets.TryGetFleet(fleetId, out fleet))
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Unknown fleet.");
             }
 
-            if (run.Timeline.IsFleetTraveling(fleetId))
+            if (run.Timeline.Fleets.IsFleetTraveling(fleetId))
             {
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "Fleet is already traveling.");
             }
@@ -140,11 +165,12 @@ namespace ProjectStarwatch.Overworld.Services
                     run.Universe.MapGraph,
                     fleet.LocationSystemId,
                     destinationNodeId,
-                    out duration))
+                    out var routeSeconds))
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidRoute, "Route duration missing.");
             }
 
+            duration = routeSeconds / FleetSpeed.Effective(fleet, _database, _effectQuery);
             return CommandResult.Ok();
         }
     }

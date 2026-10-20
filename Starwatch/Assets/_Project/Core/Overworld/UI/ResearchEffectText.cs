@@ -13,6 +13,8 @@ namespace ProjectStarwatch.Overworld.UI
             {
                 case TechnologyEffectKind.OutputMultiplier:
                     return Output(effect);
+                case TechnologyEffectKind.TravelSpeed:
+                    return Travel(effect);
                 case TechnologyEffectKind.Capability:
                     return Capability(effect);
                 default:
@@ -30,6 +32,18 @@ namespace ProjectStarwatch.Overworld.UI
             var percent = (effect.Multiplier - 1f) * 100f;
             var sign = percent > 0f ? "+" : string.Empty;
             return $"{effect.Resource} output {sign}{percent:0.#}%";
+        }
+
+        private static string Travel(TechnologyEffect effect)
+        {
+            if (effect.Multiplier <= 0f)
+            {
+                return "No effect.";
+            }
+
+            var percent = (effect.Multiplier - 1f) * 100f;
+            var sign = percent > 0f ? "+" : string.Empty;
+            return $"Travel speed {sign}{percent:0.#}%";
         }
 
         private static string Capability(TechnologyEffect effect)

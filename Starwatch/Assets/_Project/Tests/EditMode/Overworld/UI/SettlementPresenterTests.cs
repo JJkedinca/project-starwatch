@@ -58,15 +58,18 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             selection.SelectPlanet(ContentId.From("home-prime"));
             var map = new FakeStarMapView();
             var settlement = new FakeSettlementView();
+            var database = RunTestFixture.CreateObjectDatabase();
+            var fleetListQuery = new FleetListQuery(database, stack.Effects);
             var mapPresenter = new StarMapPresenter(
                 map,
                 selection,
                 new OverworldStatus(),
                 stack.Manager,
-                stack.Travel,
-                new StarMapQuery(stack.Visibility, stack.Travel),
-                new StarSystemQuery(stack.Visibility, RunTestFixture.CreateObjectDatabase()),
-                stack.Events);
+                stack.TravelService,
+                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery),
+                new StarSystemQuery(stack.VisibilityService, database, fleetListQuery),
+                stack.Events,
+                fleetListQuery);
             var settlementPresenter = CreatePresenter(settlement, selection, new OverworldStatus(), stack);
             mapPresenter.Start();
             settlementPresenter.Start();
@@ -119,10 +122,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var beforeScan = view.Model.Development;
             var database = RunTestFixture.CreateObjectDatabase();
             database.TryGetPlanet(prime.Value, out var planet);
-            var production = new ProductionService(database);
+            var productionService = new ProductionService(database);
 
             Assert.That(view.Model.Economy.IsRevealed, Is.False);
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, prime);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, prime);
 
             Assert.That(selection.SelectedPlanetId, Is.EqualTo(prime));
             Assert.That(view.ApplyCount, Is.GreaterThan(applies));
@@ -130,16 +133,16 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(view.Model.Economy.IsRevealed, Is.True);
             Assert.That(
                 view.Model.Economy.Base.Get(ResourceKind.Industry),
-                Is.EqualTo(production.ModifiedBase(planet).Get(ResourceKind.Industry)));
+                Is.EqualTo(productionService.ModifiedBase(planet).Get(ResourceKind.Industry)));
             Assert.That(
                 view.Model.Economy.Base.Get(ResourceKind.Energy),
-                Is.EqualTo(production.ModifiedBase(planet).Get(ResourceKind.Energy)));
+                Is.EqualTo(productionService.ModifiedBase(planet).Get(ResourceKind.Energy)));
             Assert.That(
                 view.Model.Economy.Base.Get(ResourceKind.Science),
-                Is.EqualTo(production.ModifiedBase(planet).Get(ResourceKind.Science)));
+                Is.EqualTo(productionService.ModifiedBase(planet).Get(ResourceKind.Science)));
             Assert.That(
                 view.Model.Economy.Base.Get(ResourceKind.Strategic),
-                Is.EqualTo(production.ModifiedBase(planet).Get(ResourceKind.Strategic)));
+                Is.EqualTo(productionService.ModifiedBase(planet).Get(ResourceKind.Strategic)));
             Assert.That(view.Model.Economy.Rate(ResourceKind.Industry), Is.EqualTo(0f));
             presenter.Dispose();
         }
@@ -165,6 +168,32 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Dispose();
         }
 
+        [Test]
+        public void ResearchCompleted_RefreshesProduction()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(89));
+            var prime = ContentId.From("home-prime");
+            var selection = new OverworldSelection();
+            selection.EnterSystem(ContentId.From("home-system"));
+            selection.SelectPlanet(prime);
+            var view = new FakeSettlementView();
+            var presenter = CreatePresenter(view, selection, new OverworldStatus(), stack);
+            presenter.Start();
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, prime);
+            var before = view.Model.Economy.Production.Get(ResourceKind.Industry);
+
+            Assert.That(before, Is.GreaterThan(0f));
+            Assert.That(run.Archive.Research.TryAdd(ContentId.From("basic-construction")), Is.True);
+            stack.Effects.Rebuild(run, RunTestFixture.CreateObjectDatabase().ResearchCatalog);
+            stack.Events.Publish(new ResearchCompletedEvent(GameTime.Zero, ContentId.From("basic-construction")));
+
+            Assert.That(
+                view.Model.Economy.Production.Get(ResourceKind.Industry),
+                Is.EqualTo(before * 1.1f).Within(0.001f));
+            presenter.Dispose();
+        }
+
         private static SettlementPresenter CreatePresenter(
             FakeSettlementView view,
             OverworldSelection selection,
@@ -177,9 +206,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 selection,
                 status,
                 stack.Manager,
-                stack.Settlement,
-                stack.Buildings,
-                new SettlementQuery(database, new ProductionService(database)),
+                stack.SettlementService,
+                stack.BuildingService,
+                new SettlementQuery(database, new ProductionService(database, stack.Effects)),
                 stack.Events);
         }
 
@@ -191,7 +220,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 remove { }
             }
 
-            public event Action TravelRequested
+            public event Action<EntityId> FleetSelected
+            {
+                add { }
+                remove { }
+            }
+
+            public event Action<ContentId> TravelRequested
             {
                 add { }
                 remove { }
@@ -202,6 +237,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             public void Apply(StarMapModel model)
             {
                 ApplyCount++;
+            }
+
+            public void ApplyFleets(IReadOnlyList<FleetChoiceModel> fleets)
+            {
             }
 
             public void ApplyNodes(IReadOnlyList<StarMapNodeModel> nodes)

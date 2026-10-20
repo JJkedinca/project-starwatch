@@ -18,13 +18,13 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         public void Quote_ReturnsOutputAndUpkeepOwnedByTheQuote()
         {
             var database = RunTestFixture.CreateObjectDatabase();
-            var production = new ProductionService(database);
+            var productionService = new ProductionService(database);
             Assert.That(database.TryGetPlanet("home-prime", out var planet), Is.True);
             var colony = new ColonyState(ContentId.From("home-prime"), ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(ContentId.From("industry-works"), 1));
 
-            var quote = production.Quote(colony, planet);
-            var again = production.Quote(colony, planet);
+            var quote = productionService.Quote(colony, planet);
+            var again = productionService.Quote(colony, planet);
 
             Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(2f));
             Assert.That(quote.Upkeep.Get(ResourceKind.Energy), Is.EqualTo(1f));
@@ -36,12 +36,12 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         public void Quote_OutpostProducesNothing()
         {
             var database = RunTestFixture.CreateObjectDatabase();
-            var production = new ProductionService(database);
+            var productionService = new ProductionService(database);
             Assert.That(database.TryGetPlanet("home-prime", out var planet), Is.True);
             var outpost = new ColonyState(ContentId.From("home-prime"), ColonyPresence.Outpost);
             outpost.AddBuilding(new ColonyBuildingState(ContentId.From("industry-works"), 1));
 
-            var quote = production.Quote(outpost, planet);
+            var quote = productionService.Quote(outpost, planet);
 
             Assert.That(quote.Output.HasAny(), Is.False);
             Assert.That(quote.Upkeep.HasAny(), Is.False);
@@ -51,7 +51,7 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         public void ModifiedBase_MultipliesLevelOneOutputByPlanetModifiers()
         {
             var database = RunTestFixture.CreateObjectDatabase();
-            var production = new ProductionService(database);
+            var productionService = new ProductionService(database);
             Assert.That(database.TryGetPlanet("forge-world", out var planet), Is.True);
             Assert.That(
                 database.SettlementCatalog.TryGetBuilding(ContentId.From("industry-works"), out var industry),
@@ -60,7 +60,7 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
                 database.SettlementCatalog.TryGetBuilding(ContentId.From("extractor"), out var extractor),
                 Is.True);
 
-            var totals = production.ModifiedBase(planet);
+            var totals = productionService.ModifiedBase(planet);
 
             Assert.That(totals.Get(ResourceKind.Industry), Is.EqualTo(LevelOne(planet, industry, ResourceKind.Industry)));
             Assert.That(totals.Get(ResourceKind.Strategic), Is.EqualTo(LevelOne(planet, extractor, ResourceKind.Strategic)));
@@ -95,7 +95,7 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
                     });
                 catalog.SetContent(new[] { building });
                 database.AssignDatabases(null, null, catalog);
-                var production = new ProductionService(database);
+                var productionService = new ProductionService(database);
                 var plain = new PlanetDefinition(
                     ContentId.From("plain"),
                     ContentId.From("plain-system"),
@@ -112,8 +112,8 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
                 var colony = new ColonyState(ContentId.From("plain"), ColonyPresence.Colony);
                 colony.AddBuilding(new ColonyBuildingState(ContentId.From("dual-works"), 2));
 
-                var quote = production.Quote(colony, plain);
-                var richBase = production.ModifiedBase(rich);
+                var quote = productionService.Quote(colony, plain);
+                var richBase = productionService.ModifiedBase(rich);
 
                 Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(5f));
                 Assert.That(quote.Output.Get(ResourceKind.Science), Is.EqualTo(1f));

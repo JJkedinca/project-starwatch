@@ -11,6 +11,8 @@ namespace ProjectStarwatch.Overworld.UI
 
         internal const string kMapHint = "Travel a known route to enter a star system, then scan its planets.";
 
+        internal const string kSelectFleet = "Select a fleet.";
+
         public event Action<string> Changed;
 
         public string Text { get; private set; } = string.Empty;

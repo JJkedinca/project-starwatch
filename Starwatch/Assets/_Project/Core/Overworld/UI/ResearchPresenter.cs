@@ -16,7 +16,7 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly IResearchView _view;
         private readonly OverworldStatus _status;
         private readonly RunManager _runManager;
-        private readonly ResearchService _research;
+        private readonly ResearchService _researchService;
         private readonly ResearchQuery _query;
         private readonly DomainEventBus _events;
         private readonly List<IDisposable> _subscriptions = new();
@@ -26,14 +26,14 @@ namespace ProjectStarwatch.Overworld.UI
             IResearchView view,
             OverworldStatus status,
             RunManager runManager,
-            ResearchService research,
+            ResearchService researchService,
             ResearchQuery query,
             DomainEventBus events)
         {
             _view = view;
             _status = status;
             _runManager = runManager;
-            _research = research;
+            _researchService = researchService;
             _query = query;
             _events = events;
         }
@@ -43,7 +43,7 @@ namespace ProjectStarwatch.Overworld.UI
             _view.StartRequested += OnStartRequested;
             _view.SwitchConfirmed += OnSwitchConfirmed;
             _view.Opened += OnOpened;
-            _research.ScienceApplied += OnScienceApplied;
+            _researchService.ScienceApplied += OnScienceApplied;
             _subscriptions.Add(_events.Subscribe<ResearchStartedEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<ResearchCompletedEvent>(_ => Apply()));
             Apply();
@@ -54,7 +54,7 @@ namespace ProjectStarwatch.Overworld.UI
             _view.StartRequested -= OnStartRequested;
             _view.SwitchConfirmed -= OnSwitchConfirmed;
             _view.Opened -= OnOpened;
-            _research.ScienceApplied -= OnScienceApplied;
+            _researchService.ScienceApplied -= OnScienceApplied;
             for (var i = 0; i < _subscriptions.Count; i++)
             {
                 _subscriptions[i].Dispose();
@@ -77,7 +77,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            var result = _research.Start(run, researchId);
+            var result = _researchService.Start(run, researchId);
             _status.Post(result.Success ? "Research started." : result.Error.Message);
             Apply();
         }
@@ -90,7 +90,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            var result = _research.Switch(run, researchId);
+            var result = _researchService.Switch(run, researchId);
             _status.Post(result.Success ? "Research switched." : result.Error.Message);
             Apply();
         }

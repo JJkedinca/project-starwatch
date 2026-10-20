@@ -11,6 +11,7 @@ namespace ProjectStarwatch.Core.Effects
     {
         private readonly HashSet<string> _capabilities = new();
         private readonly Dictionary<ResourceKind, float> _multipliers = new();
+        private float _travelSpeed = 1f;
 
         public bool HasCapability(string capabilityId)
         {
@@ -22,6 +23,11 @@ namespace ProjectStarwatch.Core.Effects
             return _multipliers.TryGetValue(kind, out var value) && value > 0f ? value : 1f;
         }
 
+        public float TravelSpeedMultiplier()
+        {
+            return _travelSpeed > 0f ? _travelSpeed : 1f;
+        }
+
         /// <summary>
         /// Replaces the registry contents from the run's completed research.
         /// </summary>
@@ -29,6 +35,7 @@ namespace ProjectStarwatch.Core.Effects
         {
             _capabilities.Clear();
             _multipliers.Clear();
+            _travelSpeed = 1f;
             if (run == null || catalog == null)
             {
                 return;
@@ -63,6 +70,14 @@ namespace ProjectStarwatch.Core.Effects
                     }
 
                     _multipliers[effect.Resource] = OutputMultiplier(effect.Resource) * effect.Multiplier;
+                    break;
+                case TechnologyEffectKind.TravelSpeed:
+                    if (effect.Multiplier <= 0f)
+                    {
+                        break;
+                    }
+
+                    _travelSpeed *= effect.Multiplier;
                     break;
             }
         }

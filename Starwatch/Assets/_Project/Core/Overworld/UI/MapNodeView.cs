@@ -13,6 +13,8 @@ namespace ProjectStarwatch.Overworld.UI
     {
         public event Action<ContentId> Clicked;
 
+        public event Action<ContentId> RightClicked;
+
         internal Button Root { get; }
 
         private readonly ContentId _nodeId;
@@ -66,6 +68,19 @@ namespace ProjectStarwatch.Overworld.UI
             Root.Add(_fleetOrbit);
 
             Root.clicked += () => Clicked?.Invoke(_nodeId);
+            // A Button only raises ClickEvent for the left mouse button.
+            Root.RegisterCallback<PointerUpEvent>(OnPointerUp);
+        }
+
+        private void OnPointerUp(PointerUpEvent evt)
+        {
+            if (evt.button != (int)MouseButton.RightMouse)
+            {
+                return;
+            }
+
+            evt.StopPropagation();
+            RightClicked?.Invoke(_nodeId);
         }
 
         /// <summary>

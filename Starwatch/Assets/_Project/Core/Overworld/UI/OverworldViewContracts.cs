@@ -12,9 +12,16 @@ namespace ProjectStarwatch.Overworld.UI
     {
         event Action<ContentId> NodeSelected;
 
-        event Action TravelRequested;
+        event Action<EntityId> FleetSelected;
+
+        event Action<ContentId> TravelRequested;
 
         void Apply(StarMapModel model);
+
+        /// <summary>
+        /// Don't hold the list. It is reused after this call returns.
+        /// </summary>
+        void ApplyFleets(IReadOnlyList<FleetChoiceModel> fleets);
 
         /// <summary>
         /// Don't hold the list. It is reused after this call returns.
@@ -34,6 +41,8 @@ namespace ProjectStarwatch.Overworld.UI
         event Action BackRequested;
 
         event Action<ContentId> PlanetSelected;
+
+        event Action<EntityId> FleetSelected;
 
         event Action<ContentId> ScanRequested;
 
@@ -56,6 +65,32 @@ namespace ProjectStarwatch.Overworld.UI
         event Action<ContentId> UpgradeRequested;
 
         void Apply(SettlementPanelModel model);
+    }
+
+    /// <summary>
+    /// Shipyard section on the settlement panel. Hidden when the colony cannot build ships.
+    /// </summary>
+    internal interface IShipyardView
+    {
+        event Action<ContentId> QueueRequested;
+
+        event Action<int> CancelRequested;
+
+        void Apply(ShipyardModel model);
+    }
+
+    /// <summary>
+    /// Inspection of the selected fleet. Hidden when no fleet is selected.
+    /// </summary>
+    internal interface IFleetPanelView
+    {
+        event Action CloseRequested;
+
+        event Action<ContentId, int> SplitRequested;
+
+        event Action<EntityId> MergeRequested;
+
+        void Apply(FleetPanelModel model);
     }
 
     /// <summary>

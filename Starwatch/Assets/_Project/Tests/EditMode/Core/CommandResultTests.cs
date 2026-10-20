@@ -17,7 +17,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var timeline = new TimelineState(new EntityIdFactory());
             var before = timeline.Fleets.Count;
 
-            var result = TimelineMutationCommands.AddPlaceholderFleet(
+            var result = TimelineMutationCommands.AddFleet(
                 timeline,
                 ContentId.From("screen"),
                 shipCount: 0,

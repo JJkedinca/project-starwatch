@@ -92,7 +92,7 @@ namespace ProjectStarwatch.Overworld.Services
                 return false;
             }
 
-            return run.Timeline.HasFleetAt(nodeId);
+            return run.Timeline.Fleets.HasFleetAt(nodeId);
         }
 
         private void RevealIncidentRoutes(RunState run, ObserverId observerId, ContentId nodeId)

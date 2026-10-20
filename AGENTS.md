@@ -12,6 +12,7 @@ ProjectStarwatch is a fantasy roguelike: FTL-style overworld adventure plus auto
 ## Code Style
 
 - Clean C# following common Unity conventions (PascalCase types/methods, private fields use `_camelCase` prefix).
+- Name a variable for what it holds. A service variable includes `Service` (`_fleetService`, `travelService`). Be precise and descriptive with naming but not too overboard. Do not use single letter variable names.
 - `const` names use a `k` prefix (`kMaxMembers`, `kTickInterval`).
 - Member order in a type: fields / properties / events first, then lifetime methods in lifecycle order (`Awake` → `OnEnable` → `Start` → `Update` / `ManagedUpdate` → `OnDisable` → `OnDestroy`; include `Construct` / `Configure` with begin when present), then other methods.
 - Single responsibility — each class does one job.

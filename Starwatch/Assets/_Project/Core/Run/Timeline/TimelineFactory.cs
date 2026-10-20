@@ -35,7 +35,7 @@ namespace ProjectStarwatch.Core.Run.Timeline
             var startingEmpire = universe.StartingEmpire;
             if (startingEmpire.CanPlaceStarterFleet)
             {
-                timeline.TryAddFleet(
+                timeline.Fleets.TryAddFleet(
                     startingEmpire.StarterFleetClassId,
                     startingEmpire.StarterShipCount,
                     startingEmpire.HomeSystemId,

@@ -14,13 +14,18 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     internal sealed class StarSystemQuery
     {
-        private readonly VisibilityService _visibility;
+        private readonly VisibilityService _visibilityService;
         private readonly ObjectDatabaseSO _objectDatabase;
+        private readonly FleetListQuery _fleetListQuery;
 
-        public StarSystemQuery(VisibilityService visibility, ObjectDatabaseSO objectDatabase)
+        public StarSystemQuery(
+            VisibilityService visibilityService,
+            ObjectDatabaseSO objectDatabase,
+            FleetListQuery fleetListQuery)
         {
-            _visibility = visibility ?? throw new ArgumentNullException(nameof(visibility));
+            _visibilityService = visibilityService ?? throw new ArgumentNullException(nameof(visibilityService));
             _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
+            _fleetListQuery = fleetListQuery ?? throw new ArgumentNullException(nameof(fleetListQuery));
         }
 
         /// <summary>
@@ -53,6 +58,7 @@ namespace ProjectStarwatch.Overworld.UI
                 true,
                 NodeLabel(node),
                 planets,
+                _fleetListQuery.AtLocation(run, node.Id, selection.SelectedFleetId),
                 showDetail,
                 detail,
                 StarSystemStatus(planets.Count));
@@ -72,7 +78,7 @@ namespace ProjectStarwatch.Overworld.UI
             for (var i = 0; i < node.PlanetIds.Count; i++)
             {
                 var planetId = node.PlanetIds[i];
-                var visibility = _visibility.GetPlanetVisibility(run.Archive, ObserverId.Player, node.Id, planetId);
+                var visibility = _visibilityService.GetPlanetVisibility(run.Archive, ObserverId.Player, node.Id, planetId);
                 if (visibility == PlanetVisibility.Hidden)
                 {
                     continue;
@@ -100,7 +106,7 @@ namespace ProjectStarwatch.Overworld.UI
             ContentId planetId,
             ContentId selectedPlanetId)
         {
-            var visibility = _visibility.GetPlanetVisibility(run.Archive, ObserverId.Player, node.Id, planetId);
+            var visibility = _visibilityService.GetPlanetVisibility(run.Archive, ObserverId.Player, node.Id, planetId);
             return new PlanetPresentationState(
                 visibility,
                 isSelected: planetId == selectedPlanetId,
@@ -119,7 +125,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return false;
             }
 
-            var planetVisibility = _visibility.GetPlanetVisibility(
+            var planetVisibility = _visibilityService.GetPlanetVisibility(
                 run.Archive,
                 ObserverId.Player,
                 node.Id,

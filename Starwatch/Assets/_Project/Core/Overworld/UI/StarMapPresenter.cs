@@ -18,12 +18,13 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly OverworldSelection _selection;
         private readonly OverworldStatus _status;
         private readonly RunManager _runManager;
-        private readonly TravelService _travel;
+        private readonly TravelService _travelService;
         private readonly StarMapQuery _query;
         private readonly StarSystemQuery _systemQuery;
         private readonly DomainEventBus _events;
         private readonly List<IDisposable> _subscriptions = new();
         private readonly List<StarMapNodeModel> _nodes = new();
+        private readonly FleetListQuery _fleetListQuery;
         private ContentId _selectedNodeId;
 
         public StarMapPresenter(
@@ -31,27 +32,36 @@ namespace ProjectStarwatch.Overworld.UI
             OverworldSelection selection,
             OverworldStatus status,
             RunManager runManager,
-            TravelService travel,
+            TravelService travelService,
             StarMapQuery query,
             StarSystemQuery systemQuery,
-            DomainEventBus events)
+            DomainEventBus events,
+            FleetListQuery fleetListQuery)
         {
             _view = view ?? throw new ArgumentNullException(nameof(view));
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
             _status = status ?? throw new ArgumentNullException(nameof(status));
             _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
-            _travel = travel ?? throw new ArgumentNullException(nameof(travel));
+            _travelService = travelService ?? throw new ArgumentNullException(nameof(travelService));
             _query = query ?? throw new ArgumentNullException(nameof(query));
             _systemQuery = systemQuery ?? throw new ArgumentNullException(nameof(systemQuery));
             _events = events ?? throw new ArgumentNullException(nameof(events));
+            _fleetListQuery = fleetListQuery ?? throw new ArgumentNullException(nameof(fleetListQuery));
         }
 
         public void Start()
         {
             _view.NodeSelected += OnNodeSelected;
+            _view.FleetSelected += OnFleetSelected;
             _view.TravelRequested += OnTravelRequested;
             _selection.Changed += OnSelectionChanged;
             _subscriptions.Add(_events.Subscribe<FleetTravelEvent>(OnFleetTravel));
+            _subscriptions.Add(_events.Subscribe<FleetCreatedEvent>(OnFleetCreated));
+            _subscriptions.Add(_events.Subscribe<FleetMergedEvent>(_ => RefreshRoster()));
+            _subscriptions.Add(_events.Subscribe<FleetSplitEvent>(_ => RefreshRoster()));
+            _subscriptions.Add(_events.Subscribe<ShipConstructionCompletedEvent>(_ => RefreshRoster()));
+            _subscriptions.Add(_events.Subscribe<ResearchCompletedEvent>(_ => RefreshRoster()));
+            _subscriptions.Add(_events.Subscribe<RewindCompletedEvent>(OnRewind));
             _subscriptions.Add(_events.Subscribe<MapKnowledgeChangedEvent>(OnMapKnowledgeChanged));
             if (!_runManager.HasActiveRun)
             {
@@ -70,6 +80,7 @@ namespace ProjectStarwatch.Overworld.UI
         public void Dispose()
         {
             _view.NodeSelected -= OnNodeSelected;
+            _view.FleetSelected -= OnFleetSelected;
             _view.TravelRequested -= OnTravelRequested;
             _selection.Changed -= OnSelectionChanged;
             for (var i = 0; i < _subscriptions.Count; i++)
@@ -108,25 +119,56 @@ namespace ProjectStarwatch.Overworld.UI
             }
         }
 
-        private void OnTravelRequested()
+        private void OnFleetSelected(EntityId fleetId)
+        {
+            _selection.SelectFleet(fleetId);
+        }
+
+        private void OnRewind(RewindCompletedEvent _)
+        {
+            if (!_selection.SelectedFleetId.IsNone)
+            {
+                _selection.SelectFleet(EntityId.None);
+            }
+        }
+
+        private void OnTravelRequested(ContentId destinationNodeId)
         {
             var run = CurrentRun();
-            if (run == null || _selection.SelectedNodeId.IsEmpty)
+            if (run == null || destinationNodeId.IsEmpty)
             {
                 return;
             }
 
-            if (!_query.TryFindFleetForDestination(run, _selection.SelectedNodeId, out var fleetId))
+            if (_selection.SelectedFleetId.IsNone)
             {
-                _status.Post("Travel is not available.");
+                _status.Post(OverworldStatus.kSelectFleet);
                 return;
             }
 
-            var result = _travel.StartTravel(run, ObserverId.Player, fleetId, _selection.SelectedNodeId);
+            var result = _travelService.StartTravel(
+                run,
+                ObserverId.Player,
+                _selection.SelectedFleetId,
+                destinationNodeId);
             if (!result.Success)
             {
                 _status.Post(result.Error.Message);
             }
+        }
+
+        private void OnFleetCreated(FleetCreatedEvent domainEvent)
+        {
+            var run = CurrentRun();
+            if (run == null)
+            {
+                return;
+            }
+
+            _nodes.Clear();
+            _query.AppendNodeAndNeighbors(run, domainEvent.LocationId, _selection.SelectedNodeId, _nodes);
+            _view.ApplyNodes(_nodes);
+            RefreshRoster();
         }
 
         private void OnFleetTravel(FleetTravelEvent domainEvent)
@@ -151,7 +193,7 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             _view.ApplyNodes(_nodes);
-            _view.ApplyCard(_query.DescribeCard(run, _selection));
+            RefreshRoster();
             _status.Post(domainEvent.Kind == FleetTravelKind.Arrived ? "Fleet arrived." : "Fleet is traveling.");
         }
 
@@ -179,18 +221,59 @@ namespace ProjectStarwatch.Overworld.UI
         {
             var run = CurrentRun();
             var current = _selection.SelectedNodeId;
+            if (run != null && current != _selectedNodeId)
+            {
+                _nodes.Clear();
+                _query.AppendNode(run, _selectedNodeId, current, _nodes);
+                _query.AppendNode(run, current, current, _nodes);
+                _view.ApplyNodes(_nodes);
+            }
+
+            _selectedNodeId = current;
             if (run == null)
             {
-                _selectedNodeId = current;
+                _view.ApplyFleets(Array.Empty<FleetChoiceModel>());
                 return;
             }
 
-            _nodes.Clear();
-            _query.AppendNode(run, _selectedNodeId, current, _nodes);
-            _query.AppendNode(run, current, current, _nodes);
-            _view.ApplyNodes(_nodes);
             _view.ApplyCard(_query.DescribeCard(run, _selection));
-            _selectedNodeId = current;
+            _view.ApplyFleets(_fleetListQuery.All(run, _selection.SelectedFleetId));
+        }
+
+        private void RefreshRoster()
+        {
+            if (ReleaseMissingFleet())
+            {
+                return;
+            }
+
+            var run = CurrentRun();
+            if (run == null)
+            {
+                _view.ApplyFleets(Array.Empty<FleetChoiceModel>());
+                return;
+            }
+
+            _view.ApplyCard(_query.DescribeCard(run, _selection));
+            _view.ApplyFleets(_fleetListQuery.All(run, _selection.SelectedFleetId));
+        }
+
+        private bool ReleaseMissingFleet()
+        {
+            var selected = _selection.SelectedFleetId;
+            if (selected.IsNone)
+            {
+                return false;
+            }
+
+            var run = CurrentRun();
+            if (run != null && run.Timeline.Fleets.TryGetFleet(selected, out _))
+            {
+                return false;
+            }
+
+            _selection.SelectFleet(EntityId.None);
+            return true;
         }
 
         private void Apply()

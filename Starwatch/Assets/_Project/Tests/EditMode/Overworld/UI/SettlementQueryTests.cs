@@ -36,7 +36,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(BuildingRow(model, "industry-works").CanPlace, Is.False);
 
             var homePrime = ContentId.From("home-prime");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, homePrime);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, homePrime);
             var revealed = query.Describe(run, Viewing("home-system", homePrime));
             Assert.That(revealed.Development, Is.Not.EqualTo(model.Development));
         }
@@ -55,6 +55,22 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         }
 
         [Test]
+        public void Describe_StartingColonyCanBuildWhileDevelopmentStaysHidden()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(92));
+            var database = RunTestFixture.CreateObjectDatabase();
+            var query = new SettlementQuery(database, new ProductionService(database));
+            var homePrime = ContentId.From("home-prime");
+
+            var model = query.Describe(run, Viewing("home-system", homePrime));
+
+            Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(homePrime), Is.False);
+            Assert.That(model.Economy.IsRevealed, Is.False);
+            Assert.That(BuildingRow(model, "industry-works").CanPlace, Is.True);
+        }
+
+        [Test]
         public void Describe_QuotesPlacedProductionAndTheNextColonyPrice()
         {
             var stack = RunTestFixture.CreateOverworldStack();
@@ -65,13 +81,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
             var homePrime = ContentId.From("home-prime");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, homePrime);
-            stack.Settlement.FoundColony(run, ObserverId.Player, homePrime);
-            stack.Buildings.Place(run, homePrime, ContentId.From("industry-works"));
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, homePrime);
+            stack.SettlementService.FoundColony(run, ObserverId.Player, homePrime);
+            stack.BuildingService.Place(run, homePrime, ContentId.From("industry-works"));
 
             var forge = ContentId.From("forge-world");
-            stack.Exploration.Explore(run, ObserverId.Player, ContentId.From("forge-system"));
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, forge);
+            stack.ExplorationService.Explore(run, ObserverId.Player, ContentId.From("forge-system"));
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, forge);
 
             var home = query.Describe(run, Viewing("home-system", homePrime));
             var next = query.Describe(run, Viewing("forge-system", forge));
@@ -92,19 +108,19 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(60));
             var database = RunTestFixture.CreateObjectDatabase();
-            var production = new ProductionService(database);
-            var query = new SettlementQuery(database, production);
+            var productionService = new ProductionService(database);
+            var query = new SettlementQuery(database, productionService);
             var forge = ContentId.From("forge-system");
             var forgeWorld = ContentId.From("forge-world");
             var innerBelt = ContentId.From("forge-inner-belt");
-            run.Timeline.TrySetFleetLocation(run.Timeline.Fleets[0].Id, forge);
-            stack.Exploration.Explore(run, ObserverId.Player, forge);
+            run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, forge);
+            stack.ExplorationService.Explore(run, ObserverId.Player, forge);
             database.TryGetPlanet(forgeWorld.Value, out var worldPlanet);
             database.TryGetPlanet(innerBelt.Value, out var beltPlanet);
 
             var hidden = query.Describe(run, Viewing("forge-system", forgeWorld));
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, forgeWorld);
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, innerBelt);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, forgeWorld);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, innerBelt);
             var world = query.Describe(run, Viewing("forge-system", forgeWorld));
             var belt = query.Describe(run, Viewing("forge-system", innerBelt));
 
@@ -115,16 +131,16 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(belt.Economy.IsRevealed, Is.True);
             Assert.That(
                 world.Economy.Base.Get(ResourceKind.Industry),
-                Is.EqualTo(production.ModifiedBase(worldPlanet).Get(ResourceKind.Industry)));
+                Is.EqualTo(productionService.ModifiedBase(worldPlanet).Get(ResourceKind.Industry)));
             Assert.That(
                 belt.Economy.Base.Get(ResourceKind.Industry),
-                Is.EqualTo(production.ModifiedBase(beltPlanet).Get(ResourceKind.Industry)));
+                Is.EqualTo(productionService.ModifiedBase(beltPlanet).Get(ResourceKind.Industry)));
             Assert.That(
                 world.Economy.Base.Get(ResourceKind.Strategic),
-                Is.EqualTo(production.ModifiedBase(worldPlanet).Get(ResourceKind.Strategic)));
+                Is.EqualTo(productionService.ModifiedBase(worldPlanet).Get(ResourceKind.Strategic)));
             Assert.That(
                 belt.Economy.Base.Get(ResourceKind.Strategic),
-                Is.EqualTo(production.ModifiedBase(beltPlanet).Get(ResourceKind.Strategic)));
+                Is.EqualTo(productionService.ModifiedBase(beltPlanet).Get(ResourceKind.Strategic)));
             Assert.That(
                 world.Economy.Base.Get(ResourceKind.Industry),
                 Is.Not.EqualTo(belt.Economy.Base.Get(ResourceKind.Industry)));
@@ -143,13 +159,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new SettlementQuery(database, new ProductionService(database));
             var homePrime = ContentId.From("home-prime");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, homePrime);
-            stack.Settlement.FoundColony(run, ObserverId.Player, homePrime);
-            stack.Buildings.Place(run, homePrime, ContentId.From("industry-works"));
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, homePrime);
+            stack.SettlementService.FoundColony(run, ObserverId.Player, homePrime);
+            stack.BuildingService.Place(run, homePrime, ContentId.From("industry-works"));
 
             var placed = query.Describe(run, Viewing("home-system", homePrime));
             var industryBase = placed.Economy.Base.Get(ResourceKind.Industry);
-            stack.Buildings.Upgrade(run, homePrime, ContentId.From("industry-works"));
+            stack.BuildingService.Upgrade(run, homePrime, ContentId.From("industry-works"));
             var upgraded = query.Describe(run, Viewing("home-system", homePrime));
 
             Assert.That(placed.Economy.Rate(ResourceKind.Industry), Is.EqualTo(industryBase));
@@ -178,10 +194,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(broke.Commitment.CanFoundColony, Is.False);
 
             run.Timeline.Resources.Grant(new StartingResources(industry: 200));
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, homePrime);
-            stack.Settlement.FoundColony(run, ObserverId.Player, homePrime);
-            stack.Buildings.Place(run, homePrime, ContentId.From("industry-works"));
-            stack.Buildings.Place(run, homePrime, ContentId.From("power-plant"));
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, homePrime);
+            stack.SettlementService.FoundColony(run, ObserverId.Player, homePrime);
+            stack.BuildingService.Place(run, homePrime, ContentId.From("industry-works"));
+            stack.BuildingService.Place(run, homePrime, ContentId.From("power-plant"));
             run.Timeline.Resources.TrySpend(new[]
             {
                 new ResourceAmount(ResourceKind.Industry, run.Timeline.Resources.Get(ResourceKind.Industry)),
@@ -193,7 +209,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(BuildingRow(full, "industry-works").CanUpgrade, Is.False);
 
             run.Timeline.Resources.Grant(new StartingResources(industry: 100));
-            stack.Buildings.Upgrade(run, homePrime, ContentId.From("industry-works"));
+            stack.BuildingService.Upgrade(run, homePrime, ContentId.From("industry-works"));
             var capped = query.Describe(run, Viewing("home-system", homePrime));
 
             Assert.That(BuildingRow(capped, "industry-works").CanUpgrade, Is.False);

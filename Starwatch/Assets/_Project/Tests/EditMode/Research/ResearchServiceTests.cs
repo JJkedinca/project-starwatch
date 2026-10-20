@@ -26,12 +26,12 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(70));
 
-            Assert.That(stack.Research.IsEligible(run, ContentId.From("basic-construction")), Is.True);
-            Assert.That(stack.Research.IsEligible(run, ContentId.From("basic-energy")), Is.True);
-            Assert.That(stack.Research.IsEligible(run, ContentId.From("basic-travel")), Is.True);
-            Assert.That(stack.Research.IsEligible(run, ContentId.From("basic-fleet")), Is.True);
-            Assert.That(stack.Research.IsEligible(run, ContentId.From("industrial-focus")), Is.False);
-            Assert.That(stack.Research.IsEligible(run, ContentId.From("relic-foundry")), Is.False);
+            Assert.That(stack.ResearchService.IsEligible(run, ContentId.From("basic-construction")), Is.True);
+            Assert.That(stack.ResearchService.IsEligible(run, ContentId.From("basic-energy")), Is.True);
+            Assert.That(stack.ResearchService.IsEligible(run, ContentId.From("basic-travel")), Is.True);
+            Assert.That(stack.ResearchService.IsEligible(run, ContentId.From("basic-fleet")), Is.True);
+            Assert.That(stack.ResearchService.IsEligible(run, ContentId.From("industrial-focus")), Is.False);
+            Assert.That(stack.ResearchService.IsEligible(run, ContentId.From("relic-foundry")), Is.False);
             Assert.That(run.Timeline.Research.Offers, Has.Count.EqualTo(3));
             Assert.That(run.Timeline.Research.IsOffered(ContentId.From("relic-foundry")), Is.False);
         }
@@ -43,15 +43,15 @@ namespace ProjectStarwatch.Tests.EditMode.Research
                 Project("basic-construction", 4f, TechnologyEffect.Capability("construction")),
                 Project("basic-energy", 4f, TechnologyEffect.Capability("energy")));
 
-            Assert.That(harness.Research.IsEligible(harness.Run, Id("basic-construction")), Is.False);
+            Assert.That(harness.ResearchService.IsEligible(harness.Run, Id("basic-construction")), Is.False);
 
-            harness.Research.OnRunStarted(harness.Run);
-            harness.Research.OnRunStarted(harness.Run);
+            harness.ResearchService.OnRunStarted(harness.Run);
+            harness.ResearchService.OnRunStarted(harness.Run);
 
             Assert.That(
                 harness.Run.Archive.Research.Projects,
                 Is.EqualTo(new[] { Id("basic-construction"), Id("basic-energy") }));
-            Assert.That(harness.Research.IsEligible(harness.Run, Id("basic-construction")), Is.True);
+            Assert.That(harness.ResearchService.IsEligible(harness.Run, Id("basic-construction")), Is.True);
         }
 
         [Test]
@@ -60,15 +60,15 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             var harness = Harness(
                 Project("basic-construction", 4f, TechnologyEffect.Output(ResourceKind.Industry, 1.1f)),
                 Project("industrial-focus", 4f, TechnologyEffect.Output(ResourceKind.Industry, 1.25f), "basic-construction"));
-            harness.Research.OnRunStarted(harness.Run);
+            harness.ResearchService.OnRunStarted(harness.Run);
 
-            Assert.That(harness.Research.IsEligible(harness.Run, Id("industrial-focus")), Is.False);
+            Assert.That(harness.ResearchService.IsEligible(harness.Run, Id("industrial-focus")), Is.False);
 
-            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
-            harness.Research.ApplyScience(harness.Run, 4f);
+            Assert.That(harness.ResearchService.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            harness.ResearchService.ApplyScience(harness.Run, 4f);
 
             Assert.That(harness.Run.Archive.Research.Contains(Id("basic-construction")), Is.True);
-            Assert.That(harness.Research.IsEligible(harness.Run, Id("industrial-focus")), Is.True);
+            Assert.That(harness.ResearchService.IsEligible(harness.Run, Id("industrial-focus")), Is.True);
             Assert.That(harness.Run.Timeline.Research.IsOffered(Id("industrial-focus")), Is.True);
         }
 
@@ -78,10 +78,10 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             var harness = Harness(
                 Project("basic-construction", 20f, TechnologyEffect.Capability("construction")),
                 Project("basic-energy", 20f, TechnologyEffect.Capability("energy")));
-            harness.Research.OnRunStarted(harness.Run);
-            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            harness.ResearchService.OnRunStarted(harness.Run);
+            Assert.That(harness.ResearchService.Start(harness.Run, Id("basic-construction")).Success, Is.True);
 
-            var rejected = harness.Research.Start(harness.Run, Id("basic-energy"));
+            var rejected = harness.ResearchService.Start(harness.Run, Id("basic-energy"));
 
             Assert.That(rejected.Success, Is.False);
             Assert.That(rejected.Error.Code, Is.EqualTo(ProjectStarwatch.Core.Commands.CommandErrorCode.NotAllowed));
@@ -94,12 +94,12 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             var harness = Harness(
                 Project("basic-construction", 20f, TechnologyEffect.Capability("construction")),
                 Project("basic-energy", 20f, TechnologyEffect.Capability("energy")));
-            harness.Research.OnRunStarted(harness.Run);
-            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            harness.ResearchService.OnRunStarted(harness.Run);
+            Assert.That(harness.ResearchService.Start(harness.Run, Id("basic-construction")).Success, Is.True);
             harness.Run.Timeline.Research.AddPoints(5f);
             var next = harness.Run.Timeline.Research.Offers[0];
 
-            var switched = harness.Research.Switch(harness.Run, next);
+            var switched = harness.ResearchService.Switch(harness.Run, next);
 
             Assert.That(switched.Success, Is.True);
             Assert.That(harness.Run.Timeline.Research.ActiveId, Is.EqualTo(next));
@@ -113,11 +113,11 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             var harness = Harness(
                 Project("basic-construction", 20f, TechnologyEffect.Capability("construction")),
                 Project("free", 0f, TechnologyEffect.Capability("free")));
-            harness.Research.OnRunStarted(harness.Run);
-            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            harness.ResearchService.OnRunStarted(harness.Run);
+            Assert.That(harness.ResearchService.Start(harness.Run, Id("basic-construction")).Success, Is.True);
             harness.Run.Timeline.Research.AddPoints(5f);
 
-            var rejected = harness.Research.Switch(harness.Run, Id("free"));
+            var rejected = harness.ResearchService.Switch(harness.Run, Id("free"));
 
             Assert.That(rejected.Success, Is.False);
             Assert.That(harness.Run.Timeline.Research.ActiveId, Is.EqualTo(Id("basic-construction")));
@@ -136,12 +136,12 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             };
             var first = LabHarness(71, projects: projects);
             var second = LabHarness(71, projects: projects);
-            first.Research.OnRunStarted(first.Run);
-            second.Research.OnRunStarted(second.Run);
+            first.ResearchService.OnRunStarted(first.Run);
+            second.ResearchService.OnRunStarted(second.Run);
             var offer = first.Run.Timeline.Research.Offers[0];
             Assert.That(second.Run.Timeline.Research.Offers[0], Is.EqualTo(offer));
-            Assert.That(second.Research.Start(second.Run, offer).Success, Is.True);
-            Assert.That(first.Research.Start(first.Run, offer).Success, Is.True);
+            Assert.That(second.ResearchService.Start(second.Run, offer).Success, Is.True);
+            Assert.That(first.ResearchService.Start(first.Run, offer).Success, Is.True);
 
             var firstTick = TicksUntilComplete(first);
             var secondTick = TicksUntilComplete(second);
@@ -157,16 +157,16 @@ namespace ProjectStarwatch.Tests.EditMode.Research
         public void IdleScience_DoesNotStockpileOrBankProgress()
         {
             var harness = LabHarness(seed: 72);
-            harness.Research.OnRunStarted(harness.Run);
+            harness.ResearchService.OnRunStarted(harness.Run);
 
-            harness.Economy.ApplyTick(harness.Run);
-            harness.Research.ApplyScience(harness.Run, harness.Economy.ProducedScience);
+            harness.EconomyService.ApplyTick(harness.Run);
+            harness.ResearchService.ApplyScience(harness.Run, harness.EconomyService.ProducedScience);
 
-            Assert.That(harness.Economy.ProducedScience, Is.EqualTo(2f));
+            Assert.That(harness.EconomyService.ProducedScience, Is.EqualTo(2f));
             Assert.That(harness.Run.Timeline.Resources.Get(ResourceKind.Science), Is.EqualTo(0));
             Assert.That(harness.Run.Timeline.Research.Points, Is.EqualTo(0f));
 
-            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            Assert.That(harness.ResearchService.Start(harness.Run, Id("basic-construction")).Success, Is.True);
             Assert.That(harness.Run.Timeline.Research.Points, Is.EqualTo(0f));
         }
 
@@ -174,9 +174,9 @@ namespace ProjectStarwatch.Tests.EditMode.Research
         public void ZeroPointCost_IsRejected()
         {
             var harness = Harness(Project("free", 0f, TechnologyEffect.Capability("free")));
-            harness.Research.OnRunStarted(harness.Run);
+            harness.ResearchService.OnRunStarted(harness.Run);
 
-            var rejected = harness.Research.Start(harness.Run, Id("free"));
+            var rejected = harness.ResearchService.Start(harness.Run, Id("free"));
 
             Assert.That(rejected.Success, Is.False);
             Assert.That(rejected.Error.Code, Is.EqualTo(ProjectStarwatch.Core.Commands.CommandErrorCode.InvalidArgument));
@@ -187,12 +187,12 @@ namespace ProjectStarwatch.Tests.EditMode.Research
         public void ZeroScience_NotifiesListenersWithoutAddingProgress()
         {
             var harness = Harness(Project("basic-construction", 20f, TechnologyEffect.Capability("construction")));
-            harness.Research.OnRunStarted(harness.Run);
-            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            harness.ResearchService.OnRunStarted(harness.Run);
+            Assert.That(harness.ResearchService.Start(harness.Run, Id("basic-construction")).Success, Is.True);
             var notifications = 0;
-            harness.Research.ScienceApplied += () => notifications++;
+            harness.ResearchService.ScienceApplied += () => notifications++;
 
-            harness.Research.ApplyScience(harness.Run, 0f);
+            harness.ResearchService.ApplyScience(harness.Run, 0f);
 
             Assert.That(notifications, Is.EqualTo(1));
             Assert.That(harness.Run.Timeline.Research.Points, Is.EqualTo(0f));
@@ -203,13 +203,13 @@ namespace ProjectStarwatch.Tests.EditMode.Research
         public void UnpaidUpkeep_AddsNoResearchProgress()
         {
             var harness = LabHarness(seed: 73, energyUpkeep: 1f);
-            harness.Research.OnRunStarted(harness.Run);
-            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            harness.ResearchService.OnRunStarted(harness.Run);
+            Assert.That(harness.ResearchService.Start(harness.Run, Id("basic-construction")).Success, Is.True);
 
-            harness.Economy.ApplyTick(harness.Run);
-            harness.Research.ApplyScience(harness.Run, harness.Economy.ProducedScience);
+            harness.EconomyService.ApplyTick(harness.Run);
+            harness.ResearchService.ApplyScience(harness.Run, harness.EconomyService.ProducedScience);
 
-            Assert.That(harness.Economy.ProducedScience, Is.EqualTo(0f));
+            Assert.That(harness.EconomyService.ProducedScience, Is.EqualTo(0f));
             Assert.That(harness.Run.Timeline.Research.Points, Is.EqualTo(0f));
         }
 
@@ -225,16 +225,16 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             };
             var first = Harness(projects);
             var replay = Harness(projects);
-            first.Research.OnRunStarted(first.Run);
-            replay.Research.OnRunStarted(replay.Run);
+            first.ResearchService.OnRunStarted(first.Run);
+            replay.ResearchService.OnRunStarted(replay.Run);
             Assert.That(Ids(replay.Run), Is.EqualTo(Ids(first.Run)));
 
             var initial = Ids(first.Run);
             var differed = false;
             for (var i = 0; i < 8 && !differed; i++)
             {
-                first.Research.OnRunStarted(first.Run);
-                replay.Research.OnRunStarted(replay.Run);
+                first.ResearchService.OnRunStarted(first.Run);
+                replay.ResearchService.OnRunStarted(replay.Run);
                 Assert.That(Ids(replay.Run), Is.EqualTo(Ids(first.Run)));
                 differed = Ids(first.Run) != initial;
             }
@@ -250,17 +250,17 @@ namespace ProjectStarwatch.Tests.EditMode.Research
                 Project("two", 4f, TechnologyEffect.Capability("two")),
                 Project("three", 4f, TechnologyEffect.Capability("three")),
                 Project("four", 4f, TechnologyEffect.Capability("four")));
-            harness.Research.OnRunStarted(harness.Run);
+            harness.ResearchService.OnRunStarted(harness.Run);
             var seeded = harness.Run.Timeline.Research.RefreshCount;
             var started = harness.Run.Timeline.Research.Offers[0];
 
-            Assert.That(harness.Research.Start(harness.Run, started).Success, Is.True);
+            Assert.That(harness.ResearchService.Start(harness.Run, started).Success, Is.True);
 
             Assert.That(harness.Run.Timeline.Research.RefreshCount, Is.EqualTo(seeded + 1));
             Assert.That(harness.Run.Timeline.Research.IsOffered(started), Is.False);
             Assert.That(harness.Run.Timeline.Research.Offers, Has.Count.EqualTo(3));
 
-            harness.Research.ApplyScience(harness.Run, 4f);
+            harness.ResearchService.ApplyScience(harness.Run, 4f);
 
             Assert.That(harness.Run.Timeline.Research.RefreshCount, Is.EqualTo(seeded + 2));
             Assert.That(harness.Run.Timeline.Research.HasActive, Is.False);
@@ -272,9 +272,9 @@ namespace ProjectStarwatch.Tests.EditMode.Research
         public void MissingProject_RejectsStartAndIgnoresScience()
         {
             var harness = Harness(Project("basic-construction", 20f, TechnologyEffect.Capability("construction")));
-            harness.Research.OnRunStarted(harness.Run);
+            harness.ResearchService.OnRunStarted(harness.Run);
 
-            var rejected = harness.Research.Start(harness.Run, Id("ghost"));
+            var rejected = harness.ResearchService.Start(harness.Run, Id("ghost"));
 
             Assert.That(rejected.Success, Is.False);
             Assert.That(rejected.Error.Code, Is.EqualTo(ProjectStarwatch.Core.Commands.CommandErrorCode.InvalidArgument));
@@ -285,7 +285,7 @@ namespace ProjectStarwatch.Tests.EditMode.Research
                 LogType.Warning,
                 "ResearchService ignored Science for active project 'ghost' because it is not in the catalog.");
 
-            harness.Research.ApplyScience(harness.Run, 5f);
+            harness.ResearchService.ApplyScience(harness.Run, 5f);
 
             Assert.That(harness.Run.Timeline.Research.Points, Is.EqualTo(0f));
             Assert.That(harness.Run.Timeline.Research.ActiveId, Is.EqualTo(Id("ghost")));
@@ -296,15 +296,15 @@ namespace ProjectStarwatch.Tests.EditMode.Research
         public void Completion_RecordsKnowledgeAndChangesTheProductionQuote()
         {
             var harness = Harness(Project("basic-construction", 4f, TechnologyEffect.Output(ResourceKind.Industry, 1.1f)));
-            harness.Research.OnRunStarted(harness.Run);
-            Assert.That(harness.Research.Start(harness.Run, Id("basic-construction")).Success, Is.True);
-            harness.Research.ApplyScience(harness.Run, 4f);
+            harness.ResearchService.OnRunStarted(harness.Run);
+            Assert.That(harness.ResearchService.Start(harness.Run, Id("basic-construction")).Success, Is.True);
+            harness.ResearchService.ApplyScience(harness.Run, 4f);
 
             Assert.That(harness.Run.Archive.Research.Contains(Id("basic-construction")), Is.True);
             Assert.That(harness.Effects.OutputMultiplier(ResourceKind.Industry), Is.EqualTo(1.1f).Within(0.001f));
             var colony = new ColonyState(Id("home-prime"), ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(Id("industry-works"), 1));
-            var quote = harness.Production.Quote(colony, Planet(1f));
+            var quote = harness.ProductionService.Quote(colony, Planet(1f));
             Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(2.2f).Within(0.001f));
         }
 
@@ -320,7 +320,7 @@ namespace ProjectStarwatch.Tests.EditMode.Research
 
             var colony = new ColonyState(Id("home-prime"), ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(Id("industry-works"), 1));
-            var quote = harness.Production.Quote(colony, Planet(2f));
+            var quote = harness.ProductionService.Quote(colony, Planet(2f));
 
             Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(12f).Within(0.001f));
         }
@@ -331,7 +331,7 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(75));
             var offered = run.Timeline.Research.Offers[0];
-            Assert.That(stack.Research.Start(run, offered).Success, Is.True);
+            Assert.That(stack.ResearchService.Start(run, offered).Success, Is.True);
             run.Archive.Research.TryAdd(ContentId.From("basic-construction"));
             run.Timeline.Research.AddPoints(3f);
 
@@ -340,7 +340,7 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             Assert.That(run.Timeline.Research.HasActive, Is.False);
             Assert.That(run.Timeline.Research.Points, Is.EqualTo(0f));
             Assert.That(run.Archive.Research.Contains(ContentId.From("basic-construction")), Is.True);
-            Assert.That(stack.Research.IsEligible(run, ContentId.From("relic-foundry")), Is.True);
+            Assert.That(stack.ResearchService.IsEligible(run, ContentId.From("relic-foundry")), Is.True);
         }
 
         private static int TicksUntilComplete(ResearchHarness harness)
@@ -348,8 +348,8 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             var active = harness.Run.Timeline.Research.ActiveId;
             for (var tick = 1; tick <= 20; tick++)
             {
-                harness.Economy.ApplyTick(harness.Run);
-                harness.Research.ApplyScience(harness.Run, harness.Economy.ProducedScience);
+                harness.EconomyService.ApplyTick(harness.Run);
+                harness.ResearchService.ApplyScience(harness.Run, harness.EconomyService.ProducedScience);
                 if (harness.Run.Archive.Research.Contains(active))
                 {
                     return tick;
@@ -429,9 +429,9 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             var effects = new EffectRegistry();
             var events = new DomainEventBus(new EventJournal());
             var clock = new SimulationClock();
-            var production = new ProductionService(database, effects);
-            var economy = new EconomyService(database, production, events, clock);
-            var research = new ResearchService(database, effects, events, clock);
+            var productionService = new ProductionService(database, effects);
+            var economyService = new EconomyService(database, productionService, events, clock);
+            var researchService = new ResearchService(database, effects, events, clock);
             var entityIds = new EntityIdFactory();
             var run = new RunState(
                 RunSeed.FromValue(seed),
@@ -441,7 +441,7 @@ namespace ProjectStarwatch.Tests.EditMode.Research
                 rewindIndex: 0,
                 new DeterministicRandom(seed),
                 entityIds);
-            return new ResearchHarness(database, effects, economy, production, research, run);
+            return new ResearchHarness(database, effects, economyService, productionService, researchService, run);
         }
 
         private static ResearchDefinitionSO Project(
@@ -478,27 +478,27 @@ namespace ProjectStarwatch.Tests.EditMode.Research
 
             public EffectRegistry Effects { get; }
 
-            public EconomyService Economy { get; }
+            public EconomyService EconomyService { get; }
 
-            public ProductionService Production { get; }
+            public ProductionService ProductionService { get; }
 
-            public ResearchService Research { get; }
+            public ResearchService ResearchService { get; }
 
             public RunState Run { get; }
 
             public ResearchHarness(
                 ProjectStarwatch.Core.Content.ObjectDatabaseSO database,
                 EffectRegistry effects,
-                EconomyService economy,
-                ProductionService production,
-                ResearchService research,
+                EconomyService economyService,
+                ProductionService productionService,
+                ResearchService researchService,
                 RunState run)
             {
                 Database = database;
                 Effects = effects;
-                Economy = economy;
-                Production = production;
-                Research = research;
+                EconomyService = economyService;
+                ProductionService = productionService;
+                ResearchService = researchService;
                 Run = run;
             }
         }

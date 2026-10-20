@@ -90,6 +90,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var root = new VisualElement { name = "star-system" };
             root.Add(new Button { name = "star-system-back" });
             root.Add(new Label { name = "star-system-title" });
+            root.Add(new VisualElement { name = "fleet-list" });
             root.Add(new VisualElement { name = "planet-strip" });
             return root;
         }

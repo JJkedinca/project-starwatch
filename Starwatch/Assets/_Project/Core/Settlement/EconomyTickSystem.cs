@@ -12,7 +12,7 @@ namespace ProjectStarwatch.Settlement
     {
         internal const int kIntervalSeconds = 10;
 
-        private readonly EconomyService _economy;
+        private readonly EconomyService _economyService;
         private Action<float> _afterSettlement;
         private RunState _run;
         private float _elapsedSeconds;
@@ -20,9 +20,9 @@ namespace ProjectStarwatch.Settlement
         private float _windowScience;
         private bool _windowChanged;
 
-        public EconomyTickSystem(EconomyService economy)
+        public EconomyTickSystem(EconomyService economyService)
         {
-            _economy = economy ?? throw new ArgumentNullException(nameof(economy));
+            _economyService = economyService ?? throw new ArgumentNullException(nameof(economyService));
         }
 
         public void OnRunChanged(RunState run)
@@ -61,8 +61,8 @@ namespace ProjectStarwatch.Settlement
             while (_elapsedSeconds >= 1f)
             {
                 _elapsedSeconds -= 1f;
-                _windowChanged |= _economy.SettleSecond(_run);
-                _windowScience += _economy.ProducedScience;
+                _windowChanged |= _economyService.SettleSecond(_run);
+                _windowScience += _economyService.ProducedScience;
                 _pendingSeconds++;
                 if (_pendingSeconds < kIntervalSeconds)
                 {
@@ -78,7 +78,7 @@ namespace ProjectStarwatch.Settlement
         {
             if (_windowChanged)
             {
-                _economy.PublishChanged();
+                _economyService.PublishChanged();
             }
 
             _afterSettlement?.Invoke(_windowScience);
@@ -92,7 +92,7 @@ namespace ProjectStarwatch.Settlement
             _pendingSeconds = 0;
             _windowScience = 0f;
             _windowChanged = false;
-            _economy.ClearOutputRemainder();
+            _economyService.ClearOutputRemainder();
         }
     }
 }

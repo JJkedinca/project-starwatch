@@ -75,7 +75,7 @@ namespace ProjectStarwatch.Core.Data
                 for (var i = 0; i < catalogBuildings.Count; i++)
                 {
                     var building = catalogBuildings[i];
-                    if (building == null || building.Id.IsEmpty)
+                    if (building == null || building.Id.IsEmpty || !Produces(building))
                     {
                         continue;
                     }
@@ -88,6 +88,20 @@ namespace ProjectStarwatch.Core.Data
             {
                 new(ContentId.From("home-prime"), isColony: true, buildings),
             };
+        }
+
+        private static bool Produces(BuildingDefinitionSO building)
+        {
+            var output = building.Output;
+            for (var i = 0; i < output.Count; i++)
+            {
+                if (output[i].Amount > 0f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static List<MapNodeDefinition> BuildNodes(

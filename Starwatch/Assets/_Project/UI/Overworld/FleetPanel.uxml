@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="fleet-panel" class="fleet-panel">
+        <ui:VisualElement class="fleet-panel-header">
+            <ui:Label name="fleet-panel-title" text="Fleet" class="fleet-panel-title" />
+            <ui:Button name="fleet-panel-close" text="Close" class="fleet-panel-close" />
+        </ui:VisualElement>
+        <ui:Label name="fleet-panel-status" text="" class="fleet-panel-status" />
+        <ui:Label name="fleet-panel-speed" text="" class="fleet-panel-speed" />
+        <ui:VisualElement name="fleet-panel-stacks" class="fleet-panel-stacks" />
+        <ui:VisualElement name="fleet-panel-merges" class="fleet-panel-merges" />
+    </ui:VisualElement>
+</ui:UXML>

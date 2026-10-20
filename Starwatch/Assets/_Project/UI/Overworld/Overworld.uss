@@ -168,77 +168,505 @@
     bottom: 0;
 }
 
+/* ---- Star system: orbital scene ---- */
+
 .star-system {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
     bottom: 0;
-    flex-direction: column;
-    background-color: rgb(14, 20, 30);
+    background-color: rgb(6, 9, 15);
     border-width: 1px;
     border-color: rgb(40, 52, 70);
-    padding: 16px;
+    overflow: hidden;
     display: none;
 }
 
+.system-scene,
+.system-orbits,
+.planet-strip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.system-star {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+}
+
+.system-star__halo,
+.system-star__corona,
+.system-star__glow,
+.system-star__core {
+    position: absolute;
+}
+
+.system-star__halo {
+    left: -130px;
+    top: -130px;
+    width: 260px;
+    height: 260px;
+    border-radius: 130px;
+    background-color: rgba(255, 170, 70, 0.05);
+}
+
+.system-star__corona {
+    left: -85px;
+    top: -85px;
+    width: 170px;
+    height: 170px;
+    border-radius: 85px;
+    background-color: rgba(255, 185, 90, 0.09);
+}
+
+.system-star__glow {
+    left: -55px;
+    top: -55px;
+    width: 110px;
+    height: 110px;
+    border-radius: 55px;
+    background-color: rgba(255, 205, 120, 0.22);
+}
+
+.system-star__core {
+    left: -32px;
+    top: -32px;
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+    border-width: 3px;
+    border-color: rgb(255, 246, 220);
+    background-color: rgb(255, 214, 130);
+}
+
+/* HUD frame brackets in the scene corners. */
+.hud-corner {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-color: rgba(120, 170, 220, 0.55);
+}
+
+.hud-corner--tl {
+    left: 8px;
+    top: 8px;
+    border-left-width: 2px;
+    border-top-width: 2px;
+}
+
+.hud-corner--tr {
+    right: 8px;
+    top: 8px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+}
+
+.hud-corner--bl {
+    left: 8px;
+    bottom: 8px;
+    border-left-width: 2px;
+    border-bottom-width: 2px;
+}
+
+.hud-corner--br {
+    right: 8px;
+    bottom: 8px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+}
+
 .star-system-header {
+    position: absolute;
+    left: 24px;
+    top: 20px;
     flex-direction: row;
-    align-items: center;
-    margin-bottom: 24px;
+    align-items: flex-start;
 }
 
 .star-system-back {
-    width: 120px;
-    margin-right: 16px;
-    margin-bottom: 0;
+    height: 28px;
+    margin: 4px 18px 0 0;
+    padding: 0 12px;
+    border-width: 1px;
+    border-radius: 2px;
+    border-color: rgba(120, 170, 220, 0.6);
+    background-color: rgba(20, 32, 48, 0.85);
+    color: rgb(180, 210, 240);
+    font-size: 12px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.12s;
+}
+
+.star-system-back:hover {
+    background-color: rgba(40, 70, 105, 0.95);
+    border-color: rgb(150, 200, 245);
+    color: rgb(240, 248, 255);
+}
+
+.star-system-heading {
+    flex-direction: column;
+    padding-left: 12px;
+    border-left-width: 2px;
+    border-left-color: rgb(240, 200, 90);
+}
+
+.star-system-caption {
+    font-size: 10px;
+    color: rgb(240, 200, 90);
+    letter-spacing: 3px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
 }
 
 .star-system-title {
-    font-size: 22px;
+    font-size: 26px;
+    color: rgb(236, 242, 250);
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    padding: 0;
+    margin: 0;
+}
+
+.star-system-summary {
+    font-size: 11px;
+    color: rgb(130, 150, 176);
+    letter-spacing: 2px;
+    padding: 0;
+    margin: 2px 0 0 0;
+}
+
+/* ---- Planets ---- */
+
+.planet-icon {
+    position: absolute;
+    /* Width, height, and position come from PlanetIconView / SystemOrbitLayout. */
+}
+
+.planet-icon__reticle {
+    position: absolute;
+    border-width: 2px;
+    border-color: rgba(240, 200, 90, 0);
+    transition-property: border-color, scale;
+    transition-duration: 0.15s;
+    scale: 1.15 1.15;
+}
+
+.planet-icon:hover .planet-icon__reticle {
+    border-color: rgba(150, 200, 245, 0.45);
+    scale: 1 1;
+}
+
+.planet-icon--selected .planet-icon__reticle,
+.planet-icon--selected:hover .planet-icon__reticle {
+    border-color: rgb(240, 200, 90);
+    scale: 1 1;
+}
+
+.planet-icon__glyph,
+.planet-icon__glyph:hover,
+.planet-icon__glyph:active {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.planet-icon__body {
+    flex-grow: 1;
+    overflow: hidden;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.25);
+    transition-property: scale, border-color;
+    transition-duration: 0.12s;
+}
+
+.planet-icon__glyph:hover .planet-icon__body {
+    scale: 1.08 1.08;
+    border-color: rgba(255, 255, 255, 0.55);
+}
+
+.planet-icon--selected .planet-icon__body {
+    border-color: rgb(255, 225, 140);
+}
+
+/* Night-side disc. PlanetIconView translates it away from the star. */
+.planet-icon__shade {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(4, 6, 12, 0.62);
+}
+
+.planet-icon__unknown {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    background-color: rgba(8, 12, 20, 0.55);
+    color: rgb(170, 195, 225);
+    font-size: 16px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.planet-icon--scanned .planet-icon__unknown {
+    display: none;
+}
+
+/* Placeholder palette until planets carry an authored archetype. */
+.planet-icon--hue-0 .planet-icon__body { background-color: rgb(196, 104, 72); }
+.planet-icon--hue-1 .planet-icon__body { background-color: rgb(62, 158, 146); }
+.planet-icon--hue-2 .planet-icon__body { background-color: rgb(148, 188, 224); }
+.planet-icon--hue-3 .planet-icon__body { background-color: rgb(204, 164, 84); }
+.planet-icon--hue-4 .planet-icon__body { background-color: rgb(138, 104, 190); }
+
+.planet-icon__plate {
+    position: absolute;
+    top: 100%;
+    left: -70px;
+    right: -70px;
+    margin-top: 8px;
+    align-items: center;
+}
+
+.planet-icon__label {
+    padding: 2px 8px;
+    margin: 0;
+    background-color: rgba(10, 16, 26, 0.8);
+    border-left-width: 2px;
+    border-left-color: rgba(120, 170, 220, 0.7);
+    color: rgb(220, 230, 242);
+    font-size: 12px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+}
+
+.planet-icon--selected .planet-icon__label {
+    border-left-color: rgb(240, 200, 90);
+    color: rgb(255, 240, 205);
+}
+
+.planet-icon__tag {
+    margin: 2px 0 0 0;
+    padding: 0;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgb(120, 140, 168);
+    -unity-text-align: middle-center;
+}
+
+.planet-icon--scanned .planet-icon__tag {
+    color: rgb(120, 200, 160);
+}
+
+/* ---- Fleet dock ---- */
+
+.system-fleet-dock {
+    position: absolute;
+    left: 24px;
+    bottom: 22px;
+    min-width: 220px;
+    padding: 8px 10px 4px 10px;
+    background-color: rgba(12, 18, 28, 0.88);
+    border-width: 1px;
+    border-color: rgba(120, 170, 220, 0.35);
+    border-top-width: 2px;
+    border-top-color: rgb(120, 170, 220);
+    display: none;
+}
+
+.system-fleet-dock__caption {
+    font-size: 10px;
+    color: rgb(120, 170, 220);
+    letter-spacing: 3px;
+    -unity-font-style: bold;
+    margin: 0 0 6px 0;
+    padding: 0;
+}
+
+.system-fleet-dock .fleet-choice {
+    height: 26px;
+    margin: 0 0 4px 0;
+    padding-left: 10px;
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: rgb(120, 170, 220);
+    border-radius: 0;
+    background-color: rgba(30, 44, 64, 0.9);
+    font-size: 12px;
+}
+
+.system-fleet-dock .fleet-choice:hover {
+    background-color: rgba(48, 70, 100, 0.95);
+}
+
+.system-fleet-dock .fleet-choice--selected {
+    border-left-color: rgb(240, 200, 90);
+    background-color: rgba(70, 60, 30, 0.9);
+    color: rgb(255, 240, 205);
+}
+
+.fleet-list-caption {
+    font-size: 11px;
+    color: rgb(160, 176, 196);
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.fleet-list {
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.fleet-choice {
+    height: 28px;
+    margin-bottom: 4px;
+    padding-left: 8px;
+    background-color: rgb(28, 38, 54);
+    color: rgb(220, 228, 240);
+    border-width: 1px;
+    border-color: rgb(70, 86, 110);
+    -unity-text-align: middle-left;
+}
+
+.fleet-choice--selected {
+    border-color: rgb(240, 200, 90);
+    color: rgb(245, 236, 210);
+}
+
+.fleet-panel {
+    display: none;
+    flex-direction: column;
+    flex-shrink: 0;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top-width: 1px;
+    border-top-color: rgb(40, 52, 70);
+}
+
+.fleet-panel-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.fleet-panel-title {
+    font-size: 16px;
     color: rgb(230, 236, 245);
     -unity-font-style: bold;
 }
 
-.planet-strip {
-    flex-grow: 1;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
+.fleet-panel-close {
+    width: 64px;
+    height: 24px;
+    margin-bottom: 0;
+    background-color: rgb(48, 96, 160);
+    color: rgb(245, 248, 252);
 }
 
-.planet-icon {
-    align-items: center;
-    margin-left: 16px;
-    margin-right: 16px;
-}
-
-.planet-icon__glyph {
-    width: 72px;
-    height: 72px;
-    border-radius: 36px;
-    border-width: 3px;
-    border-color: rgb(90, 110, 140);
-    background-color: rgb(48, 62, 84);
-    margin-bottom: 8px;
-}
-
-.planet-icon__glyph--scanned {
-    background-color: rgb(70, 110, 150);
-    border-color: rgb(140, 180, 220);
-}
-
-.planet-icon__glyph--selected,
-.planet-icon--selected .planet-icon__glyph {
-    border-color: rgb(240, 200, 90);
-}
-
-.planet-icon__label {
-    color: rgb(200, 210, 225);
+.fleet-panel-status,
+.fleet-panel-speed {
     font-size: 12px;
-    -unity-text-align: middle-center;
+    color: rgb(180, 192, 210);
+    margin-bottom: 4px;
+}
+
+.fleet-panel-stacks {
+    flex-direction: column;
+}
+
+.fleet-stack {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.fleet-stack-name {
+    font-size: 13px;
+    color: rgb(230, 236, 245);
+}
+
+.fleet-stack-detail {
+    font-size: 12px;
+    color: rgb(160, 176, 196);
+}
+
+.fleet-split-count {
+    width: 48px;
+    margin-left: 6px;
+}
+
+.fleet-split,
+.fleet-merge {
+    height: 24px;
+    margin-left: 6px;
+    margin-bottom: 0;
+    background-color: rgb(48, 96, 160);
+    color: rgb(245, 248, 252);
+}
+
+.shipyard-section {
+    display: none;
+    flex-direction: column;
+    margin-top: 8px;
+}
+
+.shipyard-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.shipyard-row-name {
+    flex-grow: 1;
+    font-size: 12px;
+    color: rgb(220, 228, 240);
     white-space: normal;
-    max-width: 96px;
+}
+
+.shipyard-build,
+.shipyard-cancel {
+    width: 64px;
+    height: 24px;
+    margin-left: 6px;
+    margin-bottom: 0;
+    background-color: rgb(48, 96, 160);
+    color: rgb(245, 248, 252);
+}
+
+.shipyard-progress {
+    width: 48px;
+    height: 8px;
+    margin-left: 6px;
+    background-color: rgb(28, 38, 54);
+}
+
+.shipyard-progress-fill {
+    height: 100%;
+    background-color: rgb(90, 160, 210);
 }
 
 .inspection-panel {
@@ -276,6 +704,12 @@
 .action-button:disabled {
     background-color: rgb(36, 44, 58);
     color: rgb(120, 130, 145);
+}
+
+.travel-arrival {
+    font-size: 12px;
+    color: rgb(180, 192, 210);
+    margin-bottom: 8px;
 }
 
 .planet-detail {

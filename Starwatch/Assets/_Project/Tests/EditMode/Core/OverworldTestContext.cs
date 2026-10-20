@@ -4,6 +4,7 @@ using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Overworld.Services;
 using ProjectStarwatch.Overworld.Systems;
+using ProjectStarwatch.Fleet;
 using ProjectStarwatch.Research;
 using ProjectStarwatch.Settlement;
 
@@ -16,13 +17,13 @@ namespace ProjectStarwatch.Tests.EditMode.Core
     {
         public RunManager Manager { get; }
 
-        public ExplorationService Exploration { get; }
+        public ExplorationService ExplorationService { get; }
 
-        public SensorService Sensor { get; }
+        public SensorService SensorService { get; }
 
-        public TravelService Travel { get; }
+        public TravelService TravelService { get; }
 
-        public VisibilityService Visibility { get; }
+        public VisibilityService VisibilityService { get; }
 
         public TravelSystem TravelSystem { get; }
 
@@ -34,48 +35,56 @@ namespace ProjectStarwatch.Tests.EditMode.Core
 
         public DomainEventBus Events { get; }
 
-        public SettlementService Settlement { get; }
+        public SettlementService SettlementService { get; }
 
-        public BuildingService Buildings { get; }
+        public BuildingService BuildingService { get; }
 
-        public EconomyService Economy { get; }
+        public EconomyService EconomyService { get; }
 
-        public ResearchService Research { get; }
+        public ResearchService ResearchService { get; }
 
         public EffectRegistry Effects { get; }
 
+        public FleetService FleetService { get; }
+
+        public ShipProductionService ShipProductionService { get; }
+
         public OverworldTestContext(
             RunManager manager,
-            ExplorationService exploration,
-            SensorService sensor,
-            TravelService travel,
-            VisibilityService visibility,
+            ExplorationService explorationService,
+            SensorService sensorService,
+            TravelService travelService,
+            VisibilityService visibilityService,
             TravelSystem travelSystem,
             SimulationLoop loop,
             SimulationClock clock,
             EventJournal journal,
             DomainEventBus events,
-            SettlementService settlement,
-            BuildingService buildings,
-            EconomyService economy,
-            ResearchService research,
-            EffectRegistry effects)
+            SettlementService settlementService,
+            BuildingService buildingService,
+            EconomyService economyService,
+            ResearchService researchService,
+            EffectRegistry effects,
+            FleetService fleetService,
+            ShipProductionService shipProductionService)
         {
             Manager = manager;
-            Exploration = exploration;
-            Sensor = sensor;
-            Travel = travel;
-            Visibility = visibility;
+            ExplorationService = explorationService;
+            SensorService = sensorService;
+            TravelService = travelService;
+            VisibilityService = visibilityService;
             TravelSystem = travelSystem;
             Loop = loop;
             Clock = clock;
             Journal = journal;
             Events = events;
-            Settlement = settlement;
-            Buildings = buildings;
-            Economy = economy;
-            Research = research;
+            SettlementService = settlementService;
+            BuildingService = buildingService;
+            EconomyService = economyService;
+            ResearchService = researchService;
             Effects = effects;
+            FleetService = fleetService;
+            ShipProductionService = shipProductionService;
         }
     }
 }

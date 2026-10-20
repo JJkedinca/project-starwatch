@@ -12,10 +12,13 @@ namespace ProjectStarwatch.Overworld.UI
     {
         public event Action<ContentId> NodeSelected;
 
-        public event Action TravelRequested;
+        public event Action<EntityId> FleetSelected;
+
+        public event Action<ContentId> TravelRequested;
 
         private readonly StarMapView _map = new();
         private readonly StarSystemInspectionView _inspection = new();
+        private readonly FleetListView _fleets = new();
 
         internal StarMapView MapView => _map;
 
@@ -23,8 +26,10 @@ namespace ProjectStarwatch.Overworld.UI
         {
             _map.Bind(mapSurface);
             _map.NodeClicked += ClickNode;
+            _map.NodeRightClicked += ClickTravel;
             _inspection.Bind(inspection);
-            _inspection.TravelClicked += ClickTravel;
+            _fleets.Bind(inspection != null ? inspection.Q<VisualElement>("fleet-list") : null);
+            _fleets.FleetSelected += ClickFleet;
         }
 
         public void Apply(StarMapModel model)
@@ -33,11 +38,13 @@ namespace ProjectStarwatch.Overworld.UI
             {
                 _map.Clear();
                 _inspection.ShowEmpty();
+                _fleets.Apply(Array.Empty<FleetChoiceModel>());
                 return;
             }
 
             _map.Rebuild(model.Nodes);
             _map.SetRoutes(model.Routes);
+            _fleets.Apply(model.Fleets);
             for (var i = 0; i < model.Nodes.Count; i++)
             {
                 var row = model.Nodes[i];
@@ -50,7 +57,12 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            _inspection.ShowNode(model.Title, model.Summary, model.CanTravel);
+            _inspection.ShowNode(model.Title, model.Summary, model.HasArrival, model.ArrivalSeconds);
+        }
+
+        public void ApplyFleets(IReadOnlyList<FleetChoiceModel> fleets)
+        {
+            _fleets.Apply(fleets);
         }
 
         public void ApplyNodes(IReadOnlyList<StarMapNodeModel> nodes)
@@ -80,7 +92,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            _inspection.ShowNode(card.Title, card.Summary, card.CanTravel);
+            _inspection.ShowNode(card.Title, card.Summary, card.HasArrival, card.ArrivalSeconds);
         }
 
         internal void ClickNode(ContentId nodeId)
@@ -88,9 +100,14 @@ namespace ProjectStarwatch.Overworld.UI
             NodeSelected?.Invoke(nodeId);
         }
 
-        internal void ClickTravel()
+        internal void ClickFleet(EntityId fleetId)
         {
-            TravelRequested?.Invoke();
+            FleetSelected?.Invoke(fleetId);
+        }
+
+        internal void ClickTravel(ContentId destinationNodeId)
+        {
+            TravelRequested?.Invoke(destinationNodeId);
         }
     }
 }

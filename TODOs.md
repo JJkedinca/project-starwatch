@@ -23,6 +23,7 @@ Different weapon capabilities wait until after that polish pass. Phase 4 does no
 ## Unity — Backlog
 
 - Split UI Toolkit presentation out of `ProjectStarwatch.Core` into its own assembly once Overworld/UI surface grows enough that domain/application vs presentation boundaries matter.
+- Determine what the best way to route UI input is
 
 ## Unity — Deferred from Phase 3
 
@@ -30,7 +31,7 @@ Not part of the research slice. The slice only keeps completed research on the a
 
 The economy settles every simulation second. Stockpile and research notifications wait for a 10-second window (`EconomyTickSystem.kIntervalSeconds`). The stockpile bar and research progress jump by that window's total. The active project line still shows the last settled second as Science per second. Confirming a switch drops the current project's progress and starts the other offer. Pausing a project, and clearing it without starting another, stay deferred.
 
-- Phase 4: apply fleet and travel capability ids. Phase 3 only stores them.
+- Phase 4 applies `fleet-foundry` and `screen-doctrine` when a ship is queued. Basic travel is a travel-speed multiplier, not a capability id.
 - Different weapon capabilities. Not part of the fleet and travel slice. Revisit after the polish pass that follows Phase 4.
 - Phase 5: invasion-counter technologies. Invasion itself waits until after the post-Phase-4 polish pass.
 - Phase 6: play a rewind and restore completed research. Do not build the rewind flow in the research slice.
@@ -40,4 +41,14 @@ The economy settles every simulation second. Stockpile and research notification
 - Mutually exclusive specializations.
 - Scanning a planet can add one research to the run's available projects (`ResearchKnowledge`). The chance and which project come from the scan, not from a planet id on `ResearchDefinitionSO`. A discovery reveals the project and does not complete it. Until that exists, a new run starts with every catalog research available.
 - Faction technology, relics with immediate effects, and Ascension reactivation of completed research.
+
+## Unity — Deferred from Phase 4
+
+Not part of the fleet and travel slice.
+
+- Battle: engagements, battle simulation, weapons, shields, armor, hull, retreat, debris, defense stations, and combat intel.
+- Ship upkeep through the economy. Revisit in the polish pass.
+- Multi-hop movement orders along known routes.
+- Per-ship damage and repair state.
+- Opposing faction fleets.
 

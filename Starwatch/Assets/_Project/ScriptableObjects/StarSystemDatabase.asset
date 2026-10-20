@@ -14,23 +14,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Data.StarSystemDatabaseSO
   _starSystems:
   - _id: home-system
+    _displayName: Home
     <Kind>k__BackingField: 0
     <MapPosition>k__BackingField: {x: 0, y: 0}
   - _id: forge-system
+    _displayName: Forge
     <Kind>k__BackingField: 0
     <MapPosition>k__BackingField: {x: 2, y: 1}
   - _id: choke-system
+    _displayName: Choke
     <Kind>k__BackingField: 0
     <MapPosition>k__BackingField: {x: 4, y: 0}
   - _id: frontier-system
+    _displayName: Frontier
     <Kind>k__BackingField: 0
     <MapPosition>k__BackingField: {x: 6, y: 0}
   - _id: relic-system
+    _displayName: Relic
     <Kind>k__BackingField: 0
     <MapPosition>k__BackingField: {x: 4, y: 2}
   - _id: asteroid-belt
+    _displayName: Asteroid Belt
     <Kind>k__BackingField: 1
     <MapPosition>k__BackingField: {x: 2, y: -1}
   - _id: anomaly-rift
+    _displayName: Anomaly Rift
     <Kind>k__BackingField: 1
     <MapPosition>k__BackingField: {x: 5, y: 1}

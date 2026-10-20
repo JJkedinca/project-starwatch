@@ -16,3 +16,4 @@ MonoBehaviour:
   _planetDatabase: {fileID: 11400000, guid: b8d4f2c05e304b7f9c1d2e3f40516273, type: 2}
   <SettlementCatalog>k__BackingField: {fileID: 11400000, guid: b82d5f8c3e4a4f7b9c1d2e3f4051c3d4, type: 2}
   <ResearchCatalog>k__BackingField: {fileID: 11400000, guid: 11aa0001bbcc4dde8ff0011223344508, type: 2}
+  <ShipCatalog>k__BackingField: {fileID: 11400000, guid: f2b8d6a49c7e4f1d3041628e0f254637, type: 2}

@@ -20,8 +20,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(44));
             var query = CreateQuery(stack);
             var belt = ContentId.From("asteroid-belt");
-            run.Timeline.TrySetFleetLocation(run.Timeline.Fleets[0].Id, belt);
-            stack.Exploration.Explore(run, ObserverId.Player, belt);
+            run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, belt);
+            stack.ExplorationService.Explore(run, ObserverId.Player, belt);
             var selection = new OverworldSelection();
             selection.EnterSystem(belt);
 
@@ -39,7 +39,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(45));
             var database = RunTestFixture.CreateObjectDatabase();
-            var query = new StarSystemQuery(stack.Visibility, database);
+            var query = new StarSystemQuery(
+                stack.VisibilityService,
+                database,
+                new FleetListQuery(database, stack.Effects));
             var home = RequireNode(run, ContentId.From("home-system"));
             var prime = ContentId.From("home-prime");
             Assert.That(database.TryGetPlanet(prime.Value, out var planet), Is.True);
@@ -60,7 +63,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(ready.PlanetDetail.Detail, Is.Not.EqualTo(planet.Summary));
             Assert.That(ready.Title, Is.EqualTo(home.Id.Value));
 
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, prime);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, prime);
             var scanned = query.Describe(run, selection);
 
             Assert.That(scanned.PlanetDetail.Detail, Is.EqualTo(planet.Summary));
@@ -72,7 +75,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
         private static StarSystemQuery CreateQuery(OverworldTestContext stack)
         {
-            return new StarSystemQuery(stack.Visibility, RunTestFixture.CreateObjectDatabase());
+            var database = RunTestFixture.CreateObjectDatabase();
+            return new StarSystemQuery(
+                stack.VisibilityService,
+                database,
+                new FleetListQuery(database, stack.Effects));
         }
 
         private static MapNode RequireNode(RunState run, ContentId nodeId)

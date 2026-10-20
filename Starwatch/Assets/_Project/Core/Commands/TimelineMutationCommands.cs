@@ -12,10 +12,10 @@ namespace ProjectStarwatch.Core.Commands
     public static class TimelineMutationCommands
     {
         /// <summary>
-        /// Adds a placeholder fleet to timeline-owned state only.
+        /// Adds a fleet of one class to timeline-owned state only.
         /// Location comes from the caller (typically universe home), not a timeline copy.
         /// </summary>
-        public static CommandResult<EntityId> AddPlaceholderFleet(
+        public static CommandResult<EntityId> AddFleet(
             TimelineState timeline,
             ContentId classId,
             int shipCount,
@@ -43,7 +43,7 @@ namespace ProjectStarwatch.Core.Commands
                 return CommandResult<EntityId>.Fail(CommandErrorCode.NotAllowed, "Ship count must be positive.");
             }
 
-            if (!timeline.TryAddFleet(classId, shipCount, locationSystemId, out var id))
+            if (!timeline.Fleets.TryAddFleet(classId, shipCount, locationSystemId, out var id))
             {
                 return CommandResult<EntityId>.Fail(CommandErrorCode.NotAllowed, "Fleet could not be added.");
             }

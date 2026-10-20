@@ -827,97 +827,69 @@ Implement:
 At least one discovery should make a different economy or future fleet plan
 more attractive than the default plan.
 
-## Phase 4: Fleets, Shipyards, and Battle
+## Phase 4: Fleets and Travel
 
-Horizontal slice: build ships, compose fleets, and resolve deterministic
-battles. Invasion directors and rewind still wait.
+Horizontal slice: build ships at a shipyard, compose fleets by explicit merge and split, and travel at a speed set by the slowest class and by research. Battle waits until after the polish pass that follows this slice.
 
 ### In scope
 
-- Shipyards, production queues, ship construction
-- Fleet composition, merge, movement
-- Engagements, battle simulation, retreat, debris, station defenses
-- Additive battle presentation
-- Combat intel into the archive
+- Three ship classes: screen, line, and carrier
+- Shipyard building and a per-colony build queue
+- Explicit merge and split
+- Travel time from the slowest class and a research travel-speed multiplier
 
 ### Deferred
 
-- Different weapon capabilities, battle simulation, retreat, and debris. Phase 4 is fleets and travel first. Weapon variety waits until after a polish pass on the map, settlement, research, fleet, and travel loop.
-- Invasion schedule, sabotage, outcome evaluator → Phase 5 / 6, after that polish pass
-- Full faction sortie AI beyond a simple authored opposing fleet → later
-- Rewind of damaged fleets / debris → Phase 6 (keep fleet state timeline-owned)
+- Battle: engagements, battle simulation, weapons, shields, armor, hull, retreat, debris, defense stations, and combat intel
+- Ship upkeep, multi-hop orders, and per-ship damage
+- Opposing faction fleets
+- Invasion schedule → Phase 5, after the polish pass
 
 ### Content assets
 
 Create:
 
-- `ShipClassDefinition`
-- `WeaponDefinition`
-- `DefenseDefinition`
-- `FleetRoleDefinition`
-- `CombatEffectDefinition`
-- `DebrisDefinition`
-- `ShipyardDefinition`
-- `ProductionRecipeDefinition`
+- `ShipClassDefinitionSO`
+- `ShipCatalogSO`
 
-Three roles: screen/fast brawler, heavy line/artillery, carrier/strike craft.
-Small weapon/defense set with shields, armor, hull, ranges, retreat, one soft
-counter.
+Shipyard is a `BuildingDefinitionSO` in the settlement catalog. It has no output. Placing it is not gated by research. Building ships is.
 
-### Initial battle presentation assets
-
-Authored world-space token prefabs for the three roles, defense stations, and
-debris (2D or simple 2.5D). Same definitions later accept 3D prefabs.
+Screen (`starter-screen`) and line require `fleet-foundry`. Carrier requires `screen-doctrine`. Basic travel is a travel-speed multiplier, not a capability id.
 
 ### Runtime systems
 
 Implement:
 
-- `ShipyardService`, `ProductionQueueService`, `ShipConstructionService`,
-  `ProductionSystem`
-- `FleetService`, `FleetCompositionService`, `FleetMergeService`,
-  `FleetMovementService`
-- `BattleService`, `EngagementService`, `BattleSimulation`
-- `TargetSelectionService`, `RangeBandService`, `DamageResolutionService`
-- `RetreatService`, `RepairService`, `DebrisService`, `DefenseStationService`
+- `FleetService`
+- `ShipProductionService`
+- `ShipProductionSystem`
+
+`FleetState` replaces the fleet placeholder and holds ship stacks. Build orders live on `ColonyState`. Both are timeline-owned.
 
 Responsibilities:
 
-- Enqueue and complete ship construction into fleets or reserves.
-- Require explicit merge; move fleets on the route graph.
-- Create battles when opposing fleets meet or a defense is attacked.
-- Track `ActiveEngagementState` with separate fleet IDs; reinforcements join
-  without merging.
-- Resolve combat on the shared `SimulationClock`.
-- Record combat observations in the archive immediately.
-- A lost battle reports attrition only; it does not end the timeline.
-
-Battle loads additively; overworld stays loaded. `BattleLifetimeScope` registers
-and unregisters its tickable with the scene.
+- Queue spends the class cost. Cancel refunds it. One order builds at a time.
+- A finished ship joins an idle fleet at that system, or creates a fleet when none is idle.
+- Merge and split are explicit. Merge keeps the target fleet.
+- Travel time is the route time divided by the slowest class speed and by the research travel multiplier.
 
 ### Presentation
 
-Implement:
-
-- `ShipyardProductionView`
-- `FleetMapView`, `FleetCompositionView`
-- `BattleView`, `BattleEventView`, `BattleResultView`, `DebrisView`
+- Shipyard section on the settlement panel
+- Fleet panel for the selected system, with merge and split
+- Map fleet selection, with the arrival time on the travel line
 
 ### Tests
 
-- Shipyard queues spend resources and emit ships without test-only spawning.
-- Fleet merge is explicit; targeting and range bands behave as configured.
-- Shields/armor/hull/penetration and destruction resolve correctly.
-- Retreat, debris, damaged-ship persistence, and station participation work.
-- Combat is deterministic for the same inputs and seed.
-- Reinforcements join without merging; battle unload keeps engagement state.
-- Tick registration does not double across repeated battles.
-- Combat intel is written to the archive.
+- A queued ship spends its cost and appears only after build time
+- Locked classes, a missing shipyard, an outpost, a full queue, and a short stockpile are rejected
+- Merge and split keep the ship count and reject an illegal split
+- A slow class lengthens the route. Basic travel shortens it
+- A new timeline clears fleets and queues and restores the starter fleet
 
 ### Deliverable
 
-Two differently composed fleets produce visibly different outcomes against the
-same opposing fleet without mid-battle unit commands.
+The player researches basic fleet, builds a shipyard, and queues a line ship. Merging it into the starter screens makes that fleet slower. Basic travel makes the same route faster again.
 
 ## Phase 5: Invasion and Crisis
 

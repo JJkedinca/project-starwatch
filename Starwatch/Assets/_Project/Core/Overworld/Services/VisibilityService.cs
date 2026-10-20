@@ -26,7 +26,7 @@ namespace ProjectStarwatch.Overworld.Services
                 return MapNodeVisibility.Hidden;
             }
 
-            if (timeline != null && timeline.HasFleetAt(nodeId))
+            if (timeline != null && timeline.Fleets.HasFleetAt(nodeId))
             {
                 return MapNodeVisibility.Present;
             }

@@ -14,6 +14,10 @@ namespace ProjectStarwatch.Core.Data
         [SerializeField]
         private string _id;
 
+        [Tooltip("Name shown in fleet lists. Empty falls back to the id.")]
+        [SerializeField]
+        private string _displayName;
+
         [field: SerializeField]
         public MapNodeKind Kind { get; private set; }
 
@@ -22,13 +26,16 @@ namespace ProjectStarwatch.Core.Data
 
         public ContentId Id => ContentId.From(_id);
 
+        public string DisplayName => _displayName ?? string.Empty;
+
         public StarSystemDefinition()
         {
         }
 
-        public StarSystemDefinition(ContentId id, MapNodeKind kind, Vector2 mapPosition)
+        public StarSystemDefinition(ContentId id, MapNodeKind kind, Vector2 mapPosition, string displayName = null)
         {
             _id = id.IsEmpty ? string.Empty : id.Value;
+            _displayName = displayName ?? string.Empty;
             Kind = kind;
             MapPosition = mapPosition;
         }
