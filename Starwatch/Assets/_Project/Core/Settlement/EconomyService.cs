@@ -17,8 +17,6 @@ namespace ProjectStarwatch.Settlement
         private readonly ProductionService _productionService;
         private readonly DomainEventBus _events;
         private readonly SimulationClock _clock;
-        private readonly ResourceInventory _output = new();
-        private readonly ResourceInventory _upkeep = new();
         private readonly ResourceInventory _outputRemainder = new();
 
         /// <summary>
@@ -69,38 +67,30 @@ namespace ProjectStarwatch.Settlement
                 return false;
             }
 
-            _output.Clear();
-            _upkeep.Clear();
-            var colonies = run.Timeline.Colonies;
-            for (var i = 0; i < colonies.Count; i++)
-            {
-                var colony = colonies[i];
-                _objectDatabase.TryGetPlanet(colony.PlanetId.Value, out var planet);
-                var quote = _productionService.Quote(colony, planet);
-                _output.Add(quote.Output);
-                _upkeep.Add(quote.Upkeep);
-            }
-
-            var science = _output.Get(ResourceKind.Science);
-            _output.Remove(ResourceKind.Science);
-            if (!_output.HasAny() && !_upkeep.HasAny() && science <= 0f)
+            var quote = EmpireProductionQuote.Build(run, _objectDatabase, _productionService);
+            var output = new ResourceInventory();
+            output.Add(quote.Output);
+            var upkeep = quote.Upkeep;
+            var science = output.Get(ResourceKind.Science);
+            output.Remove(ResourceKind.Science);
+            if (!output.HasAny() && !upkeep.HasAny() && science <= 0f)
             {
                 return false;
             }
 
             var ledger = run.Timeline.Resources;
-            if (!ledger.TrySpend(_upkeep))
+            if (!ledger.TrySpend(upkeep))
             {
                 return false;
             }
 
             ProducedScience = science;
-            if (!_output.HasAny() && !_upkeep.HasAny())
+            if (!output.HasAny() && !upkeep.HasAny())
             {
                 return false;
             }
 
-            _outputRemainder.Add(_output);
+            _outputRemainder.Add(output);
             _outputRemainder.DepositFlooredInto(ledger);
             _outputRemainder.RetainFraction();
             return true;

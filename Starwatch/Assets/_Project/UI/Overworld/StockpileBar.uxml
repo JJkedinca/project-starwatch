@@ -1,18 +1,27 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="Overworld.uss" />
+    <ui:Template name="ResourceReadout" src="ResourceReadout.uxml" />
     <ui:VisualElement name="stockpile-bar" class="stockpile-bar">
-        <ui:VisualElement class="stockpile-item">
-            <ui:Label text="Industry" class="stockpile-caption" />
-            <ui:Label name="stockpile-industry" text="0" class="stockpile-amount" />
+        <ui:VisualElement name="stockpile-readouts" class="stockpile-readouts">
+            <ui:VisualElement name="stockpile-industry-host">
+                <ui:Instance template="ResourceReadout" />
+            </ui:VisualElement>
+            <ui:VisualElement name="stockpile-energy-host">
+                <ui:Instance template="ResourceReadout" />
+            </ui:VisualElement>
+            <ui:VisualElement name="stockpile-strategic-host">
+                <ui:Instance template="ResourceReadout" />
+            </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement class="stockpile-item">
-            <ui:Label text="Energy" class="stockpile-caption" />
-            <ui:Label name="stockpile-energy" text="0" class="stockpile-amount" />
+        <ui:VisualElement class="stockpile-research">
+            <ui:VisualElement class="stockpile-science">
+                <ui:Label name="stockpile-science-rate" text="" class="stockpile-science-rate" />
+                <ui:VisualElement name="stockpile-research-progress" class="stockpile-research-progress">
+                    <ui:VisualElement name="stockpile-research-progress-fill" class="stockpile-research-progress-fill" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Button name="stockpile-research" text="No Active Research" />
         </ui:VisualElement>
-        <ui:VisualElement class="stockpile-item">
-            <ui:Label text="Strategic" class="stockpile-caption" />
-            <ui:Label name="stockpile-strategic" text="0" class="stockpile-amount" />
-        </ui:VisualElement>
-        <ui:Button name="stockpile-research" text="No Active Research" class="stockpile-research" />
+        <ui:VisualElement name="stockpile-tooltip" class="stockpile-tooltip" picking-mode="Ignore" />
     </ui:VisualElement>
 </ui:UXML>

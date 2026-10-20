@@ -13,15 +13,20 @@
     <ui:Template name="ResearchPanel" src="ResearchPanel.uxml" />
     <ui:Template name="FleetPanel" src="FleetPanel.uxml" />
     <ui:VisualElement name="root" class="root">
-        <ui:VisualElement name="header" class="header">
+        <ui:VisualElement name="top-bar" class="top-bar hud-panel">
             <ui:Label name="title" text="Star Map" class="title" />
+            <ui:Instance template="StockpileBar" />
             <ui:Label name="status-label" text="" class="status-label" />
         </ui:VisualElement>
         <ui:Instance template="ResearchPanel" />
         <ui:VisualElement name="content" class="content">
-            <ui:VisualElement name="map-panel" class="map-panel">
-                <ui:VisualElement name="map-surface" class="map-surface" />
-                <ui:Instance template="StarSystemView" class="star-system-host" picking-mode="Ignore" />
+            <ui:VisualElement name="fleet-roster-host" class="fleet-roster-host" />
+            <ui:VisualElement name="center-column" class="center-column">
+                <ui:VisualElement name="map-panel" class="map-panel">
+                    <ui:VisualElement name="map-surface" class="map-surface" />
+                    <ui:Instance template="StarSystemView" class="star-system-host" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="fleet-bar-host" class="fleet-bar-host" />
             </ui:VisualElement>
             <ui:VisualElement name="inspection-panel" class="inspection-panel">
                 <ui:Instance template="StarSystemInspection" />
@@ -46,6 +51,5 @@
                 </ui:ScrollView>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:Instance template="StockpileBar" />
     </ui:VisualElement>
 </ui:UXML>

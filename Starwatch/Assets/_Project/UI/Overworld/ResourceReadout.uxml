@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="stockpile-item" class="stockpile-item">
+        <ui:Label name="stockpile-caption" text="" class="stockpile-caption" />
+        <ui:VisualElement class="stockpile-amount-row">
+            <ui:Label name="stockpile-amount" text="0" class="stockpile-amount" />
+            <ui:Label name="stockpile-rate" text="±0" class="stockpile-rate hud-rate--zero" />
+        </ui:VisualElement>
+        <ui:Label name="stockpile-chip" text="" class="stockpile-chip" />
+    </ui:VisualElement>
+</ui:UXML>

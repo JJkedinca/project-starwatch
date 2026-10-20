@@ -1,16 +1,19 @@
+@import url("../Shared/Theme.uss");
+
 .root {
     flex-grow: 1;
     justify-content: center;
     align-items: center;
-    background-color: rgb(12, 16, 24);
+    background-color: var(--bg-deep);
     padding: 24px;
 }
 
 .title {
     font-size: 48px;
-    color: rgb(230, 236, 245);
+    color: var(--text-primary);
     margin-bottom: 32px;
     -unity-font-style: bold;
+    letter-spacing: 6px;
 }
 
 .field {

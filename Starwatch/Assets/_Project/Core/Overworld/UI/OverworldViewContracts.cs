@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using ProjectStarwatch.Core.Identifiers;
-using ProjectStarwatch.Core.Run.Timeline;
 
 namespace ProjectStarwatch.Overworld.UI
 {
@@ -98,7 +97,7 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     internal interface IStockpileView
     {
-        void Apply(ResourceInventory stockpile);
+        void Apply(StockpileModel model);
     }
 
     /// <summary>

@@ -20,7 +20,7 @@ MonoBehaviour:
     <Amount>k__BackingField: 2
   _upkeep:
   - <Kind>k__BackingField: 1
-    <Amount>k__BackingField: 0
+    <Amount>k__BackingField: 1
   _maxLevel: 2
   <BuildCost>k__BackingField:
     <Amounts>k__BackingField:

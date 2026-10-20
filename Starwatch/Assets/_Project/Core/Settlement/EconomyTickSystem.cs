@@ -76,14 +76,16 @@ namespace ProjectStarwatch.Settlement
 
         private void CloseWindow()
         {
-            if (_windowChanged)
+            // Science first so ResourceChanged listeners see updated research progress.
+            var science = _windowScience;
+            _windowScience = 0f;
+            var changed = _windowChanged;
+            _windowChanged = false;
+            _afterSettlement?.Invoke(science);
+            if (changed)
             {
                 _economyService.PublishChanged();
             }
-
-            _afterSettlement?.Invoke(_windowScience);
-            _windowScience = 0f;
-            _windowChanged = false;
         }
 
         private void ResetStep()
