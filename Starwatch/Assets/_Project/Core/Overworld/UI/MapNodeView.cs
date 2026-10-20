@@ -68,10 +68,11 @@ namespace ProjectStarwatch.Overworld.UI
             Root.Add(_fleetOrbit);
 
             Root.clicked += () => Clicked?.Invoke(_nodeId);
-            Root.RegisterCallback<ClickEvent>(OnClick);
+            // A Button only raises ClickEvent for the left mouse button.
+            Root.RegisterCallback<PointerUpEvent>(OnPointerUp);
         }
 
-        private void OnClick(ClickEvent evt)
+        private void OnPointerUp(PointerUpEvent evt)
         {
             if (evt.button != (int)MouseButton.RightMouse)
             {

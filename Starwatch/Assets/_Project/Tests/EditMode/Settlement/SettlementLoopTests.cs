@@ -28,11 +28,11 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var run = UnsettledRun(stack, 51);
             var home = ContentId.From("home-prime");
             var moon = ContentId.From("home-moon");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, moon);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, home);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, moon);
 
-            var first = stack.Settlement.FoundColony(run, ObserverId.Player, home);
-            var blocked = stack.Settlement.FoundColony(run, ObserverId.Player, moon);
+            var first = stack.SettlementService.FoundColony(run, ObserverId.Player, home);
+            var blocked = stack.SettlementService.FoundColony(run, ObserverId.Player, moon);
 
             Assert.That(first.Success, Is.True);
             Assert.That(run.Timeline.ColonyCount(), Is.EqualTo(1));
@@ -50,10 +50,10 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var run = UnsettledRun(stack, 52);
             var moon = ContentId.From("home-moon");
             var home = ContentId.From("home-prime");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, home);
 
-            var outpost = stack.Settlement.FoundOutpost(run, ObserverId.Player, moon);
-            var colony = stack.Settlement.FoundColony(run, ObserverId.Player, home);
+            var outpost = stack.SettlementService.FoundOutpost(run, ObserverId.Player, moon);
+            var colony = stack.SettlementService.FoundColony(run, ObserverId.Player, home);
 
             Assert.That(outpost.Success, Is.True);
             Assert.That(run.Timeline.ColonyCount(), Is.EqualTo(0));
@@ -72,11 +72,11 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var home = ContentId.From("home-prime");
             var forge = ContentId.From("forge-world");
 
-            var unscanned = stack.Settlement.FoundColony(run, ObserverId.Player, home);
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
-            var outpost = stack.Settlement.FoundOutpost(run, ObserverId.Player, home);
-            var colony = stack.Settlement.FoundColony(run, ObserverId.Player, home);
-            var hiddenForge = stack.Settlement.FoundOutpost(run, ObserverId.Player, forge);
+            var unscanned = stack.SettlementService.FoundColony(run, ObserverId.Player, home);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, home);
+            var outpost = stack.SettlementService.FoundOutpost(run, ObserverId.Player, home);
+            var colony = stack.SettlementService.FoundColony(run, ObserverId.Player, home);
+            var hiddenForge = stack.SettlementService.FoundOutpost(run, ObserverId.Player, forge);
 
             Assert.That(unscanned.Error.Code, Is.EqualTo(CommandErrorCode.PrerequisiteNotMet));
             Assert.That(outpost.Success, Is.True);
@@ -92,16 +92,16 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(54));
             var forge = ContentId.From("forge-world");
-            PrepareForge(stack.Exploration, stack.Sensor, run, forge);
-            stack.Settlement.FoundColony(run, ObserverId.Player, forge);
+            PrepareForge(stack.ExplorationService, stack.SensorService, run, forge);
+            stack.SettlementService.FoundColony(run, ObserverId.Player, forge);
 
             var industry = ContentId.From("industry-works");
             var lab = ContentId.From("laboratory");
             var power = ContentId.From("power-plant");
-            var first = stack.Buildings.Place(run, forge, industry);
-            var offSpec = stack.Buildings.Place(run, forge, lab);
-            var powerPlant = stack.Buildings.Place(run, forge, power);
-            var extractor = stack.Buildings.Place(run, forge, ContentId.From("extractor"));
+            var first = stack.BuildingService.Place(run, forge, industry);
+            var offSpec = stack.BuildingService.Place(run, forge, lab);
+            var powerPlant = stack.BuildingService.Place(run, forge, power);
+            var extractor = stack.BuildingService.Place(run, forge, ContentId.From("extractor"));
 
             Assert.That(first.Success, Is.True);
             Assert.That(offSpec.Success, Is.True);
@@ -117,13 +117,13 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var stack = RunTestFixture.CreateOverworldStack();
             var run = UnsettledRun(stack, 55);
             var home = ContentId.From("home-prime");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
-            stack.Settlement.FoundColony(run, ObserverId.Player, home);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, home);
+            stack.SettlementService.FoundColony(run, ObserverId.Player, home);
             var industry = ContentId.From("industry-works");
 
-            Assert.That(stack.Buildings.Place(run, home, industry).Success, Is.True);
-            Assert.That(stack.Buildings.Upgrade(run, home, industry).Success, Is.True);
-            var capped = stack.Buildings.Upgrade(run, home, industry);
+            Assert.That(stack.BuildingService.Place(run, home, industry).Success, Is.True);
+            Assert.That(stack.BuildingService.Upgrade(run, home, industry).Success, Is.True);
+            var capped = stack.BuildingService.Upgrade(run, home, industry);
 
             Assert.That(capped.Success, Is.False);
             Assert.That(run.Timeline.TryGetColony(home, out var colony), Is.True);
@@ -137,10 +137,10 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var run = UnsettledRun(stack, 56);
             var home = ContentId.From("home-prime");
             var forge = ContentId.From("forge-world");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
-            stack.Settlement.FoundColony(run, ObserverId.Player, home);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, home);
+            stack.SettlementService.FoundColony(run, ObserverId.Player, home);
             var industry = ContentId.From("industry-works");
-            stack.Buildings.Place(run, home, industry);
+            stack.BuildingService.Place(run, home, industry);
             var industryBefore = run.Timeline.Resources.Get(ResourceKind.Industry);
             var energyBefore = run.Timeline.Resources.Get(ResourceKind.Energy);
             var ticksPerInterval = TicksPerEconomyStep();
@@ -159,15 +159,15 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(energyBefore));
             Assert.That(ResourceChangeCount(stack.Journal), Is.EqualTo(notices + 1));
 
-            PrepareForge(stack.Exploration, stack.Sensor, run, forge);
+            PrepareForge(stack.ExplorationService, stack.SensorService, run, forge);
             run.Timeline.Resources.Grant(new[]
             {
                 new ResourceAmount(ResourceKind.Industry, 120),
                 new ResourceAmount(ResourceKind.Energy, 10),
             });
-            Assert.That(stack.Settlement.FoundColony(run, ObserverId.Player, forge).Success, Is.True);
-            Assert.That(stack.Buildings.Place(run, forge, industry).Success, Is.True);
-            Assert.That(stack.Buildings.Place(run, forge, ContentId.From("extractor")).Success, Is.True);
+            Assert.That(stack.SettlementService.FoundColony(run, ObserverId.Player, forge).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, forge, industry).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, forge, ContentId.From("extractor")).Success, Is.True);
             var beforeForgeTick = run.Timeline.Resources.Get(ResourceKind.Industry);
             var strategicBefore = run.Timeline.Resources.Get(ResourceKind.Strategic);
             AdvanceTicks(stack.Loop, stack.Clock, ticksPerInterval);
@@ -182,15 +182,15 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var stack = RunTestFixture.CreateOverworldStack();
             var run = UnsettledRun(stack, 66);
             var home = ContentId.From("home-prime");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
-            stack.Settlement.FoundColony(run, ObserverId.Player, home);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, home);
+            stack.SettlementService.FoundColony(run, ObserverId.Player, home);
             var ticksPerSecond = (int)Math.Round(1f / SimulationLoop.kTickIntervalSeconds);
             var seconds = EconomyTickSystem.kIntervalSeconds;
             AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond * (seconds - 1));
             var industryBefore = run.Timeline.Resources.Get(ResourceKind.Industry);
             var notices = ResourceChangeCount(stack.Journal);
 
-            Assert.That(stack.Buildings.Place(run, home, ContentId.From("industry-works")).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, home, ContentId.From("industry-works")).Success, Is.True);
             AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond);
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industryBefore + 2));
@@ -202,11 +202,11 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         {
             var home = ContentId.From("home-system");
             var planet = ContentId.From("home-prime");
-            var (settlement, run) = CreateRunOnGraph(
+            var (settlementService, run) = CreateRunOnGraph(
                 new MapNode(home, MapNodeKind.System, Vector2.zero, Array.Empty<ContentId>()),
                 home);
 
-            var result = settlement.FoundOutpost(run, ObserverId.Player, planet);
+            var result = settlementService.FoundOutpost(run, ObserverId.Player, planet);
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.Error.Code, Is.EqualTo(CommandErrorCode.InvalidArgument));
@@ -219,12 +219,12 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         {
             var planet = ContentId.From("home-prime");
             var listedOn = ContentId.From("other-system");
-            var (settlement, run) = CreateRunOnGraph(
+            var (settlementService, run) = CreateRunOnGraph(
                 new MapNode(listedOn, MapNodeKind.System, Vector2.zero, new[] { planet }),
                 listedOn,
                 ContentId.From("home-system"));
 
-            var result = settlement.FoundOutpost(run, ObserverId.Player, planet);
+            var result = settlementService.FoundOutpost(run, ObserverId.Player, planet);
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.Error.Code, Is.EqualTo(CommandErrorCode.InvalidArgument));
@@ -238,13 +238,13 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var stack = RunTestFixture.CreateOverworldStack();
             var run = UnsettledRun(stack, 58);
             var home = ContentId.From("home-prime");
-            var missing = stack.Settlement.Abandon(run, home);
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
-            var founded = stack.Settlement.FoundColony(run, ObserverId.Player, home);
+            var missing = stack.SettlementService.Abandon(run, home);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, home);
+            var founded = stack.SettlementService.FoundColony(run, ObserverId.Player, home);
 
-            var abandoned = stack.Settlement.Abandon(run, home);
+            var abandoned = stack.SettlementService.Abandon(run, home);
             var abandonedRecord = stack.Journal.Records[stack.Journal.Records.Count - 1];
-            var again = stack.Settlement.FoundColony(run, ObserverId.Player, home);
+            var again = stack.SettlementService.FoundColony(run, ObserverId.Player, home);
 
             Assert.That(missing.Success, Is.False);
             Assert.That(missing.Error.Code, Is.EqualTo(CommandErrorCode.NotAllowed));
@@ -266,7 +266,7 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(57));
             var home = ContentId.From("home-prime");
             var moon = ContentId.From("home-moon");
-            Assert.That(stack.Settlement.FoundOutpost(run, ObserverId.Player, moon).Success, Is.True);
+            Assert.That(stack.SettlementService.FoundOutpost(run, ObserverId.Player, moon).Success, Is.True);
 
             var fresh = new TimelineFactory().Create(run.Universe, run.Archive, new EntityIdFactory());
 
@@ -284,9 +284,9 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var run = UnsettledRun(stack, 59);
             var home = ContentId.From("home-prime");
             var industry = ContentId.From("industry-works");
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, home);
-            Assert.That(stack.Settlement.FoundColony(run, ObserverId.Player, home).Success, Is.True);
-            Assert.That(stack.Buildings.Place(run, home, industry).Success, Is.True);
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, home);
+            Assert.That(stack.SettlementService.FoundColony(run, ObserverId.Player, home).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, home, industry).Success, Is.True);
             AdvanceTicks(stack.Loop, stack.Clock, TicksPerEconomyStep() - 1);
 
             var timeline = stack.Manager.RecreateTimeline(1);
@@ -344,11 +344,11 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
                 RunTestFixture.UnsettledVerticalSlice());
         }
 
-        private static (SettlementService Settlement, RunState Run) CreateRunOnGraph(
+        private static (SettlementService SettlementService, RunState Run) CreateRunOnGraph(
             MapNode node,
             params ContentId[] exploredNodeIds)
         {
-            var settlement = new SettlementService(
+            var settlementService = new SettlementService(
                 RunTestFixture.CreateObjectDatabase(),
                 new DomainEventBus(new EventJournal()),
                 new SimulationClock());
@@ -374,7 +374,7 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
                 rewindIndex: 0,
                 new DeterministicRandom(58),
                 entityIds);
-            return (settlement, run);
+            return (settlementService, run);
         }
 
         private static int ResourceChangeCount(EventJournal journal)
@@ -406,12 +406,12 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             }
         }
 
-        private static void PrepareForge(ExplorationService exploration, SensorService sensor, RunState run, ContentId forgePlanet)
+        private static void PrepareForge(ExplorationService explorationService, SensorService sensorService, RunState run, ContentId forgePlanet)
         {
             var fleetId = run.Timeline.Fleets[0].Id;
-            run.Timeline.TrySetFleetLocation(fleetId, ContentId.From("forge-system"));
-            exploration.Explore(run, ObserverId.Player, ContentId.From("forge-system"));
-            sensor.ScanPlanet(run, ObserverId.Player, forgePlanet);
+            run.Timeline.Fleets.TrySetFleetLocation(fleetId, ContentId.From("forge-system"));
+            explorationService.Explore(run, ObserverId.Player, ContentId.From("forge-system"));
+            sensorService.ScanPlanet(run, ObserverId.Player, forgePlanet);
         }
     }
 }

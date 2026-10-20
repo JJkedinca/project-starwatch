@@ -13,9 +13,9 @@ namespace ProjectStarwatch.Settlement
     internal sealed class ProductionService
     {
         private readonly SettlementCatalogSO _catalog;
-        private readonly IEffectQuery _effects;
+        private readonly IEffectQuery _effectQuery;
 
-        public ProductionService(ObjectDatabaseSO objectDatabase, IEffectQuery effects = null)
+        public ProductionService(ObjectDatabaseSO objectDatabase, IEffectQuery effectQuery = null)
         {
             if (objectDatabase == null)
             {
@@ -24,7 +24,7 @@ namespace ProjectStarwatch.Settlement
 
             _catalog = objectDatabase.SettlementCatalog
                 ?? throw new ArgumentNullException(nameof(objectDatabase.SettlementCatalog));
-            _effects = effects;
+            _effectQuery = effectQuery;
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace ProjectStarwatch.Settlement
                 multiplier += SettlementCosts.DepositMultiplierBonus;
             }
 
-            var research = _effects != null ? _effects.OutputMultiplier(kind) : 1f;
+            var research = _effectQuery != null ? _effectQuery.OutputMultiplier(kind) : 1f;
             if (research <= 0f)
             {
                 research = 1f;

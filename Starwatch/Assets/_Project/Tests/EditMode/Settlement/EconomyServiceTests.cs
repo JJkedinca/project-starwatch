@@ -21,19 +21,19 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         [Test]
         public void ApplyTick_CarriesAFractionalRateUntilItBecomesWhole()
         {
-            var economy = CreateEconomy();
+            var economyService = CreateEconomy();
             var run = CreateRun();
             var colony = new ColonyState(ContentId.From("fraction-world"), ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(ContentId.From("industry-works"), 1));
             Assert.That(run.Timeline.TryAddColony(colony), Is.True);
             run.Timeline.Resources.Grant(new StartingResources(energy: 2));
 
-            economy.ApplyTick(run);
+            economyService.ApplyTick(run);
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(0));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(1));
 
-            economy.ApplyTick(run);
+            economyService.ApplyTick(run);
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(1));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(0));
@@ -42,15 +42,15 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         [Test]
         public void ApplyTick_UnpaidUpkeepDoesNotBankOutput()
         {
-            var economy = CreateEconomy();
+            var economyService = CreateEconomy();
             var run = CreateRun();
             var colony = new ColonyState(ContentId.From("fraction-world"), ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(ContentId.From("industry-works"), 1));
             Assert.That(run.Timeline.TryAddColony(colony), Is.True);
 
-            economy.ApplyTick(run);
+            economyService.ApplyTick(run);
             run.Timeline.Resources.Grant(new StartingResources(energy: 1));
-            economy.ApplyTick(run);
+            economyService.ApplyTick(run);
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(0));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(0));
@@ -59,17 +59,17 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         [Test]
         public void ApplyTick_TimelineResetDropsTheFractionalRemainder()
         {
-            var economy = CreateEconomy();
-            var tick = new EconomyTickSystem(economy);
+            var economyService = CreateEconomy();
+            var tick = new EconomyTickSystem(economyService);
             var run = CreateRun();
             var colony = new ColonyState(ContentId.From("fraction-world"), ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(ContentId.From("industry-works"), 1));
             Assert.That(run.Timeline.TryAddColony(colony), Is.True);
             run.Timeline.Resources.Grant(new StartingResources(energy: 2));
 
-            economy.ApplyTick(run);
+            economyService.ApplyTick(run);
             tick.OnTimelineReset();
-            economy.ApplyTick(run);
+            economyService.ApplyTick(run);
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(0));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Energy), Is.EqualTo(0));

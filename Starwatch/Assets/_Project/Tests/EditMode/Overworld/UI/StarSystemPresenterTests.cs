@@ -21,8 +21,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(33));
             var belt = ContentId.From("asteroid-belt");
-            run.Timeline.TrySetFleetLocation(run.Timeline.Fleets[0].Id, belt);
-            stack.Exploration.Explore(run, ObserverId.Player, belt);
+            run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, belt);
+            stack.ExplorationService.Explore(run, ObserverId.Player, belt);
             var selection = new OverworldSelection();
             var status = new OverworldStatus();
             var map = new FakeStarMapView();
@@ -129,7 +129,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var home = ContentId.From("home-system");
             var fleetId = run.Timeline.Fleets[0].Id;
             Assert.That(
-                run.Timeline.TryAddFleet(ContentId.From("starter-screen"), 1, ContentId.From("forge-system"), out _),
+                run.Timeline.Fleets.TryAddFleet(ContentId.From("starter-screen"), 1, ContentId.From("forge-system"), out _),
                 Is.True);
             var selection = new OverworldSelection();
             selection.EnterSystem(home);
@@ -147,6 +147,27 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Dispose();
         }
 
+        [Test]
+        public void ResearchCompleted_RefreshesFleetSpeed()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(87));
+            var selection = new OverworldSelection();
+            selection.EnterSystem(ContentId.From("home-system"));
+            var view = new FakeStarSystemView();
+            var presenter = CreateSystem(view, selection, new OverworldStatus(), stack);
+            presenter.Start();
+
+            Assert.That(view.Model.Fleets[0].TravelSpeed, Is.EqualTo(1f).Within(0.001f));
+
+            Assert.That(run.Archive.Research.TryAdd(ContentId.From("basic-travel")), Is.True);
+            stack.Effects.Rebuild(run, RunTestFixture.CreateObjectDatabase().ResearchCatalog);
+            stack.Events.Publish(new ResearchCompletedEvent(GameTime.Zero, ContentId.From("basic-travel")));
+
+            Assert.That(view.Model.Fleets[0].TravelSpeed, Is.EqualTo(1.25f).Within(0.001f));
+            presenter.Dispose();
+        }
+
         private static StarMapPresenter CreateMap(
             FakeStarMapView view,
             OverworldSelection selection,
@@ -154,17 +175,17 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             OverworldTestContext stack)
         {
             var database = RunTestFixture.CreateObjectDatabase();
-            var fleets = new FleetListQuery(database, stack.Effects);
+            var fleetListQuery = new FleetListQuery(database, stack.Effects);
             return new StarMapPresenter(
                 view,
                 selection,
                 status,
                 stack.Manager,
-                stack.Travel,
-                new StarMapQuery(stack.Visibility, stack.Travel, fleets),
-                new StarSystemQuery(stack.Visibility, database, fleets),
+                stack.TravelService,
+                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery),
+                new StarSystemQuery(stack.VisibilityService, database, fleetListQuery),
                 stack.Events,
-                fleets);
+                fleetListQuery);
         }
 
         private static StarSystemPresenter CreateSystem(
@@ -179,9 +200,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 selection,
                 status,
                 stack.Manager,
-                stack.Sensor,
+                stack.SensorService,
                 new StarSystemQuery(
-                    stack.Visibility,
+                    stack.VisibilityService,
                     database,
                     new FleetListQuery(database, stack.Effects)),
                 stack.Events);

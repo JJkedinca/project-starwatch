@@ -43,7 +43,7 @@ namespace ProjectStarwatch.Core.Commands
                 return CommandResult<EntityId>.Fail(CommandErrorCode.NotAllowed, "Ship count must be positive.");
             }
 
-            if (!timeline.TryAddFleet(classId, shipCount, locationSystemId, out var id))
+            if (!timeline.Fleets.TryAddFleet(classId, shipCount, locationSystemId, out var id))
             {
                 return CommandResult<EntityId>.Fail(CommandErrorCode.NotAllowed, "Fleet could not be added.");
             }

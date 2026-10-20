@@ -9,7 +9,8 @@ using VContainer.Unity;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Opens the fleet panel for the selected fleet and closes it when the selection clears.
+    /// Opens the fleet panel for the selected fleet while a star system is open.
+    /// A fleet selected on the star map keeps this panel closed.
     /// </summary>
     internal sealed class FleetPanelPresenter : IStartable, IDisposable
     {
@@ -17,7 +18,7 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly OverworldSelection _selection;
         private readonly OverworldStatus _status;
         private readonly RunManager _runManager;
-        private readonly FleetService _fleets;
+        private readonly FleetService _fleetService;
         private readonly FleetPanelQuery _query;
         private readonly DomainEventBus _events;
         private readonly List<IDisposable> _subscriptions = new();
@@ -27,7 +28,7 @@ namespace ProjectStarwatch.Overworld.UI
             OverworldSelection selection,
             OverworldStatus status,
             RunManager runManager,
-            FleetService fleets,
+            FleetService fleetService,
             FleetPanelQuery query,
             DomainEventBus events)
         {
@@ -35,7 +36,7 @@ namespace ProjectStarwatch.Overworld.UI
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
             _status = status ?? throw new ArgumentNullException(nameof(status));
             _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
-            _fleets = fleets ?? throw new ArgumentNullException(nameof(fleets));
+            _fleetService = fleetService ?? throw new ArgumentNullException(nameof(fleetService));
             _query = query ?? throw new ArgumentNullException(nameof(query));
             _events = events ?? throw new ArgumentNullException(nameof(events));
         }
@@ -51,6 +52,7 @@ namespace ProjectStarwatch.Overworld.UI
             _subscriptions.Add(_events.Subscribe<FleetMergedEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<FleetSplitEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<ShipConstructionCompletedEvent>(_ => Apply()));
+            _subscriptions.Add(_events.Subscribe<ResearchCompletedEvent>(_ => Apply()));
             Apply();
         }
 
@@ -81,7 +83,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            var result = _fleets.Split(run, _selection.SelectedFleetId, classId, count, out _);
+            var result = _fleetService.Split(run, _selection.SelectedFleetId, classId, count, out _);
             _status.Post(result.Success ? "Fleet split." : result.Error.Message);
         }
 
@@ -93,7 +95,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            var result = _fleets.Merge(run, _selection.SelectedFleetId, sourceFleetId);
+            var result = _fleetService.Merge(run, _selection.SelectedFleetId, sourceFleetId);
             _status.Post(result.Success ? "Fleet merged." : result.Error.Message);
         }
 

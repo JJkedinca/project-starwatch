@@ -7,6 +7,7 @@ namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Fleet inspection. Hidden until a fleet is selected.
+    /// Stack rows stay put while the class list is unchanged, so a split count keeps its value and focus.
     /// </summary>
     internal sealed class FleetPanelView : IFleetPanelView
     {
@@ -16,6 +17,11 @@ namespace ProjectStarwatch.Overworld.UI
 
         public event Action<EntityId> MergeRequested;
 
+        private readonly List<StackLine> _stackLines = new();
+        private readonly List<MergeLine> _mergeLines = new();
+        private EntityId _shownFleetId;
+        private bool _shownCanSplit;
+        private bool _stacksReady;
         private VisualElement _root;
         private Label _title;
         private Label _status;
@@ -84,14 +90,17 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            _stacks.Clear();
-            var stacks = model.Stacks;
-            if (stacks == null)
+            if (SameStacks(model))
             {
+                UpdateStacks(model.Stacks);
                 return;
             }
 
-            for (var i = 0; i < stacks.Count; i++)
+            _stacks.Clear();
+            _stackLines.Clear();
+            var stacks = model.Stacks;
+            var count = stacks?.Count ?? 0;
+            for (var i = 0; i < count; i++)
             {
                 var row = stacks[i];
                 var line = new VisualElement();
@@ -101,26 +110,75 @@ namespace ProjectStarwatch.Overworld.UI
                 name.AddToClassList("fleet-stack-name");
                 line.Add(name);
 
-                var detail = new Label(Detail(row));
+                var detail = new Label(row.Count.ToString());
                 detail.AddToClassList("fleet-stack-detail");
                 line.Add(detail);
 
+                IntegerField splitCount = null;
                 if (model.CanSplit && row.Count > 0)
                 {
                     var classId = row.ClassId;
-                    var count = new IntegerField { value = 1 };
-                    count.AddToClassList("fleet-split-count");
-                    var split = new Button(() => SplitRequested?.Invoke(classId, count.value))
+                    splitCount = new IntegerField { value = 1 };
+                    splitCount.AddToClassList("fleet-split-count");
+                    var countField = splitCount;
+                    var split = new Button(() => SplitRequested?.Invoke(classId, countField.value))
                     {
                         text = "Split",
                     };
                     split.AddToClassList("fleet-split");
-                    line.Add(count);
+                    line.Add(splitCount);
                     line.Add(split);
                 }
 
                 _stacks.Add(line);
+                _stackLines.Add(new StackLine(row.ClassId, name, detail));
             }
+
+            _shownFleetId = model.FleetId;
+            _shownCanSplit = model.CanSplit;
+            _stacksReady = true;
+        }
+
+        private void UpdateStacks(IReadOnlyList<FleetStackRow> stacks)
+        {
+            for (var i = 0; i < stacks.Count; i++)
+            {
+                var row = stacks[i];
+                var line = _stackLines[i];
+                if (line.Name.text != row.DisplayName)
+                {
+                    line.Name.text = row.DisplayName;
+                }
+
+                var detail = row.Count.ToString();
+                if (line.Detail.text != detail)
+                {
+                    line.Detail.text = detail;
+                }
+            }
+        }
+
+        private bool SameStacks(FleetPanelModel model)
+        {
+            var stacks = model.Stacks;
+            var count = stacks?.Count ?? 0;
+            if (!_stacksReady
+                || model.FleetId != _shownFleetId
+                || model.CanSplit != _shownCanSplit
+                || _stackLines.Count != count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                if (stacks[i].ClassId != _stackLines[i].ClassId)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void ShowMerges(IReadOnlyList<FleetMergeCandidate> candidates)
@@ -130,13 +188,16 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            _merges.Clear();
-            if (candidates == null)
+            if (SameMerges(candidates))
             {
+                UpdateMerges(candidates);
                 return;
             }
 
-            for (var i = 0; i < candidates.Count; i++)
+            _merges.Clear();
+            _mergeLines.Clear();
+            var count = candidates?.Count ?? 0;
+            for (var i = 0; i < count; i++)
             {
                 var candidate = candidates[i];
                 var fleetId = candidate.FleetId;
@@ -146,21 +207,82 @@ namespace ProjectStarwatch.Overworld.UI
                 };
                 button.AddToClassList("fleet-merge");
                 _merges.Add(button);
+                _mergeLines.Add(new MergeLine(fleetId, button));
             }
         }
 
-        private static string Detail(FleetStackRow row)
+        private void UpdateMerges(IReadOnlyList<FleetMergeCandidate> candidates)
         {
-            return row.Count.ToString();
+            var count = candidates?.Count ?? 0;
+            for (var i = 0; i < count; i++)
+            {
+                var text = "Merge " + candidates[i].ShipCount;
+                if (_mergeLines[i].Button.text != text)
+                {
+                    _mergeLines[i].Button.text = text;
+                }
+            }
+        }
+
+        private bool SameMerges(IReadOnlyList<FleetMergeCandidate> candidates)
+        {
+            var count = candidates?.Count ?? 0;
+            if (_mergeLines.Count != count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                if (_mergeLines[i].FleetId != candidates[i].FleetId)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void Hide()
         {
             _stacks?.Clear();
             _merges?.Clear();
+            _stackLines.Clear();
+            _mergeLines.Clear();
+            _stacksReady = false;
+            _shownFleetId = EntityId.None;
             if (_root != null)
             {
                 _root.style.display = DisplayStyle.None;
+            }
+        }
+
+        private readonly struct StackLine
+        {
+            public ContentId ClassId { get; }
+
+            public Label Name { get; }
+
+            public Label Detail { get; }
+
+            public StackLine(ContentId classId, Label name, Label detail)
+            {
+                ClassId = classId;
+                Name = name;
+                Detail = detail;
+            }
+        }
+
+        private readonly struct MergeLine
+        {
+            public EntityId FleetId { get; }
+
+            public Button Button { get; }
+
+            public MergeLine(EntityId fleetId, Button button)
+            {
+                FleetId = fleetId;
+                Button = button;
             }
         }
     }

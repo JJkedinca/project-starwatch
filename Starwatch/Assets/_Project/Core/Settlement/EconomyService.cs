@@ -14,7 +14,7 @@ namespace ProjectStarwatch.Settlement
     internal sealed class EconomyService
     {
         private readonly ObjectDatabaseSO _objectDatabase;
-        private readonly ProductionService _production;
+        private readonly ProductionService _productionService;
         private readonly DomainEventBus _events;
         private readonly SimulationClock _clock;
         private readonly ResourceInventory _output = new();
@@ -28,12 +28,12 @@ namespace ProjectStarwatch.Settlement
 
         public EconomyService(
             ObjectDatabaseSO objectDatabase,
-            ProductionService production,
+            ProductionService productionService,
             DomainEventBus events,
             SimulationClock clock)
         {
             _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
-            _production = production ?? throw new ArgumentNullException(nameof(production));
+            _productionService = productionService ?? throw new ArgumentNullException(nameof(productionService));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
@@ -76,7 +76,7 @@ namespace ProjectStarwatch.Settlement
             {
                 var colony = colonies[i];
                 _objectDatabase.TryGetPlanet(colony.PlanetId.Value, out var planet);
-                var quote = _production.Quote(colony, planet);
+                var quote = _productionService.Quote(colony, planet);
                 _output.Add(quote.Output);
                 _upkeep.Add(quote.Upkeep);
             }

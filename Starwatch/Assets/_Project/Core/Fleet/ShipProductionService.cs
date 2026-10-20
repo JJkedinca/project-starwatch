@@ -17,18 +17,18 @@ namespace ProjectStarwatch.Fleet
     internal sealed class ShipProductionService
     {
         private readonly ObjectDatabaseSO _database;
-        private readonly IEffectQuery _effects;
+        private readonly IEffectQuery _effectQuery;
         private readonly DomainEventBus _events;
         private readonly SimulationClock _clock;
 
         public ShipProductionService(
             ObjectDatabaseSO database,
-            IEffectQuery effects,
+            IEffectQuery effectQuery,
             DomainEventBus events,
             SimulationClock clock)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
-            _effects = effects ?? throw new ArgumentNullException(nameof(effects));
+            _effectQuery = effectQuery ?? throw new ArgumentNullException(nameof(effectQuery));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
@@ -54,7 +54,7 @@ namespace ProjectStarwatch.Fleet
             }
 
             if (!string.IsNullOrWhiteSpace(shipClass.RequiredCapabilityId)
-                && !_effects.HasCapability(shipClass.RequiredCapabilityId))
+                && !_effectQuery.HasCapability(shipClass.RequiredCapabilityId))
             {
                 return CommandResult.Fail(CommandErrorCode.PrerequisiteNotMet, "That class is still locked.");
             }

@@ -1,5 +1,6 @@
 using System;
 using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Simulation;
@@ -36,7 +37,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(81));
             var planet = ContentId.From("home-prime");
-            Assert.That(stack.Buildings.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
             var selection = new OverworldSelection();
             selection.EnterSystem(ContentId.From("home-system"));
             selection.SelectPlanet(planet);
@@ -52,6 +53,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(screen.Costs[0].Kind, Is.EqualTo(ResourceKind.Industry));
             Assert.That(screen.Costs[0].Amount, Is.EqualTo(10f));
             Assert.That(screen.BuildSeconds, Is.EqualTo(10f));
+
+            Unlock(stack, run);
+            stack.Events.Publish(new ResearchCompletedEvent(GameTime.Zero, ContentId.From("basic-fleet")));
+
+            Assert.That(FindClass(view.Model, ContentId.From("starter-screen")).IsLocked, Is.False);
             presenter.Dispose();
         }
 
@@ -62,7 +68,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(82));
             var planet = ContentId.From("home-prime");
             Unlock(stack, run);
-            Assert.That(stack.Buildings.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
             var selection = new OverworldSelection();
             selection.EnterSystem(ContentId.From("home-system"));
             selection.SelectPlanet(planet);
@@ -92,7 +98,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(83));
             var planet = ContentId.From("home-prime");
             Unlock(stack, run);
-            Assert.That(stack.Buildings.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
             var selection = new OverworldSelection();
             selection.EnterSystem(ContentId.From("home-system"));
             selection.SelectPlanet(planet);
@@ -143,8 +149,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 selection,
                 new OverworldStatus(),
                 stack.Manager,
-                stack.ShipProduction,
-                new ShipyardQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects, stack.ShipProduction),
+                stack.ShipProductionService,
+                new ShipyardQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects, stack.ShipProductionService),
                 stack.Clock,
                 stack.Events);
         }

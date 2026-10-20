@@ -4,6 +4,7 @@ using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Overworld;
 using ProjectStarwatch.Overworld.UI;
 using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
@@ -61,17 +62,17 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             var whileTraveling = status.Text;
             Assert.That(whileTraveling, Is.Not.EqualTo(beforeTravel));
-            Assert.That(run.Timeline.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.True);
+            Assert.That(run.Timeline.Fleets.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.True);
 
             stack.Clock.SetPaused(false);
             var ticks = 0;
-            while (run.Timeline.IsFleetTraveling(run.Timeline.Fleets[0].Id) && ticks < 200)
+            while (run.Timeline.Fleets.IsFleetTraveling(run.Timeline.Fleets[0].Id) && ticks < 200)
             {
                 stack.Loop.Pump(1f / 30f);
                 ticks++;
             }
 
-            Assert.That(run.Timeline.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.False);
+            Assert.That(run.Timeline.Fleets.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.False);
             Assert.That(status.Text, Is.Not.EqualTo(whileTraveling));
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(ContentId.From("forge-system")), Is.True);
             presenter.Dispose();
@@ -87,7 +88,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Start();
             var applies = view.ApplyCount;
 
-            stack.Sensor.ScanPlanet(run, ObserverId.Player, ContentId.From("home-prime"));
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, ContentId.From("home-prime"));
 
             Assert.That(view.ApplyCount, Is.EqualTo(applies));
             Assert.That(view.NodeApplyCount, Is.EqualTo(0));
@@ -116,7 +117,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(view.RouteApplyCount, Is.EqualTo(0));
             Assert.That(view.CardApplyCount, Is.EqualTo(1));
             Assert.That(view.AppliedNodeIds, Is.EquivalentTo(new[] { home, forge }));
-            Assert.That(run.Timeline.HasTravelingFleetAt(home), Is.True);
+            Assert.That(run.Timeline.Fleets.HasTravelingFleetAt(home), Is.True);
             presenter.Dispose();
         }
 
@@ -135,7 +136,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var presenter = CreatePresenter(view, selection, stack);
             presenter.Start();
 
-            var outbound = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, forge);
+            var outbound = stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge);
             Assert.That(outbound.Success, Is.True);
             PumpUntilIdle(stack, run);
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.True);
@@ -143,16 +144,16 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             selection.SelectFleet(fleetId);
             view.ClickNode(choke);
-            Assert.That(view.LastCard.CanTravel, Is.True);
+            Assert.That(view.LastCard.HasArrival, Is.True);
             view.ClearPartial();
             var applies = view.ApplyCount;
 
-            var returnTrip = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, home);
+            var returnTrip = stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, home);
             Assert.That(returnTrip.Success, Is.True);
             Assert.That(view.ApplyCount, Is.EqualTo(applies));
             Assert.That(view.RouteApplyCount, Is.EqualTo(0));
             Assert.That(view.CardApplyCount, Is.EqualTo(1));
-            Assert.That(view.LastCard.CanTravel, Is.False);
+            Assert.That(view.LastCard.HasArrival, Is.False);
             Assert.That(view.AppliedNodeIds, Is.EquivalentTo(new[] { forge, home }));
 
             view.ClearPartial();
@@ -165,7 +166,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(view.AppliedNodeIds, Is.EquivalentTo(BothNeighborhoods(run, forge, home)));
             Assert.That(view.AppliedStates[belt].IsExplorable, Is.True);
             Assert.That(view.AppliedStates[choke].IsExplorable, Is.False);
-            Assert.That(run.Timeline.TryGetFleet(fleetId, out var fleet), Is.True);
+            Assert.That(run.Timeline.Fleets.TryGetFleet(fleetId, out var fleet), Is.True);
             Assert.That(fleet.LocationSystemId, Is.EqualTo(home));
             presenter.Dispose();
         }
@@ -178,7 +179,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var home = ContentId.From("home-system");
             var first = run.Timeline.Fleets[0].Id;
             Assert.That(
-                run.Timeline.TryAddFleet(ContentId.From("starter-screen"), 1, home, out var second),
+                run.Timeline.Fleets.TryAddFleet(ContentId.From("starter-screen"), 1, home, out var second),
                 Is.True);
             var selection = new OverworldSelection();
             var view = new FakeStarMapView();
@@ -190,8 +191,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             view.RightClickNode(ContentId.From("forge-system"));
 
             Assert.That(selection.SelectedFleetId, Is.EqualTo(second));
-            Assert.That(run.Timeline.IsFleetTraveling(second), Is.True);
-            Assert.That(run.Timeline.IsFleetTraveling(first), Is.False);
+            Assert.That(run.Timeline.Fleets.IsFleetTraveling(second), Is.True);
+            Assert.That(run.Timeline.Fleets.IsFleetTraveling(first), Is.False);
             presenter.Dispose();
         }
 
@@ -209,7 +210,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             view.RightClickNode(ContentId.From("forge-system"));
 
             Assert.That(status.Text, Is.EqualTo(OverworldStatus.kSelectFleet));
-            Assert.That(run.Timeline.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.False);
+            Assert.That(run.Timeline.Fleets.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.False);
             presenter.Dispose();
         }
 
@@ -221,7 +222,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var home = ContentId.From("home-system");
             var target = run.Timeline.Fleets[0].Id;
             Assert.That(
-                run.Timeline.TryAddFleet(ContentId.From("starter-screen"), 1, home, out var source),
+                run.Timeline.Fleets.TryAddFleet(ContentId.From("starter-screen"), 1, home, out var source),
                 Is.True);
             var selection = new OverworldSelection();
             var view = new FakeStarMapView();
@@ -229,7 +230,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Start();
             view.ClickFleet(source);
 
-            var merged = stack.Fleets.Merge(run, target, source);
+            var merged = stack.FleetService.Merge(run, target, source);
 
             Assert.That(merged.Success, Is.True);
             Assert.That(selection.SelectedFleetId.IsNone, Is.True);
@@ -256,7 +257,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             view.ClickNode(ContentId.From("forge-system"));
             view.RightClickNode(ContentId.From("forge-system"));
             Assert.That(status.Text, Is.EqualTo(OverworldStatus.kSelectFleet));
-            Assert.That(run.Timeline.ActiveTravels, Is.Empty);
+            Assert.That(run.Timeline.Fleets.ActiveTravels, Is.Empty);
             presenter.Dispose();
         }
 
@@ -296,9 +297,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var presenter = CreatePresenter(view, new OverworldSelection(), stack);
             presenter.Start();
             var applies = view.ApplyCount;
-            run.Timeline.TrySetFleetLocation(run.Timeline.Fleets[0].Id, forge);
+            run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, forge);
 
-            var explored = stack.Exploration.Explore(run, ObserverId.Player, forge);
+            var explored = stack.ExplorationService.Explore(run, ObserverId.Player, forge);
 
             Assert.That(explored.Success, Is.True);
             Assert.That(view.ApplyCount, Is.EqualTo(applies));
@@ -351,6 +352,57 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Dispose();
         }
 
+        [Test]
+        public void FleetCreated_RepaintsTheEmptySystemAndItsNeighbors()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(90));
+            var home = ContentId.From("home-system");
+            var belt = ContentId.From("asteroid-belt");
+            Assert.That(run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, ContentId.From("forge-system")), Is.True);
+            var view = new FakeStarMapView();
+            var presenter = CreatePresenter(view, new OverworldSelection(), stack);
+            presenter.Start();
+
+            Assert.That(
+                stack.FleetService.AddBuiltShip(run, home, ContentId.From("starter-screen"), out var created),
+                Is.True);
+
+            Assert.That(view.NodeApplyCount, Is.EqualTo(1));
+            Assert.That(view.AppliedNodeIds, Does.Contain(home));
+            Assert.That(view.AppliedNodeIds, Does.Contain(belt));
+            Assert.That(view.AppliedStates[home].HasFleet, Is.True);
+            Assert.That(view.AppliedStates[home].Visibility, Is.EqualTo(MapNodeVisibility.Present));
+            Assert.That(view.AppliedStates[belt].IsExplorable, Is.True);
+            Assert.That(view.LastFleets, Has.Some.Matches<FleetChoiceModel>(fleet => fleet.FleetId == created));
+            presenter.Dispose();
+        }
+
+        [Test]
+        public void ResearchCompleted_RefreshesFleetSpeedAndArrival()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(86));
+            var selection = new OverworldSelection();
+            var view = new FakeStarMapView();
+            var presenter = CreatePresenter(view, selection, stack);
+            presenter.Start();
+            selection.SelectNode(ContentId.From("forge-system"));
+            selection.SelectFleet(run.Timeline.Fleets[0].Id);
+
+            Assert.That(view.LastFleets[0].TravelSpeed, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(view.LastCard.HasArrival, Is.True);
+            Assert.That(view.LastCard.ArrivalSeconds, Is.EqualTo(3f).Within(0.001f));
+
+            Assert.That(run.Archive.Research.TryAdd(ContentId.From("basic-travel")), Is.True);
+            stack.Effects.Rebuild(run, RunTestFixture.CreateObjectDatabase().ResearchCatalog);
+            stack.Events.Publish(new ResearchCompletedEvent(GameTime.Zero, ContentId.From("basic-travel")));
+
+            Assert.That(view.LastFleets[0].TravelSpeed, Is.EqualTo(1.25f).Within(0.001f));
+            Assert.That(view.LastCard.ArrivalSeconds, Is.EqualTo(3f / 1.25f).Within(0.001f));
+            presenter.Dispose();
+        }
+
         private static StarMapPresenter CreatePresenter(
             FakeStarMapView view,
             OverworldSelection selection,
@@ -366,17 +418,17 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             OverworldTestContext stack)
         {
             var database = RunTestFixture.CreateObjectDatabase();
-            var fleets = new FleetListQuery(database, stack.Effects);
+            var fleetListQuery = new FleetListQuery(database, stack.Effects);
             return new StarMapPresenter(
                 view,
                 selection,
                 status,
                 stack.Manager,
-                stack.Travel,
-                new StarMapQuery(stack.Visibility, stack.Travel, fleets),
-                new StarSystemQuery(stack.Visibility, database, fleets),
+                stack.TravelService,
+                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery),
+                new StarSystemQuery(stack.VisibilityService, database, fleetListQuery),
                 stack.Events,
-                fleets);
+                fleetListQuery);
         }
 
         private sealed class FakeStarMapView : IStarMapView
@@ -471,7 +523,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         {
             stack.Clock.SetPaused(false);
             var ticks = 0;
-            while (run.Timeline.IsFleetTraveling(run.Timeline.Fleets[0].Id) && ticks < 200)
+            while (run.Timeline.Fleets.IsFleetTraveling(run.Timeline.Fleets[0].Id) && ticks < 200)
             {
                 stack.Loop.Pump(1f / 30f);
                 ticks++;

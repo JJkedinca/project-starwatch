@@ -14,15 +14,15 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     internal sealed class StarMapQuery
     {
-        private readonly VisibilityService _visibility;
-        private readonly TravelService _travel;
-        private readonly FleetListQuery _fleets;
+        private readonly VisibilityService _visibilityService;
+        private readonly TravelService _travelService;
+        private readonly FleetListQuery _fleetListQuery;
 
-        public StarMapQuery(VisibilityService visibility, TravelService travel, FleetListQuery fleets)
+        public StarMapQuery(VisibilityService visibilityService, TravelService travelService, FleetListQuery fleetListQuery)
         {
-            _visibility = visibility ?? throw new ArgumentNullException(nameof(visibility));
-            _travel = travel ?? throw new ArgumentNullException(nameof(travel));
-            _fleets = fleets ?? throw new ArgumentNullException(nameof(fleets));
+            _visibilityService = visibilityService ?? throw new ArgumentNullException(nameof(visibilityService));
+            _travelService = travelService ?? throw new ArgumentNullException(nameof(travelService));
+            _fleetListQuery = fleetListQuery ?? throw new ArgumentNullException(nameof(fleetListQuery));
         }
 
         /// <summary>
@@ -61,10 +61,9 @@ namespace ProjectStarwatch.Overworld.UI
                 card.HasSelection,
                 card.Title,
                 card.Summary,
-                card.CanTravel,
                 card.HasArrival,
                 card.ArrivalSeconds,
-                _fleets.All(run, selectedFleetId));
+                _fleetListQuery.All(run, selectedFleetId));
         }
 
         /// <summary>
@@ -118,14 +117,14 @@ namespace ProjectStarwatch.Overworld.UI
 
         internal MapNodePresentationState NodeState(RunState run, MapNode node, ContentId selectedNodeId)
         {
-            var visibility = _visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, node.Id);
-            var hasFleet = visibility != MapNodeVisibility.Hidden && run.Timeline.HasFleetAt(node.Id);
+            var visibility = _visibilityService.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, node.Id);
+            var hasFleet = visibility != MapNodeVisibility.Hidden && run.Timeline.Fleets.HasFleetAt(node.Id);
             return new MapNodePresentationState(
                 visibility,
                 isExplorable: visibility == MapNodeVisibility.Hidden && IsKnownNeighbor(run, node.Id),
                 isSelected: node.Id == selectedNodeId,
                 hasFleet,
-                isFleetTraveling: hasFleet && run.Timeline.HasTravelingFleetAt(node.Id),
+                isFleetTraveling: hasFleet && run.Timeline.Fleets.HasTravelingFleetAt(node.Id),
                 revealedLabel: visibility == MapNodeVisibility.Hidden ? string.Empty : NodeLabel(node));
         }
 
@@ -191,10 +190,10 @@ namespace ProjectStarwatch.Overworld.UI
                 return StarMapCardModel.Empty;
             }
 
-            var visibility = _visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, node.Id);
+            var visibility = _visibilityService.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, node.Id);
             var arrivalSeconds = 0f;
             var hasArrival = !selectedFleetId.IsNone
-                && _travel.TryGetTripSeconds(run, ObserverId.Player, selectedFleetId, node.Id, out arrivalSeconds);
+                && _travelService.TryGetTripSeconds(run, ObserverId.Player, selectedFleetId, node.Id, out arrivalSeconds);
             if (visibility == MapNodeVisibility.Hidden)
             {
                 return new StarMapCardModel(
@@ -203,7 +202,6 @@ namespace ProjectStarwatch.Overworld.UI
                     hasArrival
                         ? "Known route. Travel here to enter."
                         : "Hidden until a fleet arrives by a known route.",
-                    hasArrival,
                     hasArrival,
                     hasArrival ? arrivalSeconds : 0f);
             }
@@ -227,7 +225,6 @@ namespace ProjectStarwatch.Overworld.UI
                 NodeLabel(node),
                 summary,
                 hasArrival,
-                hasArrival,
                 hasArrival ? arrivalSeconds : 0f);
         }
 
@@ -237,8 +234,8 @@ namespace ProjectStarwatch.Overworld.UI
             for (var i = 0; i < neighbors.Count; i++)
             {
                 var neighborId = neighbors[i];
-                if (run.Timeline.HasFleetAt(neighborId)
-                    && _travel.IsKnownAdjacentDestination(run, ObserverId.Player, neighborId, nodeId))
+                if (run.Timeline.Fleets.HasFleetAt(neighborId)
+                    && _travelService.IsKnownAdjacentDestination(run, ObserverId.Player, neighborId, nodeId))
                 {
                     return true;
                 }

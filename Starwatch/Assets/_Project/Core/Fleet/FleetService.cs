@@ -24,6 +24,7 @@ namespace ProjectStarwatch.Fleet
 
         /// <summary>
         /// Puts a finished ship on an idle fleet at the system, or creates a fleet when none is idle.
+        /// TODO: Decide which fleet we want to merge
         /// </summary>
         public bool AddBuiltShip(RunState run, ContentId systemId, ContentId classId, out EntityId fleetId)
         {
@@ -33,25 +34,25 @@ namespace ProjectStarwatch.Fleet
                 return false;
             }
 
-            var fleets = run.Timeline.Fleets;
-            for (var i = 0; i < fleets.Count; i++)
+            var atSystem = run.Timeline.Fleets.FleetsAt(systemId);
+            for (var i = 0; i < atSystem.Count; i++)
             {
-                var fleet = fleets[i];
-                if (fleet.LocationSystemId != systemId || run.Timeline.IsFleetTraveling(fleet.Id))
+                var id = atSystem[i];
+                if (run.Timeline.Fleets.IsFleetTraveling(id))
                 {
                     continue;
                 }
 
-                if (!run.Timeline.TryAddShips(fleet.Id, classId, 1))
+                if (!run.Timeline.Fleets.TryAddShips(id, classId, 1))
                 {
                     return false;
                 }
 
-                fleetId = fleet.Id;
+                fleetId = id;
                 return true;
             }
 
-            if (!run.Timeline.TryAddFleet(classId, 1, systemId, out fleetId))
+            if (!run.Timeline.Fleets.TryAddFleet(classId, 1, systemId, out fleetId))
             {
                 return false;
             }
@@ -75,7 +76,7 @@ namespace ProjectStarwatch.Fleet
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "Fleets are not at the same node.");
             }
 
-            if (!run.Timeline.TryMergeFleets(target.Id, source.Id))
+            if (!run.Timeline.Fleets.TryMergeFleets(target.Id, source.Id))
             {
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "Fleet could not be merged.");
             }
@@ -100,12 +101,12 @@ namespace ProjectStarwatch.Fleet
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Choose a class and a ship count.");
             }
 
-            if (!run.Timeline.TryGetFleet(fleetId, out var fleet))
+            if (!run.Timeline.Fleets.TryGetFleet(fleetId, out var fleet))
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Unknown fleet.");
             }
 
-            if (run.Timeline.IsFleetTraveling(fleetId))
+            if (run.Timeline.Fleets.IsFleetTraveling(fleetId))
             {
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "Fleet is traveling.");
             }
@@ -120,7 +121,7 @@ namespace ProjectStarwatch.Fleet
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "That would split the whole fleet.");
             }
 
-            if (!run.Timeline.TrySplitFleet(fleetId, classId, count, out newFleetId))
+            if (!run.Timeline.Fleets.TrySplitFleet(fleetId, classId, count, out newFleetId))
             {
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "Fleet could not be split.");
             }
@@ -133,8 +134,8 @@ namespace ProjectStarwatch.Fleet
             RunState run,
             EntityId targetFleetId,
             EntityId sourceFleetId,
-            out FleetState target,
-            out FleetState source,
+            out FleetComposition target,
+            out FleetComposition source,
             out CommandResult failure)
         {
             target = null;
@@ -151,13 +152,13 @@ namespace ProjectStarwatch.Fleet
                 return false;
             }
 
-            if (!run.Timeline.TryGetFleet(targetFleetId, out target) || !run.Timeline.TryGetFleet(sourceFleetId, out source))
+            if (!run.Timeline.Fleets.TryGetFleet(targetFleetId, out target) || !run.Timeline.Fleets.TryGetFleet(sourceFleetId, out source))
             {
                 failure = CommandResult.Fail(CommandErrorCode.InvalidArgument, "Unknown fleet.");
                 return false;
             }
 
-            if (run.Timeline.IsFleetTraveling(targetFleetId) || run.Timeline.IsFleetTraveling(sourceFleetId))
+            if (run.Timeline.Fleets.IsFleetTraveling(targetFleetId) || run.Timeline.Fleets.IsFleetTraveling(sourceFleetId))
             {
                 failure = CommandResult.Fail(CommandErrorCode.NotAllowed, "A traveling fleet cannot merge.");
                 return false;

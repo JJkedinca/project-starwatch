@@ -33,19 +33,17 @@ namespace ProjectStarwatch.Overworld.UI
     }
 
     /// <summary>
-    /// Selected-node card: title, summary, and whether travel can start.
+    /// Selected-node card: title, summary, and the selected fleet's arrival time.
     /// </summary>
     internal readonly struct StarMapCardModel
     {
-        public static StarMapCardModel Empty { get; } = new(false, string.Empty, string.Empty, false, false, 0f);
+        public static StarMapCardModel Empty { get; } = new(false, string.Empty, string.Empty, false, 0f);
 
         public bool HasSelection { get; }
 
         public string Title { get; }
 
         public string Summary { get; }
-
-        public bool CanTravel { get; }
 
         public bool HasArrival { get; }
 
@@ -55,14 +53,12 @@ namespace ProjectStarwatch.Overworld.UI
             bool hasSelection,
             string title,
             string summary,
-            bool canTravel,
             bool hasArrival,
             float arrivalSeconds)
         {
             HasSelection = hasSelection;
             Title = title ?? string.Empty;
             Summary = summary ?? string.Empty;
-            CanTravel = canTravel;
             HasArrival = hasArrival;
             ArrivalSeconds = arrivalSeconds;
         }
@@ -81,7 +77,6 @@ namespace ProjectStarwatch.Overworld.UI
             string.Empty,
             string.Empty,
             false,
-            false,
             0f,
             Array.Empty<FleetChoiceModel>());
 
@@ -97,8 +92,6 @@ namespace ProjectStarwatch.Overworld.UI
 
         public string Summary { get; }
 
-        public bool CanTravel { get; }
-
         public bool HasArrival { get; }
 
         public float ArrivalSeconds { get; }
@@ -112,7 +105,6 @@ namespace ProjectStarwatch.Overworld.UI
             bool hasSelection,
             string title,
             string summary,
-            bool canTravel,
             bool hasArrival,
             float arrivalSeconds,
             IReadOnlyList<FleetChoiceModel> fleets)
@@ -123,7 +115,6 @@ namespace ProjectStarwatch.Overworld.UI
             HasSelection = hasSelection;
             Title = title ?? string.Empty;
             Summary = summary ?? string.Empty;
-            CanTravel = canTravel;
             HasArrival = hasArrival;
             ArrivalSeconds = arrivalSeconds;
             Fleets = fleets ?? Array.Empty<FleetChoiceModel>();

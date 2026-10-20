@@ -1,4 +1,5 @@
 using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
@@ -21,20 +22,37 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var stack = RunTestFixture.CreateOverworldStack();
             var run = HomeRun(stack, 90);
             Unlock(stack, run, "basic-fleet");
-            Assert.That(stack.Buildings.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
             var industry = run.Timeline.Resources.Get(ResourceKind.Industry);
             var starter = run.Timeline.Fleets[0].Id;
 
-            Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.True);
+            Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.True);
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industry - 10));
             Assert.That(run.Timeline.Fleets[0].ShipCount, Is.EqualTo(3));
 
             AdvanceTicks(stack.Loop, stack.Clock, Ticks(10) - 1);
             Assert.That(run.Timeline.Fleets[0].ShipCount, Is.EqualTo(3));
 
-            AdvanceTicks(stack.Loop, stack.Clock, 1);
+            var finishedOrderStillQueued = false;
+            using (stack.Events.Subscribe<ShipConstructionCompletedEvent>(completed =>
+            {
+                Assert.That(run.Timeline.TryGetColony(Home, out var building), Is.True);
+                for (var i = 0; i < building.BuildQueue.Count; i++)
+                {
+                    var order = building.BuildQueue[i];
+                    if (order.ClassId == completed.ClassId && order.SecondsRemaining <= 0f)
+                    {
+                        finishedOrderStillQueued = true;
+                    }
+                }
+            }))
+            {
+                AdvanceTicks(stack.Loop, stack.Clock, 1);
+            }
 
-            Assert.That(run.Timeline.TryGetFleet(starter, out var fleet), Is.True);
+            Assert.That(finishedOrderStillQueued, Is.False);
+
+            Assert.That(run.Timeline.Fleets.TryGetFleet(starter, out var fleet), Is.True);
             Assert.That(fleet.ShipCount, Is.EqualTo(4));
             Assert.That(fleet.CountOf(Screen), Is.EqualTo(4));
             Assert.That(run.Timeline.TryGetColony(Home, out var colony), Is.True);
@@ -47,11 +65,11 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var stack = RunTestFixture.CreateOverworldStack();
             var run = HomeRun(stack, 91);
             Unlock(stack, run, "basic-fleet");
-            Assert.That(stack.Buildings.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
-            Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
+            Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.True);
             var industry = run.Timeline.Resources.Get(ResourceKind.Industry);
 
-            Assert.That(stack.ShipProduction.Cancel(run, Home, 0).Success, Is.True);
+            Assert.That(stack.ShipProductionService.Cancel(run, Home, 0).Success, Is.True);
 
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industry + 10));
             Assert.That(run.Timeline.TryGetColony(Home, out var colony), Is.True);
@@ -63,17 +81,17 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = HomeRun(stack, 92);
-            Assert.That(stack.Buildings.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
             var industry = run.Timeline.Resources.Get(ResourceKind.Industry);
 
-            var locked = stack.ShipProduction.Queue(run, Home, Screen);
+            var locked = stack.ShipProductionService.Queue(run, Home, Screen);
 
             Assert.That(locked.Success, Is.False);
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industry));
 
             Unlock(stack, run, "basic-fleet");
 
-            Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.True);
+            Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.True);
         }
 
         [Test]
@@ -84,27 +102,27 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             Unlock(stack, run, "basic-fleet");
             var before = run.Timeline.Resources.Get(ResourceKind.Industry);
 
-            Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.False);
+            Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.False);
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(before));
 
             var outpost = ContentId.From("forge-world");
             Assert.That(run.Timeline.TryAddColony(new ColonyState(outpost, ColonyPresence.Outpost)), Is.True);
-            Assert.That(stack.ShipProduction.Queue(run, outpost, Screen).Success, Is.False);
+            Assert.That(stack.ShipProductionService.Queue(run, outpost, Screen).Success, Is.False);
 
-            Assert.That(stack.Buildings.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
             for (var i = 0; i < ColonyState.kMaxBuildOrders; i++)
             {
-                Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.True);
+                Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.True);
             }
 
             var full = run.Timeline.Resources.Get(ResourceKind.Industry);
-            Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.False);
+            Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.False);
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(full));
 
             run.Timeline.Resources.TrySpend(new[] { new ResourceAmount(ResourceKind.Industry, full) });
             Assert.That(run.Timeline.TryGetColony(Home, out var colony), Is.True);
             colony.TryTakeBuild(0, out _);
-            Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.False);
+            Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.False);
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(0));
         }
 
@@ -114,11 +132,11 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var stack = RunTestFixture.CreateOverworldStack();
             var run = HomeRun(stack, 101);
             Unlock(stack, run, "basic-fleet");
-            Assert.That(stack.Buildings.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
-            Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
+            Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.True);
             var industry = run.Timeline.Resources.Get(ResourceKind.Industry);
 
-            Assert.That(stack.Settlement.Abandon(run, Home).Success, Is.True);
+            Assert.That(stack.SettlementService.Abandon(run, Home).Success, Is.True);
 
             Assert.That(run.Timeline.TryGetColony(Home, out _), Is.False);
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(industry));
@@ -134,7 +152,7 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var colony = new ColonyState(planet, ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(ShipProductionServiceId(), 1));
             Assert.That(run.Timeline.TryAddColony(colony), Is.True);
-            Assert.That(stack.ShipProduction.Queue(run, planet, Screen).Success, Is.True);
+            Assert.That(stack.ShipProductionService.Queue(run, planet, Screen).Success, Is.True);
             var paid = run.Timeline.Resources.Get(ResourceKind.Industry);
 
             LogAssert.Expect(
@@ -157,11 +175,11 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var fleetId = run.Timeline.Fleets[0].Id;
             stack.Clock.SetPaused(false);
             Assert.That(
-                stack.Travel.StartTravel(run, ObserverId.Player, fleetId, ContentId.From("forge-system")).Success,
+                stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, ContentId.From("forge-system")).Success,
                 Is.True);
 
-            Assert.That(run.Timeline.TryRemoveShips(fleetId, Screen, 1), Is.False);
-            Assert.That(run.Timeline.TryGetFleet(fleetId, out var fleet), Is.True);
+            Assert.That(run.Timeline.Fleets.TryRemoveShips(fleetId, Screen, 1), Is.False);
+            Assert.That(run.Timeline.Fleets.TryGetFleet(fleetId, out var fleet), Is.True);
             Assert.That(fleet.ShipCount, Is.EqualTo(3));
         }
 
@@ -171,15 +189,15 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var stack = RunTestFixture.CreateOverworldStack();
             var run = HomeRun(stack, 94);
             Unlock(stack, run, "basic-fleet");
-            Assert.That(stack.Buildings.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
+            Assert.That(stack.BuildingService.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
             var starter = run.Timeline.Fleets[0].Id;
-            Assert.That(run.Timeline.TrySetFleetLocation(starter, ContentId.From("forge-system")), Is.True);
-            Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.True);
+            Assert.That(run.Timeline.Fleets.TrySetFleetLocation(starter, ContentId.From("forge-system")), Is.True);
+            Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.True);
 
             AdvanceTicks(stack.Loop, stack.Clock, Ticks(10));
 
             Assert.That(run.Timeline.Fleets, Has.Count.EqualTo(2));
-            Assert.That(run.Timeline.TryGetFleet(starter, out var away), Is.True);
+            Assert.That(run.Timeline.Fleets.TryGetFleet(starter, out var away), Is.True);
             Assert.That(away.ShipCount, Is.EqualTo(3));
             Assert.That(away.LocationSystemId, Is.EqualTo(ContentId.From("forge-system")));
         }
@@ -191,20 +209,20 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var run = HomeRun(stack, 95);
             var home = ContentId.From("home-system");
             var target = run.Timeline.Fleets[0].Id;
-            Assert.That(run.Timeline.TryAddFleet(Line, 2, home, out var source), Is.True);
-            Assert.That(run.Timeline.TrySetFleetLocation(source, ContentId.From("forge-system")), Is.True);
+            Assert.That(run.Timeline.Fleets.TryAddFleet(Line, 2, home, out var source), Is.True);
+            Assert.That(run.Timeline.Fleets.TrySetFleetLocation(source, ContentId.From("forge-system")), Is.True);
 
-            Assert.That(stack.Fleets.Merge(run, target, source).Success, Is.False);
+            Assert.That(stack.FleetService.Merge(run, target, source).Success, Is.False);
 
-            Assert.That(run.Timeline.TrySetFleetLocation(source, home), Is.True);
-            Assert.That(stack.Fleets.Merge(run, target, source).Success, Is.True);
+            Assert.That(run.Timeline.Fleets.TrySetFleetLocation(source, home), Is.True);
+            Assert.That(stack.FleetService.Merge(run, target, source).Success, Is.True);
 
             Assert.That(run.Timeline.Fleets, Has.Count.EqualTo(1));
-            Assert.That(run.Timeline.TryGetFleet(target, out var merged), Is.True);
+            Assert.That(run.Timeline.Fleets.TryGetFleet(target, out var merged), Is.True);
             Assert.That(merged.ShipCount, Is.EqualTo(5));
             Assert.That(merged.CountOf(Screen), Is.EqualTo(3));
             Assert.That(merged.CountOf(Line), Is.EqualTo(2));
-            Assert.That(run.Timeline.TryGetFleet(source, out _), Is.False);
+            Assert.That(run.Timeline.Fleets.TryGetFleet(source, out _), Is.False);
         }
 
         [Test]
@@ -214,12 +232,12 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var run = HomeRun(stack, 96);
             var fleetId = run.Timeline.Fleets[0].Id;
 
-            Assert.That(stack.Fleets.Split(run, fleetId, Screen, 3, out _).Success, Is.False);
-            Assert.That(stack.Fleets.Split(run, fleetId, Screen, 4, out _).Success, Is.False);
-            Assert.That(stack.Fleets.Split(run, fleetId, Screen, 1, out var created).Success, Is.True);
+            Assert.That(stack.FleetService.Split(run, fleetId, Screen, 3, out _).Success, Is.False);
+            Assert.That(stack.FleetService.Split(run, fleetId, Screen, 4, out _).Success, Is.False);
+            Assert.That(stack.FleetService.Split(run, fleetId, Screen, 1, out var created).Success, Is.True);
 
-            Assert.That(run.Timeline.TryGetFleet(fleetId, out var source), Is.True);
-            Assert.That(run.Timeline.TryGetFleet(created, out var split), Is.True);
+            Assert.That(run.Timeline.Fleets.TryGetFleet(fleetId, out var source), Is.True);
+            Assert.That(run.Timeline.Fleets.TryGetFleet(created, out var split), Is.True);
             Assert.That(source.ShipCount + split.ShipCount, Is.EqualTo(3));
             Assert.That(split.CountOf(Screen), Is.EqualTo(1));
         }
@@ -243,9 +261,9 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var run = HomeRun(stack, 100);
             Unlock(stack, run, "basic-fleet");
             Unlock(stack, run, "basic-travel");
-            Assert.That(stack.Buildings.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
-            Assert.That(stack.ShipProduction.Queue(run, Home, Screen).Success, Is.True);
-            Assert.That(run.Timeline.TryAddFleet(Line, 1, ContentId.From("home-system"), out _), Is.True);
+            Assert.That(stack.BuildingService.Place(run, Home, ShipProductionServiceId()).Success, Is.True);
+            Assert.That(stack.ShipProductionService.Queue(run, Home, Screen).Success, Is.True);
+            Assert.That(run.Timeline.Fleets.TryAddFleet(Line, 1, ContentId.From("home-system"), out _), Is.True);
 
             var timeline = stack.Manager.RecreateTimeline(1);
 
@@ -269,14 +287,14 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
             var fleetId = run.Timeline.Fleets[0].Id;
             if (lineShip)
             {
-                Assert.That(run.Timeline.TryAddShips(fleetId, Line, 1), Is.True);
+                Assert.That(run.Timeline.Fleets.TryAddShips(fleetId, Line, 1), Is.True);
             }
 
             stack.Clock.SetPaused(false);
             Assert.That(
-                stack.Travel.StartTravel(run, ObserverId.Player, fleetId, ContentId.From("forge-system")).Success,
+                stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, ContentId.From("forge-system")).Success,
                 Is.True);
-            var travel = run.Timeline.ActiveTravels[0];
+            var travel = run.Timeline.Fleets.ActiveTravels[0];
             return (float)(travel.ArriveTime.Seconds - travel.DepartTime.Seconds);
         }
 

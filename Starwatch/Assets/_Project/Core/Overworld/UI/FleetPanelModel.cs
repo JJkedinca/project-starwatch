@@ -13,24 +13,13 @@ namespace ProjectStarwatch.Overworld.UI
 
         public int Count { get; }
 
-        public float SpeedFactor { get; }
-
         public string DisplayName { get; }
 
-        public bool HasClass { get; }
-
-        public FleetStackRow(
-            ContentId classId,
-            int count,
-            float speedFactor,
-            string displayName,
-            bool hasClass)
+        public FleetStackRow(ContentId classId, int count, string displayName)
         {
             ClassId = classId;
             Count = count;
-            SpeedFactor = speedFactor;
             DisplayName = displayName ?? string.Empty;
-            HasClass = hasClass;
         }
     }
 
@@ -52,7 +41,8 @@ namespace ProjectStarwatch.Overworld.UI
     }
 
     /// <summary>
-    /// Inspection of the selected fleet. Closed when nothing is selected.
+    /// Inspection of the selected fleet while a star system is open.
+    /// Closed on the star map, and when no fleet is selected.
     /// </summary>
     internal sealed class FleetPanelModel
     {

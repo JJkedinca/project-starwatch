@@ -10,16 +10,17 @@ namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Read model for the fleet panel. Travel speed is the slowest class times the research multiplier.
+    /// Stays closed on the star map. Opens only while a star system is open and a fleet is selected.
     /// </summary>
     internal sealed class FleetPanelQuery
     {
         private readonly ObjectDatabaseSO _database;
-        private readonly IEffectQuery _effects;
+        private readonly IEffectQuery _effectQuery;
 
-        public FleetPanelQuery(ObjectDatabaseSO database, IEffectQuery effects)
+        public FleetPanelQuery(ObjectDatabaseSO database, IEffectQuery effectQuery)
         {
             _database = database;
-            _effects = effects;
+            _effectQuery = effectQuery;
         }
 
         internal FleetPanelModel Describe(RunState run, OverworldSelection selection)
@@ -32,7 +33,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return FleetPanelModel.Closed;
             }
 
-            if (!run.Timeline.TryGetFleet(selection.SelectedFleetId, out var fleet))
+            if (!run.Timeline.Fleets.TryGetFleet(selection.SelectedFleetId, out var fleet))
             {
                 return FleetPanelModel.Closed;
             }
@@ -41,28 +42,22 @@ namespace ProjectStarwatch.Overworld.UI
             for (var i = 0; i < fleet.Stacks.Count; i++)
             {
                 var stack = fleet.Stacks[i];
-                DescribeClass(stack.ClassId, out var displayName, out var hasClass);
-                stacks.Add(new FleetStackRow(
-                    stack.ClassId,
-                    stack.Count,
-                    FleetSpeed.ClassFactor(_database, stack.ClassId),
-                    displayName,
-                    hasClass));
+                stacks.Add(new FleetStackRow(stack.ClassId, stack.Count, ClassName(stack.ClassId)));
             }
 
-            var traveling = run.Timeline.IsFleetTraveling(fleet.Id);
+            var traveling = run.Timeline.Fleets.IsFleetTraveling(fleet.Id);
             return new FleetPanelModel(
                 true,
                 fleet.Id,
                 fleet.LocationSystemId,
                 traveling,
-                FleetSpeed.Effective(fleet, _database, _effects),
+                FleetSpeed.Effective(fleet, _database, _effectQuery),
                 !traveling && fleet.ShipCount > 1,
                 stacks,
                 MergeCandidates(run, fleet, traveling));
         }
 
-        private static List<FleetMergeCandidate> MergeCandidates(RunState run, FleetState fleet, bool traveling)
+        private static List<FleetMergeCandidate> MergeCandidates(RunState run, FleetComposition fleet, bool traveling)
         {
             List<FleetMergeCandidate> candidates = new();
             if (traveling)
@@ -76,7 +71,7 @@ namespace ProjectStarwatch.Overworld.UI
                 var other = fleets[i];
                 if (other.Id == fleet.Id
                     || other.LocationSystemId != fleet.LocationSystemId
-                    || run.Timeline.IsFleetTraveling(other.Id))
+                    || run.Timeline.Fleets.IsFleetTraveling(other.Id))
                 {
                     continue;
                 }
@@ -87,23 +82,18 @@ namespace ProjectStarwatch.Overworld.UI
             return candidates;
         }
 
-        private void DescribeClass(ContentId classId, out string displayName, out bool hasClass)
+        private string ClassName(ContentId classId)
         {
-            displayName = classId.Value;
-            hasClass = false;
             if (_database == null
                 || _database.ShipCatalog == null
                 || !_database.ShipCatalog.TryGet(classId, out var shipClass)
-                || shipClass == null)
+                || shipClass == null
+                || string.IsNullOrEmpty(shipClass.DisplayName))
             {
-                return;
+                return classId.Value;
             }
 
-            hasClass = true;
-            if (!string.IsNullOrEmpty(shipClass.DisplayName))
-            {
-                displayName = shipClass.DisplayName;
-            }
+            return shipClass.DisplayName;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var home = ContentId.From("home-system");
             var forge = ContentId.From("forge-system");
             var homeFleet = run.Timeline.Fleets[0].Id;
-            Assert.That(run.Timeline.TryAddFleet(ContentId.From("line-ship"), 2, forge, out var away), Is.True);
+            Assert.That(run.Timeline.Fleets.TryAddFleet(ContentId.From("line-ship"), 2, forge, out var away), Is.True);
             var database = RunTestFixture.CreateObjectDatabase();
             var query = new FleetListQuery(database, stack.Effects);
 

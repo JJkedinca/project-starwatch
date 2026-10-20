@@ -63,46 +63,46 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var timelineFactory = new TimelineFactory();
             var loader = new UniverseLoader(timelineFactory);
             var manager = new RunManager(timelineFactory, loader, objectDatabase, journal, events, loop);
-            var route = new RouteService();
-            var archive = new ArchiveService();
+            var routeService = new RouteService();
+            var archiveService = new ArchiveService();
             var effects = new EffectRegistry();
-            var exploration = new ExplorationService(archive, route, events, clock);
-            var travel = new TravelService(route, clock, events, effects, objectDatabase);
-            var visibility = new VisibilityService();
-            var travelSystem = new TravelSystem(exploration, events);
-            var production = new ProductionService(objectDatabase, effects);
-            var economy = new EconomyService(objectDatabase, production, events, clock);
-            var research = new ResearchService(objectDatabase, effects, events, clock);
-            var economyTick = new EconomyTickSystem(economy);
-            var researchTick = new ResearchTickSystem(research, economyTick);
-            var sensor = new SensorService(archive, objectDatabase, events, clock);
-            var settlement = new SettlementService(objectDatabase, events, clock);
-            var buildings = new BuildingService(objectDatabase, events, clock);
-            var fleets = new FleetService(events, clock);
-            var shipProduction = new ShipProductionService(objectDatabase, effects, events, clock);
-            var shipProductionSystem = new ShipProductionSystem(objectDatabase, fleets, shipProduction, events);
+            var explorationService = new ExplorationService(archiveService, routeService, events, clock);
+            var travelService = new TravelService(routeService, clock, events, effects, objectDatabase);
+            var visibilityService = new VisibilityService();
+            var travelSystem = new TravelSystem(explorationService, events);
+            var productionService = new ProductionService(objectDatabase, effects);
+            var economyService = new EconomyService(objectDatabase, productionService, events, clock);
+            var researchService = new ResearchService(objectDatabase, effects, events, clock);
+            var economyTick = new EconomyTickSystem(economyService);
+            var researchTick = new ResearchTickSystem(researchService, economyTick);
+            var sensorService = new SensorService(archiveService, objectDatabase, events, clock);
+            var settlementService = new SettlementService(objectDatabase, events, clock);
+            var buildingService = new BuildingService(objectDatabase, events, clock);
+            var fleetService = new FleetService(events, clock);
+            var shipProductionService = new ShipProductionService(objectDatabase, effects, events, clock);
+            var shipProductionSystem = new ShipProductionSystem(objectDatabase, fleetService, shipProductionService, events);
             loop.Register(travelSystem);
             loop.Register(economyTick);
             loop.Register(researchTick);
             loop.Register(shipProductionSystem);
             return new OverworldTestContext(
                 manager: manager,
-                exploration: exploration,
-                sensor: sensor,
-                travel: travel,
-                visibility: visibility,
+                explorationService: explorationService,
+                sensorService: sensorService,
+                travelService: travelService,
+                visibilityService: visibilityService,
                 travelSystem: travelSystem,
                 loop: loop,
                 clock: clock,
                 journal: journal,
                 events: events,
-                settlement: settlement,
-                buildings: buildings,
-                economy: economy,
-                research: research,
+                settlementService: settlementService,
+                buildingService: buildingService,
+                economyService: economyService,
+                researchService: researchService,
                 effects: effects,
-                fleets: fleets,
-                shipProduction: shipProduction);
+                fleetService: fleetService,
+                shipProductionService: shipProductionService);
         }
 
         internal static StartingEmpireDefinition UnsettledVerticalSlice()

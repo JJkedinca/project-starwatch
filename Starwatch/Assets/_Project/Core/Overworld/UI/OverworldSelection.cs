@@ -53,6 +53,7 @@ namespace ProjectStarwatch.Overworld.UI
 
         /// <summary>
         /// Selects a fleet on the map or in a system. The node and planet stay as they are.
+        /// The fleet panel opens for that fleet only while a star system is open.
         /// </summary>
         public void SelectFleet(EntityId fleetId)
         {

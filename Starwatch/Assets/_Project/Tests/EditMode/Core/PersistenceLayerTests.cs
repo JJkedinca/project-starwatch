@@ -111,7 +111,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         {
             var timeline = new TimelineState(new EntityIdFactory());
 
-            var added = timeline.TryAddFleet(
+            var added = timeline.Fleets.TryAddFleet(
                 ContentId.From("screen"),
                 shipCount: 1,
                 ContentId.From(" "),
@@ -123,13 +123,13 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         }
 
         [Test]
-        public void FleetState_RejectsInvalidConstruction()
+        public void Fleet_RejectsInvalidConstruction()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new ShipStack(ContentId.From("screen"), 0));
 
             Assert.Throws<ArgumentException>(() =>
-                new FleetState(
+                new FleetComposition(
                     new EntityId(1),
                     ContentId.From(" "),
                     new[] { new ShipStack(ContentId.From("screen"), 1) }));

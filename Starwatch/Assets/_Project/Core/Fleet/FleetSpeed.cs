@@ -12,9 +12,9 @@ namespace ProjectStarwatch.Fleet
     /// </summary>
     internal static class FleetSpeed
     {
-        internal static float Effective(FleetState fleet, ObjectDatabaseSO database, IEffectQuery effects)
+        internal static float Effective(FleetComposition fleet, ObjectDatabaseSO database, IEffectQuery effectQuery)
         {
-            return Slowest(fleet, database) * Multiplier(effects);
+            return Slowest(fleet, database) * Multiplier(effectQuery);
         }
 
         internal static float ClassFactor(ObjectDatabaseSO database, ContentId classId)
@@ -36,7 +36,7 @@ namespace ProjectStarwatch.Fleet
             return shipClass.SpeedFactor;
         }
 
-        private static float Slowest(FleetState fleet, ObjectDatabaseSO database)
+        private static float Slowest(FleetComposition fleet, ObjectDatabaseSO database)
         {
             if (fleet == null)
             {
@@ -56,9 +56,9 @@ namespace ProjectStarwatch.Fleet
             return slowest == float.MaxValue ? 1f : slowest;
         }
 
-        private static float Multiplier(IEffectQuery effects)
+        private static float Multiplier(IEffectQuery effectQuery)
         {
-            var multiplier = effects != null ? effects.TravelSpeedMultiplier() : 1f;
+            var multiplier = effectQuery != null ? effectQuery.TravelSpeedMultiplier() : 1f;
             return multiplier > 0f ? multiplier : 1f;
         }
     }

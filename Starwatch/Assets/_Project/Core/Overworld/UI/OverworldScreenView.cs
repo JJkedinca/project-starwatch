@@ -141,44 +141,44 @@ namespace ProjectStarwatch.Overworld.UI
     internal sealed class OverworldScreenBinder : IStartable
     {
         private readonly OverworldScreenView _screen;
-        private readonly StarMapPresenter _map;
-        private readonly StarSystemPresenter _system;
-        private readonly SettlementPresenter _settlement;
-        private readonly StockpilePresenter _stockpile;
-        private readonly ResearchPresenter _research;
-        private readonly FleetPanelPresenter _fleetPanel;
-        private readonly ShipyardPresenter _shipyard;
+        private readonly StarMapPresenter _starMapPresenter;
+        private readonly StarSystemPresenter _starSystemPresenter;
+        private readonly SettlementPresenter _settlementPresenter;
+        private readonly StockpilePresenter _stockpilePresenter;
+        private readonly ResearchPresenter _researchPresenter;
+        private readonly FleetPanelPresenter _fleetPanelPresenter;
+        private readonly ShipyardPresenter _shipyardPresenter;
 
         public OverworldScreenBinder(
             OverworldScreenView screen,
-            StarMapPresenter map,
-            StarSystemPresenter system,
-            SettlementPresenter settlement,
-            StockpilePresenter stockpile,
-            ResearchPresenter research,
-            FleetPanelPresenter fleetPanel,
-            ShipyardPresenter shipyard)
+            StarMapPresenter starMapPresenter,
+            StarSystemPresenter starSystemPresenter,
+            SettlementPresenter settlementPresenter,
+            StockpilePresenter stockpilePresenter,
+            ResearchPresenter researchPresenter,
+            FleetPanelPresenter fleetPanelPresenter,
+            ShipyardPresenter shipyardPresenter)
         {
             _screen = screen;
-            _map = map;
-            _system = system;
-            _settlement = settlement;
-            _stockpile = stockpile;
-            _research = research;
-            _fleetPanel = fleetPanel;
-            _shipyard = shipyard;
+            _starMapPresenter = starMapPresenter;
+            _starSystemPresenter = starSystemPresenter;
+            _settlementPresenter = settlementPresenter;
+            _stockpilePresenter = stockpilePresenter;
+            _researchPresenter = researchPresenter;
+            _fleetPanelPresenter = fleetPanelPresenter;
+            _shipyardPresenter = shipyardPresenter;
         }
 
         public void Start()
         {
             _screen.Bind();
-            _map.Start();
-            _system.Start();
-            _settlement.Start();
-            _stockpile.Start();
-            _research.Start();
-            _fleetPanel.Start();
-            _shipyard.Start();
+            _starMapPresenter.Start();
+            _starSystemPresenter.Start();
+            _settlementPresenter.Start();
+            _stockpilePresenter.Start();
+            _researchPresenter.Start();
+            _fleetPanelPresenter.Start();
+            _shipyardPresenter.Start();
         }
     }
 }

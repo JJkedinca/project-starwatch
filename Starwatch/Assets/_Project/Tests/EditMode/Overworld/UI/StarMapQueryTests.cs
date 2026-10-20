@@ -36,7 +36,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var forge = ContentId.From("forge-system");
             var fleetId = run.Timeline.Fleets[0].Id;
 
-            var started = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, forge);
+            var started = stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge);
 
             Assert.That(started.Success, Is.True);
             var forgeState = query.NodeState(run, RequireNode(run, forge), default(ContentId));
@@ -52,7 +52,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(homeState.HasFleet, Is.True);
             Assert.That(homeState.IsFleetTraveling, Is.True);
             Assert.That(card.HasSelection, Is.True);
-            Assert.That(card.CanTravel, Is.False);
+            Assert.That(card.HasArrival, Is.False);
         }
 
         [Test]
@@ -72,13 +72,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             unselected.SelectNode(forge);
 
             Assert.That(card.HasSelection, Is.True);
-            Assert.That(card.CanTravel, Is.True);
             Assert.That(card.HasArrival, Is.True);
             Assert.That(card.ArrivalSeconds, Is.EqualTo(3f).Within(0.001f));
             Assert.That(card.Fleets, Has.Count.EqualTo(1));
             Assert.That(card.Fleets[0].FleetId, Is.EqualTo(fleetId));
             Assert.That(card.Fleets[0].IsSelected, Is.True);
-            Assert.That(query.Describe(run, unselected).CanTravel, Is.False);
+            Assert.That(query.Describe(run, unselected).HasArrival, Is.False);
         }
 
         [Test]
@@ -91,8 +90,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(query.CanEnter(run, belt), Is.False);
 
-            run.Timeline.TrySetFleetLocation(run.Timeline.Fleets[0].Id, belt);
-            stack.Exploration.Explore(run, ObserverId.Player, belt);
+            run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, belt);
+            stack.ExplorationService.Explore(run, ObserverId.Player, belt);
 
             Assert.That(query.CanEnter(run, belt), Is.True);
         }
@@ -123,8 +122,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         private static StarMapQuery CreateQuery(OverworldTestContext stack)
         {
             return new StarMapQuery(
-                stack.Visibility,
-                stack.Travel,
+                stack.VisibilityService,
+                stack.TravelService,
                 new FleetListQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects));
         }
 

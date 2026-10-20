@@ -17,12 +17,12 @@ namespace ProjectStarwatch.Overworld.UI
     internal sealed class SettlementQuery
     {
         private readonly ObjectDatabaseSO _objectDatabase;
-        private readonly ProductionService _production;
+        private readonly ProductionService _productionService;
 
-        public SettlementQuery(ObjectDatabaseSO objectDatabase, ProductionService production)
+        public SettlementQuery(ObjectDatabaseSO objectDatabase, ProductionService productionService)
         {
             _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
-            _production = production ?? throw new ArgumentNullException(nameof(production));
+            _productionService = productionService ?? throw new ArgumentNullException(nameof(productionService));
         }
 
         /// <summary>
@@ -67,8 +67,8 @@ namespace ProjectStarwatch.Overworld.UI
 
         private PlanetEconomy DescribeEconomy(PlanetDefinition planet, ColonyState colony)
         {
-            var quote = _production.Quote(colony, planet);
-            return new PlanetEconomy(_production.ModifiedBase(planet), quote.Output, quote.Upkeep);
+            var quote = _productionService.Quote(colony, planet);
+            return new PlanetEconomy(_productionService.ModifiedBase(planet), quote.Output, quote.Upkeep);
         }
 
         private string DevelopmentText(PlanetDefinition planet, ColonyState colony)

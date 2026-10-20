@@ -16,14 +16,14 @@ namespace ProjectStarwatch.Overworld.UI
     internal sealed class ShipyardQuery
     {
         private readonly ObjectDatabaseSO _database;
-        private readonly IEffectQuery _effects;
-        private readonly ShipProductionService _production;
+        private readonly IEffectQuery _effectQuery;
+        private readonly ShipProductionService _shipProductionService;
 
-        public ShipyardQuery(ObjectDatabaseSO database, IEffectQuery effects, ShipProductionService production)
+        public ShipyardQuery(ObjectDatabaseSO database, IEffectQuery effectQuery, ShipProductionService shipProductionService)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
-            _effects = effects ?? throw new ArgumentNullException(nameof(effects));
-            _production = production ?? throw new ArgumentNullException(nameof(production));
+            _effectQuery = effectQuery ?? throw new ArgumentNullException(nameof(effectQuery));
+            _shipProductionService = shipProductionService ?? throw new ArgumentNullException(nameof(shipProductionService));
         }
 
         internal ShipyardModel Describe(RunState run, OverworldSelection selection)
@@ -34,7 +34,7 @@ namespace ProjectStarwatch.Overworld.UI
                 || selection.SelectedPlanetId.IsEmpty
                 || !run.Timeline.TryGetColony(selection.SelectedPlanetId, out var colony)
                 || colony.Presence != ColonyPresence.Colony
-                || !_production.EnablesShipConstruction(colony))
+                || !_shipProductionService.EnablesShipConstruction(colony))
             {
                 return ShipyardModel.Hidden;
             }
@@ -61,7 +61,7 @@ namespace ProjectStarwatch.Overworld.UI
                 }
 
                 var capability = shipClass.RequiredCapabilityId;
-                var locked = !string.IsNullOrWhiteSpace(capability) && !_effects.HasCapability(capability);
+                var locked = !string.IsNullOrWhiteSpace(capability) && !_effectQuery.HasCapability(capability);
                 TryUnlock(capability, out var researchId, out var unlockName);
                 rows.Add(new ShipyardClassRow(
                     shipClass.Id,

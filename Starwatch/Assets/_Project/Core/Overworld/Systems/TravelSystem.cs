@@ -14,14 +14,14 @@ namespace ProjectStarwatch.Overworld.Systems
     /// </summary>
     internal sealed class TravelSystem : ISimulationSystem
     {
-        private readonly ExplorationService _exploration;
+        private readonly ExplorationService _explorationService;
         private readonly DomainEventBus _events;
         private readonly List<ActiveTravel> _completedBuffer = new();
         private RunState _run;
 
-        public TravelSystem(ExplorationService exploration, DomainEventBus events)
+        public TravelSystem(ExplorationService explorationService, DomainEventBus events)
         {
-            _exploration = exploration ?? throw new ArgumentNullException(nameof(exploration));
+            _explorationService = explorationService ?? throw new ArgumentNullException(nameof(explorationService));
             _events = events ?? throw new ArgumentNullException(nameof(events));
         }
 
@@ -54,7 +54,7 @@ namespace ProjectStarwatch.Overworld.Systems
             }
 
             _completedBuffer.Clear();
-            var completed = _run.Timeline.CompleteArrivals(time, _completedBuffer);
+            var completed = _run.Timeline.Fleets.CompleteArrivals(time, _completedBuffer);
 
             for (var i = 0; i < _completedBuffer.Count; i++)
             {
@@ -65,7 +65,7 @@ namespace ProjectStarwatch.Overworld.Systems
                     travel.FromNodeId,
                     travel.ToNodeId,
                     FleetTravelKind.Arrived));
-                _exploration.Explore(_run, ObserverId.Player, travel.ToNodeId);
+                _explorationService.Explore(_run, ObserverId.Player, travel.ToNodeId);
             }
 
             return completed;

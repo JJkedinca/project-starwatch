@@ -18,8 +18,8 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly OverworldSelection _selection;
         private readonly OverworldStatus _status;
         private readonly RunManager _runManager;
-        private readonly SettlementService _settlement;
-        private readonly BuildingService _buildings;
+        private readonly SettlementService _settlementService;
+        private readonly BuildingService _buildingService;
         private readonly SettlementQuery _query;
         private readonly DomainEventBus _events;
         private readonly List<IDisposable> _subscriptions = new();
@@ -29,8 +29,8 @@ namespace ProjectStarwatch.Overworld.UI
             OverworldSelection selection,
             OverworldStatus status,
             RunManager runManager,
-            SettlementService settlement,
-            BuildingService buildings,
+            SettlementService settlementService,
+            BuildingService buildingService,
             SettlementQuery query,
             DomainEventBus events)
         {
@@ -38,8 +38,8 @@ namespace ProjectStarwatch.Overworld.UI
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
             _status = status ?? throw new ArgumentNullException(nameof(status));
             _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
-            _settlement = settlement ?? throw new ArgumentNullException(nameof(settlement));
-            _buildings = buildings ?? throw new ArgumentNullException(nameof(buildings));
+            _settlementService = settlementService ?? throw new ArgumentNullException(nameof(settlementService));
+            _buildingService = buildingService ?? throw new ArgumentNullException(nameof(buildingService));
             _query = query ?? throw new ArgumentNullException(nameof(query));
             _events = events ?? throw new ArgumentNullException(nameof(events));
         }
@@ -56,6 +56,7 @@ namespace ProjectStarwatch.Overworld.UI
             _subscriptions.Add(_events.Subscribe<SettlementAbandonedEvent>(_ => OnSettlementChanged()));
             _subscriptions.Add(_events.Subscribe<BuildingChangedEvent>(_ => OnSettlementChanged()));
             _subscriptions.Add(_events.Subscribe<ResourceChangedEvent>(_ => OnSettlementChanged()));
+            _subscriptions.Add(_events.Subscribe<ResearchCompletedEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<MapKnowledgeChangedEvent>(OnMapKnowledgeChanged));
             Apply();
         }
@@ -79,30 +80,30 @@ namespace ProjectStarwatch.Overworld.UI
         private void OnFoundOutpostRequested()
         {
             CommitPlanet(
-                (run, planetId) => _settlement.FoundOutpost(run, ObserverId.Player, planetId),
+                (run, planetId) => _settlementService.FoundOutpost(run, ObserverId.Player, planetId),
                 "Outpost founded.");
         }
 
         private void OnFoundColonyRequested()
         {
             CommitPlanet(
-                (run, planetId) => _settlement.FoundColony(run, ObserverId.Player, planetId),
+                (run, planetId) => _settlementService.FoundColony(run, ObserverId.Player, planetId),
                 "Colony founded.");
         }
 
         private void OnAbandonRequested()
         {
-            CommitPlanet((run, planetId) => _settlement.Abandon(run, planetId), "Settlement abandoned.");
+            CommitPlanet((run, planetId) => _settlementService.Abandon(run, planetId), "Settlement abandoned.");
         }
 
         private void OnPlaceRequested(ContentId buildingId)
         {
-            CommitPlanet((run, planetId) => _buildings.Place(run, planetId, buildingId), "Building placed.");
+            CommitPlanet((run, planetId) => _buildingService.Place(run, planetId, buildingId), "Building placed.");
         }
 
         private void OnUpgradeRequested(ContentId buildingId)
         {
-            CommitPlanet((run, planetId) => _buildings.Upgrade(run, planetId, buildingId), "Building upgraded.");
+            CommitPlanet((run, planetId) => _buildingService.Upgrade(run, planetId, buildingId), "Building upgraded.");
         }
 
         private void CommitPlanet(Func<RunState, ContentId, CommandResult> command, string success)

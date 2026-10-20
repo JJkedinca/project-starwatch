@@ -8,6 +8,7 @@ namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
     /// Shipyard classes and build queue inside the settlement panel.
+    /// Rows stay put while only build progress changes, so a click is not dropped on refresh.
     /// </summary>
     internal sealed class ShipyardSectionView : IShipyardView
     {
@@ -15,6 +16,9 @@ namespace ProjectStarwatch.Overworld.UI
 
         public event Action<int> CancelRequested;
 
+        private readonly List<ShipyardClassRow> _shownClasses = new();
+        private readonly List<ShipyardQueueRow> _shownQueue = new();
+        private readonly List<VisualElement> _queueFills = new();
         private VisualElement _root;
         private VisualElement _classes;
         private VisualElement _queue;
@@ -50,18 +54,15 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void ShowClasses(IReadOnlyList<ShipyardClassRow> rows)
         {
-            if (_classes == null)
+            if (_classes == null || SameClasses(rows))
             {
                 return;
             }
 
             _classes.Clear();
-            if (rows == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < rows.Count; i++)
+            _shownClasses.Clear();
+            var count = rows?.Count ?? 0;
+            for (var i = 0; i < count; i++)
             {
                 var row = rows[i];
                 var line = new VisualElement();
@@ -79,6 +80,7 @@ namespace ProjectStarwatch.Overworld.UI
                 build.SetEnabled(!row.IsLocked);
                 line.Add(build);
                 _classes.Add(line);
+                _shownClasses.Add(row);
             }
         }
 
@@ -89,13 +91,17 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            _queue.Clear();
-            if (rows == null)
+            if (SameQueue(rows))
             {
+                UpdateProgress(rows);
                 return;
             }
 
-            for (var i = 0; i < rows.Count; i++)
+            _queue.Clear();
+            _shownQueue.Clear();
+            _queueFills.Clear();
+            var count = rows?.Count ?? 0;
+            for (var i = 0; i < count; i++)
             {
                 var row = rows[i];
                 var line = new VisualElement();
@@ -104,24 +110,14 @@ namespace ProjectStarwatch.Overworld.UI
                 name.AddToClassList("shipyard-row-name");
                 line.Add(name);
 
+                VisualElement fill = null;
                 if (row.IsHead && row.BuildSeconds > 0f)
                 {
-                    var done = row.BuildSeconds - row.SecondsRemaining;
-                    var fraction = done / row.BuildSeconds;
-                    if (fraction < 0f)
-                    {
-                        fraction = 0f;
-                    }
-                    else if (fraction > 1f)
-                    {
-                        fraction = 1f;
-                    }
-
                     var track = new VisualElement();
                     track.AddToClassList("shipyard-progress");
-                    var fill = new VisualElement();
+                    fill = new VisualElement { name = "shipyard-progress-fill" };
                     fill.AddToClassList("shipyard-progress-fill");
-                    fill.style.width = Length.Percent(fraction * 100f);
+                    fill.style.width = Length.Percent(ProgressFraction(row) * 100f);
                     track.Add(fill);
                     line.Add(track);
                 }
@@ -134,7 +130,120 @@ namespace ProjectStarwatch.Overworld.UI
                 cancel.AddToClassList("shipyard-cancel");
                 line.Add(cancel);
                 _queue.Add(line);
+                _shownQueue.Add(row);
+                _queueFills.Add(fill);
             }
+        }
+
+        private void UpdateProgress(IReadOnlyList<ShipyardQueueRow> rows)
+        {
+            var count = rows?.Count ?? 0;
+            for (var i = 0; i < count; i++)
+            {
+                var fill = _queueFills[i];
+                if (fill == null)
+                {
+                    continue;
+                }
+
+                fill.style.width = Length.Percent(ProgressFraction(rows[i]) * 100f);
+            }
+        }
+
+        private bool SameClasses(IReadOnlyList<ShipyardClassRow> rows)
+        {
+            var count = rows?.Count ?? 0;
+            if (_shownClasses.Count != count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                if (!SameClass(_shownClasses[i], rows[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool SameQueue(IReadOnlyList<ShipyardQueueRow> rows)
+        {
+            var count = rows?.Count ?? 0;
+            if (_shownQueue.Count != count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var shown = _shownQueue[i];
+                var row = rows[i];
+                if (shown.Index != row.Index
+                    || shown.ClassId != row.ClassId
+                    || shown.DisplayName != row.DisplayName
+                    || shown.BuildSeconds != row.BuildSeconds
+                    || shown.IsHead != row.IsHead)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool SameClass(ShipyardClassRow left, ShipyardClassRow right)
+        {
+            return left.ClassId == right.ClassId
+                && left.DisplayName == right.DisplayName
+                && left.BuildSeconds == right.BuildSeconds
+                && left.IsLocked == right.IsLocked
+                && left.UnlockResearchId == right.UnlockResearchId
+                && left.UnlockName == right.UnlockName
+                && SameCosts(left.Costs, right.Costs);
+        }
+
+        private static bool SameCosts(IReadOnlyList<ResourceAmount> left, IReadOnlyList<ResourceAmount> right)
+        {
+            var leftCount = left?.Count ?? 0;
+            var rightCount = right?.Count ?? 0;
+            if (leftCount != rightCount)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < leftCount; i++)
+            {
+                if (left[i].Kind != right[i].Kind || left[i].Amount != right[i].Amount)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static float ProgressFraction(ShipyardQueueRow row)
+        {
+            if (row.BuildSeconds <= 0f)
+            {
+                return 0f;
+            }
+
+            var fraction = (row.BuildSeconds - row.SecondsRemaining) / row.BuildSeconds;
+            if (fraction < 0f)
+            {
+                return 0f;
+            }
+
+            if (fraction > 1f)
+            {
+                return 1f;
+            }
+
+            return fraction;
         }
 
         private static string ClassText(ShipyardClassRow row)
@@ -169,6 +278,9 @@ namespace ProjectStarwatch.Overworld.UI
         {
             _classes?.Clear();
             _queue?.Clear();
+            _shownClasses.Clear();
+            _shownQueue.Clear();
+            _queueFills.Clear();
             if (_root != null)
             {
                 _root.style.display = DisplayStyle.None;

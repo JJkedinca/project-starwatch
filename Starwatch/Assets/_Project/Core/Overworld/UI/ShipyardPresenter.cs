@@ -22,7 +22,7 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly OverworldSelection _selection;
         private readonly OverworldStatus _status;
         private readonly RunManager _runManager;
-        private readonly ShipProductionService _production;
+        private readonly ShipProductionService _shipProductionService;
         private readonly ShipyardQuery _query;
         private readonly SimulationClock _clock;
         private readonly DomainEventBus _events;
@@ -35,7 +35,7 @@ namespace ProjectStarwatch.Overworld.UI
             OverworldSelection selection,
             OverworldStatus status,
             RunManager runManager,
-            ShipProductionService production,
+            ShipProductionService shipProductionService,
             ShipyardQuery query,
             SimulationClock clock,
             DomainEventBus events)
@@ -44,7 +44,7 @@ namespace ProjectStarwatch.Overworld.UI
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
             _status = status ?? throw new ArgumentNullException(nameof(status));
             _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
-            _production = production ?? throw new ArgumentNullException(nameof(production));
+            _shipProductionService = shipProductionService ?? throw new ArgumentNullException(nameof(shipProductionService));
             _query = query ?? throw new ArgumentNullException(nameof(query));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _events = events ?? throw new ArgumentNullException(nameof(events));
@@ -58,6 +58,7 @@ namespace ProjectStarwatch.Overworld.UI
             _clock.TimeAdvanced += OnTimeAdvanced;
             _subscriptions.Add(_events.Subscribe<ShipQueuedEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<ShipConstructionCompletedEvent>(_ => Apply()));
+            _subscriptions.Add(_events.Subscribe<ResearchCompletedEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<ResourceChangedEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<BuildingChangedEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<SettlementFoundedEvent>(_ => Apply()));
@@ -87,7 +88,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            var result = _production.Queue(run, _selection.SelectedPlanetId, classId);
+            var result = _shipProductionService.Queue(run, _selection.SelectedPlanetId, classId);
             _status.Post(result.Success ? "Ship queued." : result.Error.Message);
         }
 
@@ -99,7 +100,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            var result = _production.Cancel(run, _selection.SelectedPlanetId, queueIndex);
+            var result = _shipProductionService.Cancel(run, _selection.SelectedPlanetId, queueIndex);
             if (!result.Success)
             {
                 _status.Post(result.Error.Message);

@@ -31,9 +31,9 @@ namespace ProjectStarwatch.Core.Run.Timeline
     }
 
     /// <summary>
-    /// Timeline-owned fleet. Stacks change only through <see cref="TimelineState"/>.
+    /// One fleet: where it is and the ships in it. Stacks change only through <see cref="FleetLedger"/>.
     /// </summary>
-    public sealed class FleetState
+    public sealed class FleetComposition
     {
         private readonly List<ShipStack> _stacks;
 
@@ -57,7 +57,7 @@ namespace ProjectStarwatch.Core.Run.Timeline
             }
         }
 
-        public FleetState(EntityId id, ContentId locationSystemId, IReadOnlyList<ShipStack> stacks)
+        public FleetComposition(EntityId id, ContentId locationSystemId, IReadOnlyList<ShipStack> stacks)
         {
             if (id.IsNone)
             {
@@ -81,15 +81,16 @@ namespace ProjectStarwatch.Core.Run.Timeline
 
         public int CountOf(ContentId classId)
         {
+            var count = 0;
             for (var i = 0; i < _stacks.Count; i++)
             {
                 if (_stacks[i].ClassId == classId)
                 {
-                    return _stacks[i].Count;
+                    count += _stacks[i].Count;
                 }
             }
 
-            return 0;
+            return count;
         }
 
         private static List<ShipStack> Copy(IReadOnlyList<ShipStack> source)
@@ -102,9 +103,28 @@ namespace ProjectStarwatch.Core.Run.Timeline
 
             for (var i = 0; i < source.Count; i++)
             {
-                if (source[i].Count > 0 && !source[i].ClassId.IsEmpty)
+                var stack = source[i];
+                if (stack.Count <= 0 || stack.ClassId.IsEmpty)
                 {
-                    copy.Add(source[i]);
+                    continue;
+                }
+
+                var merged = false;
+                for (var slot = 0; slot < copy.Count; slot++)
+                {
+                    if (copy[slot].ClassId != stack.ClassId)
+                    {
+                        continue;
+                    }
+
+                    copy[slot] = new ShipStack(stack.ClassId, copy[slot].Count + stack.Count);
+                    merged = true;
+                    break;
+                }
+
+                if (!merged)
+                {
+                    copy.Add(stack);
                 }
             }
 

@@ -37,20 +37,20 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
             var forge = ContentId.From("forge-system");
             var planet = ContentId.From("forge-world");
 
-            var blocked = stack.Exploration.Explore(run, ObserverId.Player, forge);
+            var blocked = stack.ExplorationService.Explore(run, ObserverId.Player, forge);
 
             Assert.That(blocked.Success, Is.False);
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.False);
 
-            run.Timeline.TrySetFleetLocation(run.Timeline.Fleets[0].Id, forge);
-            var result = stack.Exploration.Explore(run, ObserverId.Player, forge);
+            run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, forge);
+            var result = stack.ExplorationService.Explore(run, ObserverId.Player, forge);
 
             Assert.That(result.Success, Is.True);
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.True);
             Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.False);
             Assert.That(stack.Journal.Records, Has.Count.EqualTo(1));
             Assert.That(
-                stack.Visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, forge),
+                stack.VisibilityService.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, forge),
                 Is.EqualTo(MapNodeVisibility.Present));
         }
 
@@ -61,7 +61,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(2));
             var frontier = ContentId.From("frontier-system");
 
-            var result = stack.Exploration.Explore(run, ObserverId.Player, frontier);
+            var result = stack.ExplorationService.Explore(run, ObserverId.Player, frontier);
 
             Assert.That(result.Success, Is.False);
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(frontier), Is.False);
@@ -74,20 +74,20 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(3));
             var planet = ContentId.From("forge-world");
 
-            var blocked = stack.Sensor.ScanPlanet(run, ObserverId.Player, planet);
+            var blocked = stack.SensorService.ScanPlanet(run, ObserverId.Player, planet);
             Assert.That(blocked.Success, Is.False);
 
-            run.Timeline.TrySetFleetLocation(
+            run.Timeline.Fleets.TrySetFleetLocation(
                 run.Timeline.Fleets[0].Id,
                 ContentId.From("forge-system"));
-            stack.Exploration.Explore(run, ObserverId.Player, ContentId.From("forge-system"));
+            stack.ExplorationService.Explore(run, ObserverId.Player, ContentId.From("forge-system"));
             Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.False);
-            var scanned = stack.Sensor.ScanPlanet(run, ObserverId.Player, planet);
+            var scanned = stack.SensorService.ScanPlanet(run, ObserverId.Player, planet);
 
             Assert.That(scanned.Success, Is.True);
             Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.True);
             Assert.That(
-                stack.Visibility.GetPlanetVisibility(
+                stack.VisibilityService.GetPlanetVisibility(
                     run.Archive,
                     ObserverId.Player,
                     ContentId.From("forge-system"),
@@ -118,14 +118,14 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
 
             var stack = RunTestFixture.CreateOverworldStack();
             // Rebuild sensor against the database that includes the foreign planet.
-            var sensor = new SensorService(
+            var sensorService = new SensorService(
                 new ArchiveService(),
                 objectDatabase,
                 stack.Events,
                 stack.Clock);
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(3));
 
-            var result = sensor.ScanPlanet(run, ObserverId.Player, foreignPlanet);
+            var result = sensorService.ScanPlanet(run, ObserverId.Player, foreignPlanet);
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.Error.Code, Is.EqualTo(CommandErrorCode.InvalidArgument));
@@ -143,20 +143,20 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
 
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.False);
             stack.Clock.SetPaused(false);
-            var started = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, forge);
+            var started = stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge);
             Assert.That(started.Success, Is.True);
-            Assert.That(run.Timeline.IsFleetTraveling(fleetId), Is.True);
+            Assert.That(run.Timeline.Fleets.IsFleetTraveling(fleetId), Is.True);
             Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(ContentId.From("home-system")));
 
             // 3s travel at 30Hz; pump past arrival so SimulationLoop resolves TravelSystem.
             var ticks = 0;
-            while (run.Timeline.IsFleetTraveling(fleetId) && ticks < 200)
+            while (run.Timeline.Fleets.IsFleetTraveling(fleetId) && ticks < 200)
             {
                 stack.Loop.Pump(1f / 30f);
                 ticks++;
             }
 
-            Assert.That(run.Timeline.IsFleetTraveling(fleetId), Is.False);
+            Assert.That(run.Timeline.Fleets.IsFleetTraveling(fleetId), Is.False);
             Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(forge));
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.True);
             Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.False);
@@ -167,7 +167,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
                 stack.Journal.Records[stack.Journal.Records.Count - 1].EventType,
                 Is.EqualTo(GameEventType.NodeExplored));
             Assert.That(
-                stack.Visibility.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, forge),
+                stack.VisibilityService.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, forge),
                 Is.EqualTo(MapNodeVisibility.Present));
         }
 
@@ -179,7 +179,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
             var fleetId = run.Timeline.Fleets[0].Id;
             var frontier = ContentId.From("frontier-system");
 
-            var result = stack.Travel.StartTravel(run, ObserverId.Player, fleetId, frontier);
+            var result = stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, frontier);
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.Error.Code, Is.EqualTo(ProjectStarwatch.Core.Commands.CommandErrorCode.InvalidRoute));

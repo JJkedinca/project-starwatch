@@ -16,20 +16,20 @@ namespace ProjectStarwatch.Fleet
     internal sealed class ShipProductionSystem : ISimulationSystem
     {
         private readonly ObjectDatabaseSO _database;
-        private readonly FleetService _fleets;
-        private readonly ShipProductionService _production;
+        private readonly FleetService _fleetService;
+        private readonly ShipProductionService _shipProductionService;
         private readonly DomainEventBus _events;
         private RunState _run;
 
         public ShipProductionSystem(
             ObjectDatabaseSO database,
-            FleetService fleets,
-            ShipProductionService production,
+            FleetService fleetService,
+            ShipProductionService shipProductionService,
             DomainEventBus events)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
-            _fleets = fleets ?? throw new ArgumentNullException(nameof(fleets));
-            _production = production ?? throw new ArgumentNullException(nameof(production));
+            _fleetService = fleetService ?? throw new ArgumentNullException(nameof(fleetService));
+            _shipProductionService = shipProductionService ?? throw new ArgumentNullException(nameof(shipProductionService));
             _events = events ?? throw new ArgumentNullException(nameof(events));
         }
 
@@ -67,7 +67,7 @@ namespace ProjectStarwatch.Fleet
                     return;
                 }
 
-                if (!Finish(colony, head, time))
+                if (!Finish(colony, head, out var fleetId))
                 {
                     if (!Drop(colony, head))
                     {
@@ -78,32 +78,33 @@ namespace ProjectStarwatch.Fleet
                     continue;
                 }
 
-                colony.TryTakeBuild(0, out _);
+                if (!colony.TryTakeBuild(0, out _))
+                {
+                    return;
+                }
+
+                // The order is gone before subscribers refresh, so the queue does not keep a finished 0s head.
+                _events.Publish(new ShipConstructionCompletedEvent(time, colony.PlanetId, head.ClassId, fleetId));
                 seconds = leftover;
             }
         }
 
-        private bool Finish(ColonyState colony, ShipBuildOrder order, GameTime time)
+        private bool Finish(ColonyState colony, ShipBuildOrder order, out EntityId fleetId)
         {
+            fleetId = default;
             if (!_database.TryGetPlanet(colony.PlanetId.Value, out var planet) || planet == null || planet.SystemId.IsEmpty)
             {
                 return false;
             }
 
-            if (!_fleets.AddBuiltShip(_run, planet.SystemId, order.ClassId, out var fleetId))
-            {
-                return false;
-            }
-
-            _events.Publish(new ShipConstructionCompletedEvent(time, colony.PlanetId, order.ClassId, fleetId));
-            return true;
+            return _fleetService.AddBuiltShip(_run, planet.SystemId, order.ClassId, out fleetId);
         }
 
         private bool Drop(ColonyState colony, ShipBuildOrder order)
         {
             Debug.LogWarning(
                 $"ShipProductionSystem dropped a finished {order.ClassId.Value} on '{colony.PlanetId.Value}' and refunded it because it could not be placed.");
-            return _production.Cancel(_run, colony.PlanetId, 0).Success;
+            return _shipProductionService.Cancel(_run, colony.PlanetId, 0).Success;
         }
     }
 }

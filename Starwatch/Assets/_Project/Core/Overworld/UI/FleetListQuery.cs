@@ -15,12 +15,12 @@ namespace ProjectStarwatch.Overworld.UI
     internal sealed class FleetListQuery
     {
         private readonly ObjectDatabaseSO _database;
-        private readonly IEffectQuery _effects;
+        private readonly IEffectQuery _effectQuery;
 
-        public FleetListQuery(ObjectDatabaseSO database, IEffectQuery effects)
+        public FleetListQuery(ObjectDatabaseSO database, IEffectQuery effectQuery)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
-            _effects = effects ?? throw new ArgumentNullException(nameof(effects));
+            _effectQuery = effectQuery ?? throw new ArgumentNullException(nameof(effectQuery));
         }
 
         /// <summary>
@@ -67,10 +67,10 @@ namespace ProjectStarwatch.Overworld.UI
             return rows;
         }
 
-        private FleetChoiceModel Describe(RunState run, FleetState fleet, EntityId selectedFleetId)
+        private FleetChoiceModel Describe(RunState run, FleetComposition fleet, EntityId selectedFleetId)
         {
-            var traveling = run.Timeline.IsFleetTraveling(fleet.Id);
-            var speed = FleetSpeed.Effective(fleet, _database, _effects);
+            var traveling = run.Timeline.Fleets.IsFleetTraveling(fleet.Id);
+            var speed = FleetSpeed.Effective(fleet, _database, _effectQuery);
             return new FleetChoiceModel(
                 fleet.Id,
                 fleet.LocationSystemId,
@@ -81,7 +81,7 @@ namespace ProjectStarwatch.Overworld.UI
                 Label(fleet, traveling, speed));
         }
 
-        private string Label(FleetState fleet, bool traveling, float speed)
+        private string Label(FleetComposition fleet, bool traveling, float speed)
         {
             var composition = StackText(fleet.Stacks[0]);
             for (var i = 1; i < fleet.Stacks.Count; i++)

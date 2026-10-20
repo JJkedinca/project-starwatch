@@ -18,20 +18,20 @@ namespace ProjectStarwatch.Overworld.Services
         private readonly RouteService _routeService;
         private readonly SimulationClock _clock;
         private readonly DomainEventBus _events;
-        private readonly IEffectQuery _effects;
+        private readonly IEffectQuery _effectQuery;
         private readonly ObjectDatabaseSO _database;
 
         public TravelService(
             RouteService routeService,
             SimulationClock clock,
             DomainEventBus events,
-            IEffectQuery effects,
+            IEffectQuery effectQuery,
             ObjectDatabaseSO database)
         {
             _routeService = routeService;
             _clock = clock;
             _events = events ?? throw new System.ArgumentNullException(nameof(events));
-            _effects = effects;
+            _effectQuery = effectQuery;
             _database = database;
         }
 
@@ -60,7 +60,7 @@ namespace ProjectStarwatch.Overworld.Services
             var arrive = depart.Add(duration);
             var travel = new ActiveTravel(fleetId, fleet.LocationSystemId, destinationNodeId, depart, arrive);
 
-            if (!run.Timeline.TryStartTravel(travel))
+            if (!run.Timeline.Fleets.TryStartTravel(travel))
             {
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "Travel could not start.");
             }
@@ -124,7 +124,7 @@ namespace ProjectStarwatch.Overworld.Services
             ObserverId observerId,
             EntityId fleetId,
             ContentId destinationNodeId,
-            out FleetState fleet,
+            out FleetComposition fleet,
             out float duration)
         {
             fleet = null;
@@ -139,12 +139,12 @@ namespace ProjectStarwatch.Overworld.Services
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Destination is required.");
             }
 
-            if (!run.Timeline.TryGetFleet(fleetId, out fleet))
+            if (!run.Timeline.Fleets.TryGetFleet(fleetId, out fleet))
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Unknown fleet.");
             }
 
-            if (run.Timeline.IsFleetTraveling(fleetId))
+            if (run.Timeline.Fleets.IsFleetTraveling(fleetId))
             {
                 return CommandResult.Fail(CommandErrorCode.NotAllowed, "Fleet is already traveling.");
             }
@@ -170,7 +170,7 @@ namespace ProjectStarwatch.Overworld.Services
                 return CommandResult.Fail(CommandErrorCode.InvalidRoute, "Route duration missing.");
             }
 
-            duration = routeSeconds / FleetSpeed.Effective(fleet, _database, _effects);
+            duration = routeSeconds / FleetSpeed.Effective(fleet, _database, _effectQuery);
             return CommandResult.Ok();
         }
     }

@@ -65,8 +65,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(model.Stacks, Has.Count.EqualTo(fleet.Stacks.Count));
             Assert.That(model.Stacks[0].ClassId, Is.EqualTo(fleet.Stacks[0].ClassId));
             Assert.That(model.Stacks[0].Count, Is.EqualTo(fleet.Stacks[0].Count));
-            Assert.That(model.Stacks[0].HasClass, Is.True);
-            Assert.That(model.TravelSpeed, Is.EqualTo(model.Stacks[0].SpeedFactor));
+            Assert.That(database.ShipCatalog.TryGet(fleet.Stacks[0].ClassId, out var shipClass), Is.True);
+            Assert.That(model.TravelSpeed, Is.EqualTo(shipClass.SpeedFactor));
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(database.ShipCatalog.TryGet(screen, out var screenClass), Is.True);
             Assert.That(database.ShipCatalog.TryGet(line, out var lineClass), Is.True);
             Assert.That(
-                run.Timeline.TryAddFleet(
+                run.Timeline.Fleets.TryAddFleet(
                     new[] { new ShipStack(screen, 2), new ShipStack(line, 1) },
                     ContentId.From("home-system"),
                     out var fleetId),
