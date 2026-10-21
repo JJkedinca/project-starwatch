@@ -107,6 +107,26 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Dispose();
         }
 
+        [Test]
+        public void ScienceApplied_DoesNotRefreshStockAmounts()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(109));
+            Assert.That(run.Timeline.Research.Offers, Is.Not.Empty);
+            Assert.That(stack.ResearchService.Start(run, run.Timeline.Research.Offers[0]).Success, Is.True);
+            var view = new FakeStockpileView();
+            var presenter = CreatePresenter(view, stack);
+            presenter.Start();
+            var industryBefore = view.Model.Get(ResourceKind.Industry).Amount;
+
+            run.Timeline.Resources.Add(ResourceKind.Industry, 7);
+            stack.ResearchService.ApplyScience(run, 2f);
+
+            Assert.That(view.Model.Get(ResourceKind.Industry).Amount, Is.EqualTo(industryBefore));
+            Assert.That(view.Model.Research.Points, Is.EqualTo(2f));
+            presenter.Dispose();
+        }
+
         private static StockpilePresenter CreatePresenter(
             FakeStockpileView view,
             OverworldTestContext stack,
@@ -135,7 +155,18 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             public void Apply(StockpileModel model)
             {
-                Model = model;
+                Model = model ?? StockpileModel.Empty;
+            }
+
+            public void ApplyResearchProgress(StockpileModel model)
+            {
+                model ??= StockpileModel.Empty;
+                Model = new StockpileModel(
+                    Model.Entries,
+                    model.Research,
+                    model.CycleSeconds,
+                    Model.ColonyLines,
+                    Model.IsEmpireStalled);
             }
         }
     }

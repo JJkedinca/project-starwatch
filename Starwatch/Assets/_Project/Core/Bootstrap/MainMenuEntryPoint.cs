@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Run;
 using UnityEngine;
 using VContainer.Unity;
@@ -13,11 +15,16 @@ namespace ProjectStarwatch.Core.Bootstrap
     {
         private readonly MainMenuViewBridge _viewBridge;
         private readonly RunStartService _runStartService;
+        private readonly ObjectDatabaseSO _database;
 
-        public MainMenuEntryPoint(MainMenuViewBridge viewBridge, RunStartService runStartService)
+        public MainMenuEntryPoint(
+            MainMenuViewBridge viewBridge,
+            RunStartService runStartService,
+            ObjectDatabaseSO database)
         {
             _viewBridge = viewBridge ?? throw new ArgumentNullException(nameof(viewBridge));
             _runStartService = runStartService ?? throw new ArgumentNullException(nameof(runStartService));
+            _database = database ?? throw new ArgumentNullException(nameof(database));
         }
 
         /// <summary>
@@ -28,6 +35,27 @@ namespace ProjectStarwatch.Core.Bootstrap
             _viewBridge.StartRunRequested += OnStartRunRequested;
             _viewBridge.QuitRequested += OnQuitRequested;
             _viewBridge.Bind();
+            _viewBridge.SetScenarios(ListScenarioIds());
+        }
+
+        private List<string> ListScenarioIds()
+        {
+            List<string> ids = new();
+            if (_database.Scenarios == null)
+            {
+                return ids;
+            }
+
+            foreach (var pair in _database.Scenarios)
+            {
+                if (!string.IsNullOrWhiteSpace(pair.Key))
+                {
+                    ids.Add(pair.Key);
+                }
+            }
+
+            ids.Sort(StringComparer.Ordinal);
+            return ids;
         }
 
         private void OnStartRunRequested()
@@ -42,7 +70,7 @@ namespace ProjectStarwatch.Core.Bootstrap
 
         /// <summary>
         /// Creates a run from the menu fields and transitions into Overworld.
-        /// Disables Start Run while a transition is in flight.
+        /// Disables Launch while a transition is in flight.
         /// </summary>
         private async UniTaskVoid StartRunAsync()
         {

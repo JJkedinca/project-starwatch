@@ -50,9 +50,10 @@ namespace ProjectStarwatch.Overworld.UI
                 entries.Add(BuildEntry(kStockpileKinds[i], ledger, quote.Output, quote.Upkeep, empireStalled));
             }
 
+            var sciencePerSecond = empireStalled ? 0f : quote.Output.Get(ResourceKind.Science);
             return new StockpileModel(
                 entries,
-                BuildResearch(run, quote.Output.Get(ResourceKind.Science)),
+                BuildResearch(run, sciencePerSecond),
                 EconomyTickSystem.kIntervalSeconds,
                 quote.Lines,
                 empireStalled);
@@ -61,6 +62,7 @@ namespace ProjectStarwatch.Overworld.UI
         private StockpileResearch BuildResearch(RunState run, float sciencePerSecond)
         {
             var progress = run.Timeline.Research;
+            var dropped = !progress.HasActive && sciencePerSecond > 0f;
             if (!progress.HasActive)
             {
                 return new StockpileResearch(
@@ -68,18 +70,32 @@ namespace ProjectStarwatch.Overworld.UI
                     hasActive: false,
                     activeName: string.Empty,
                     points: 0f,
-                    cost: 0f);
+                    cost: 0f,
+                    dropped,
+                    estimatedSecondsLeft: 0f);
             }
 
             var catalog = _objectDatabase.ResearchCatalog;
             if (catalog != null && catalog.TryGet(progress.ActiveId, out var project) && project != null)
             {
+                var eta = 0f;
+                if (sciencePerSecond > 0.0001f)
+                {
+                    eta = (project.PointCost - progress.Points) / sciencePerSecond;
+                    if (eta < 0f)
+                    {
+                        eta = 0f;
+                    }
+                }
+
                 return new StockpileResearch(
                     sciencePerSecond,
                     hasActive: true,
                     project.DisplayName,
                     progress.Points,
-                    project.PointCost);
+                    project.PointCost,
+                    scienceDropped: false,
+                    eta);
             }
 
             return new StockpileResearch(
@@ -87,7 +103,9 @@ namespace ProjectStarwatch.Overworld.UI
                 hasActive: true,
                 progress.ActiveId.Value,
                 progress.Points,
-                cost: 0f);
+                cost: 0f,
+                scienceDropped: false,
+                estimatedSecondsLeft: 0f);
         }
 
         private static StockpileEntry BuildEntry(
@@ -100,10 +118,15 @@ namespace ProjectStarwatch.Overworld.UI
             var amount = ledger.Get(kind);
             var gross = output.Get(kind);
             var upkeepRate = upkeep.Get(kind);
-            var net = gross - upkeepRate;
+            var theoreticalNet = gross - upkeepRate;
             var upkeepWhole = Whole(upkeepRate);
             var shortOnThis = upkeepWhole > amount;
-            var state = ResolveState(amount, net, shortOnThis || (empireStalled && upkeepWhole > 0));
+            // While unpaid upkeep stalls the empire, nothing is produced. Show the unpaid
+            // shortfall on the deficient resource and +0 on everything else.
+            var net = empireStalled
+                ? (shortOnThis ? -upkeepRate : 0f)
+                : theoreticalNet;
+            var state = ResolveState(amount, net, empireStalled);
             var secondsUntilEmpty = net < 0f && amount > 0
                 ? amount / -net
                 : float.PositiveInfinity;

@@ -47,6 +47,7 @@ namespace ProjectStarwatch.Overworld.UI
                 _map.SetNodeState(row.NodeId, row.State);
             }
 
+            _map.SetFleetMarkers(model.FleetMarkers);
             _inspection.Show(model.Card);
         }
 
@@ -77,6 +78,11 @@ namespace ProjectStarwatch.Overworld.UI
         public void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip)
         {
             _map.SetHoverTooltip(tooltip);
+        }
+
+        public void ApplyFleetMarkers(IReadOnlyList<FleetMarkerModel> markers)
+        {
+            _map.SetFleetMarkers(markers);
         }
 
         internal void ClickNode(ContentId nodeId)

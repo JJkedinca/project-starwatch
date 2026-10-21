@@ -65,7 +65,9 @@ namespace ProjectStarwatch.Overworld.UI
             hasActive: false,
             activeName: string.Empty,
             points: 0f,
-            cost: 0f);
+            cost: 0f,
+            scienceDropped: false,
+            estimatedSecondsLeft: 0f);
 
         public float SciencePerSecond { get; }
 
@@ -76,6 +78,10 @@ namespace ProjectStarwatch.Overworld.UI
         public float Points { get; }
 
         public float Cost { get; }
+
+        public bool ScienceDropped { get; }
+
+        public float EstimatedSecondsLeft { get; }
 
         public float ProgressFraction
         {
@@ -101,13 +107,17 @@ namespace ProjectStarwatch.Overworld.UI
             bool hasActive,
             string activeName,
             float points,
-            float cost)
+            float cost,
+            bool scienceDropped = false,
+            float estimatedSecondsLeft = 0f)
         {
             SciencePerSecond = sciencePerSecond;
             HasActive = hasActive;
             ActiveName = activeName ?? string.Empty;
             Points = points;
             Cost = cost;
+            ScienceDropped = scienceDropped;
+            EstimatedSecondsLeft = estimatedSecondsLeft < 0f ? 0f : estimatedSecondsLeft;
         }
     }
 

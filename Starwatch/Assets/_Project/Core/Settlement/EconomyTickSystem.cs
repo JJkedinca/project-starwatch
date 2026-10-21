@@ -5,7 +5,8 @@ using ProjectStarwatch.Core.Simulation;
 namespace ProjectStarwatch.Settlement
 {
     /// <summary>
-    /// Settles colony rates every simulation second, then notifies listeners once every <see cref="kIntervalSeconds"/> seconds.
+    /// Settles colony rates every simulation second. Science is handed to listeners each second;
+    /// resource-changed notifications batch once every <see cref="kIntervalSeconds"/> seconds.
     /// The ledger matches the colonies that existed during each second. The active run arrives through <see cref="ISimulationSystem.OnRunChanged"/>.
     /// </summary>
     internal sealed class EconomyTickSystem : ISimulationSystem
@@ -17,7 +18,6 @@ namespace ProjectStarwatch.Settlement
         private RunState _run;
         private float _elapsedSeconds;
         private int _pendingSeconds;
-        private float _windowScience;
         private bool _windowChanged;
 
         public EconomyTickSystem(EconomyService economyService)
@@ -42,7 +42,7 @@ namespace ProjectStarwatch.Settlement
         }
 
         /// <summary>
-        /// Runs when the 10-second window closes. The argument is the Science granted across that window.
+        /// Runs after each settled second. The argument is that second's Science output.
         /// </summary>
         internal void AfterEachSettlement(Action<float> callback)
         {
@@ -62,7 +62,8 @@ namespace ProjectStarwatch.Settlement
             {
                 _elapsedSeconds -= 1f;
                 _windowChanged |= _economyService.SettleSecond(_run);
-                _windowScience += _economyService.ProducedScience;
+                // Science every second so research progress moves with the clock.
+                _afterSettlement?.Invoke(_economyService.ProducedScience);
                 _pendingSeconds++;
                 if (_pendingSeconds < kIntervalSeconds)
                 {
@@ -76,12 +77,8 @@ namespace ProjectStarwatch.Settlement
 
         private void CloseWindow()
         {
-            // Science first so ResourceChanged listeners see updated research progress.
-            var science = _windowScience;
-            _windowScience = 0f;
             var changed = _windowChanged;
             _windowChanged = false;
-            _afterSettlement?.Invoke(science);
             if (changed)
             {
                 _economyService.PublishChanged();
@@ -92,7 +89,6 @@ namespace ProjectStarwatch.Settlement
         {
             _elapsedSeconds = 0f;
             _pendingSeconds = 0;
-            _windowScience = 0f;
             _windowChanged = false;
             _economyService.ClearOutputRemainder();
         }

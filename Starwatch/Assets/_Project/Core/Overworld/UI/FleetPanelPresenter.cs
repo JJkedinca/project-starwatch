@@ -15,8 +15,6 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     internal sealed class FleetPanelPresenter : IStartable, IDisposable
     {
-        private const float kRefreshSeconds = 1f;
-
         private readonly IFleetPanelView _detailsView;
         private readonly IFleetBarView _barView;
         private readonly OverworldSelection _selection;
@@ -27,8 +25,7 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly SimulationClock _clock;
         private readonly DomainEventBus _events;
         private readonly List<IDisposable> _subscriptions = new();
-        private bool _transitActive;
-        private double _nextRefresh;
+        private readonly TransitCountdown _countdown = new();
 
         public FleetPanelPresenter(
             IFleetPanelView detailsView,
@@ -111,7 +108,7 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             var result = _fleetService.Split(run, _selection.SelectedFleetId, classId, count, out _);
-            _status.Post(result.Success ? "Fleet split." : result.Error.Message);
+            _status.PostCommand(result.Success, "Fleet split.", result.Error.Message);
         }
 
         private void OnMergeRequested(EntityId sourceFleetId)
@@ -123,7 +120,7 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             var result = _fleetService.Merge(run, _selection.SelectedFleetId, sourceFleetId);
-            _status.Post(result.Success ? "Fleet merged." : result.Error.Message);
+            _status.PostCommand(result.Success, "Fleet merged.", result.Error.Message);
         }
 
         private void OnSelectionChanged()
@@ -133,25 +130,16 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void OnTimeAdvanced(GameTime time, float deltaSeconds)
         {
-            if (!_transitActive || deltaSeconds <= 0f || time.Seconds + 0.0001d < _nextRefresh)
+            if (_countdown.ShouldRefresh(time, deltaSeconds))
             {
-                return;
+                Apply();
             }
-
-            _nextRefresh = time.Seconds + kRefreshSeconds;
-            Apply();
         }
 
         private void Apply()
         {
             var model = _query.Describe(CurrentRun(), _selection);
-            var traveling = model.HasFleet && model.Route.IsTraveling;
-            if (traveling && !_transitActive)
-            {
-                _nextRefresh = _clock.CurrentTime.Seconds + kRefreshSeconds;
-            }
-
-            _transitActive = traveling;
+            _countdown.SetTraveling(model.HasFleet && model.Route.IsTraveling, _clock);
             _barView.Apply(model);
             _detailsView.Apply(model);
         }

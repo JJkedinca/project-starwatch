@@ -45,17 +45,20 @@ namespace ProjectStarwatch.Overworld.UI
             for (var i = 0; i < fleet.Stacks.Count; i++)
             {
                 var stack = fleet.Stacks[i];
-                stacks.Add(new FleetStackRow(stack.ClassId, stack.Count, ClassName(stack.ClassId)));
+                stacks.Add(new FleetStackRow(
+                    stack.ClassId,
+                    stack.Count,
+                    OverworldNames.ShipClass(_database, stack.ClassId)));
             }
 
             var traveling = TryGetTravel(run, fleet.Id, out var travel);
             var destinationId = traveling ? travel.ToNodeId : default;
             var route = new FleetRouteModel(
                 fleet.LocationSystemId,
-                LocationName(fleet.LocationSystemId),
+                OverworldNames.StarSystem(_database, fleet.LocationSystemId),
                 destinationId,
-                traveling ? LocationName(destinationId) : string.Empty,
-                traveling ? RemainingSeconds(travel.ArriveTime) : 0f,
+                traveling ? OverworldNames.StarSystem(_database, destinationId) : string.Empty,
+                traveling ? OverworldNames.RemainingSeconds(_clock, travel.ArriveTime) : 0f,
                 traveling);
             return new FleetPanelModel(
                 hasFleet: true,
@@ -84,17 +87,6 @@ namespace ProjectStarwatch.Overworld.UI
             return false;
         }
 
-        private float RemainingSeconds(GameTime arriveTime)
-        {
-            if (_clock == null)
-            {
-                return 0f;
-            }
-
-            var remaining = arriveTime.Seconds - _clock.CurrentTime.Seconds;
-            return remaining > 0d ? (float)remaining : 0f;
-        }
-
         private static List<FleetMergeCandidate> MergeCandidates(RunState run, FleetComposition fleet, bool traveling)
         {
             List<FleetMergeCandidate> candidates = new();
@@ -118,32 +110,6 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             return candidates;
-        }
-
-        private string ClassName(ContentId classId)
-        {
-            if (_database == null
-                || _database.ShipCatalog == null
-                || !_database.ShipCatalog.TryGet(classId, out var shipClass)
-                || shipClass == null
-                || string.IsNullOrEmpty(shipClass.DisplayName))
-            {
-                return classId.Value;
-            }
-
-            return shipClass.DisplayName;
-        }
-
-        private string LocationName(ContentId locationId)
-        {
-            if (_database != null
-                && _database.TryGetStarSystem(locationId.Value, out var system)
-                && !string.IsNullOrEmpty(system.DisplayName))
-            {
-                return system.DisplayName;
-            }
-
-            return locationId.Value;
         }
     }
 }

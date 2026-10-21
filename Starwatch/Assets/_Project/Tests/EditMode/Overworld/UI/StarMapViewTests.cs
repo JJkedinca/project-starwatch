@@ -5,6 +5,7 @@ using ProjectStarwatch.Overworld.UI;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UIElements;
+using EntityId = ProjectStarwatch.Core.Identifiers.EntityId;
 
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
@@ -28,8 +29,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(map.NodeCount, Is.EqualTo(2));
             Assert.That(map.HasNode(ContentId.From("home-system")), Is.True);
-            // Route layer + two node elements.
-            Assert.That(surface.childCount, Is.EqualTo(3));
+            // Route layer + fleet-marker layer + tooltip + two node elements.
+            Assert.That(surface.childCount, Is.EqualTo(5));
         }
 
         [Test]
@@ -109,62 +110,32 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         }
 
         [Test]
-        public void SetNodeState_ShowsOrbitWhenFleetIsInSystem()
+        public void SetFleetMarkers_CreatesOneElementPerMarker()
         {
             var surface = new VisualElement();
             var map = new StarMapView();
             map.Bind(surface);
-            var nodeId = ContentId.From("home-system");
             map.Rebuild(new[]
             {
-                new StarMapNodeModel(nodeId, MapNodeKind.System, Vector2.zero, default),
+                new StarMapNodeModel(ContentId.From("home-system"), MapNodeKind.System, Vector2.zero, default),
             });
 
-            var orbit = surface.Q<Button>("node-home-system").Q<VisualElement>("fleet-orbit");
-            Assert.That(orbit.ClassListContains("map-node__orbit--visible"), Is.False);
-
-            map.SetNodeState(
-                nodeId,
-                new MapNodePresentationState(
-                    MapNodeVisibility.Present,
-                    isExplorable: false,
-                    isSelected: false,
-                    hasFleet: true,
-                    isFleetTraveling: false,
-                    revealedLabel: "home-system"));
-
-            Assert.That(orbit.ClassListContains("map-node__orbit--visible"), Is.True);
-            Assert.That(orbit.ClassListContains("map-node__orbit--traveling"), Is.False);
-            Assert.That(
-                orbit.Q<VisualElement>("fleet-marker").ClassListContains("map-node__fleet--visible"),
-                Is.True);
-        }
-
-        [Test]
-        public void SetNodeState_MarksOrbitTravelingWhileFleetDeparts()
-        {
-            var surface = new VisualElement();
-            var map = new StarMapView();
-            map.Bind(surface);
-            var nodeId = ContentId.From("home-system");
-            map.Rebuild(new[]
+            map.SetFleetMarkers(new[]
             {
-                new StarMapNodeModel(nodeId, MapNodeKind.System, Vector2.zero, default),
+                new FleetMarkerModel(
+                    FleetMarkerKind.Parked,
+                    EntityId.None,
+                    ContentId.From("home-system"),
+                    default,
+                    Vector2.zero,
+                    Vector2.zero,
+                    count: 2,
+                    isSelected: true,
+                    remainingSeconds: 0f,
+                    totalSeconds: 0f),
             });
 
-            map.SetNodeState(
-                nodeId,
-                new MapNodePresentationState(
-                    MapNodeVisibility.Present,
-                    isExplorable: false,
-                    isSelected: false,
-                    hasFleet: true,
-                    isFleetTraveling: true,
-                    revealedLabel: "home-system"));
-
-            var orbit = surface.Q<Button>("node-home-system").Q<VisualElement>("fleet-orbit");
-            Assert.That(orbit.ClassListContains("map-node__orbit--visible"), Is.True);
-            Assert.That(orbit.ClassListContains("map-node__orbit--traveling"), Is.True);
+            Assert.That(map.FleetMarkerCount, Is.EqualTo(1));
         }
     }
 }

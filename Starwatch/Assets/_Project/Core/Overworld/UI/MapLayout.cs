@@ -16,12 +16,14 @@ namespace ProjectStarwatch.Overworld.UI
         /// </summary>
         internal const float kNodeSize = 56f;
 
-        /// <summary>
-        /// Gap between the map-node edge and the fleet orbit ring.
-        /// </summary>
-        internal const float kFleetOrbitOutset = 8f;
+        internal const float kFleetMarkerWidth = 14f;
 
-        internal const float kFleetPipSize = 8f;
+        internal const float kFleetMarkerHeight = 16f;
+
+        /// <summary>
+        /// Gap between the node top edge and a parked fleet arrow.
+        /// </summary>
+        internal const float kFleetMarkerParkedGap = 4f;
 
         internal const float kRoutePad = 4f;
 

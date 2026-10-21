@@ -7,7 +7,7 @@ namespace ProjectStarwatch.Research
 {
     /// <summary>
     /// Hears run and timeline changes from the simulation loop. Science is taken from
-    /// <see cref="EconomyTickSystem"/> once when each 10-second window closes.
+    /// <see cref="EconomyTickSystem"/> after each settled second.
     /// </summary>
     internal sealed class ResearchTickSystem : ISimulationSystem
     {
@@ -44,7 +44,7 @@ namespace ProjectStarwatch.Research
         }
 
         /// <summary>
-        /// Called once when the 10-second window closes, including a window that produced zero Science.
+        /// Called after each settled second, including a second that produced zero Science.
         /// </summary>
         public void Consume(float science)
         {

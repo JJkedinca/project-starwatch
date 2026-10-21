@@ -10,7 +10,7 @@ using ProjectStarwatch.Overworld.Services;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Read model for the open star system and the selected planet.
+    /// Read model for the open star system scene.
     /// </summary>
     internal sealed class StarSystemQuery
     {
@@ -29,7 +29,7 @@ namespace ProjectStarwatch.Overworld.UI
         }
 
         /// <summary>
-        /// Title, visible planets, selected planet detail, and the status line for an open system.
+        /// Title, visible planets, fleets in system, and the status line for an open system.
         /// </summary>
         internal StarSystemModel Describe(RunState run, OverworldSelection selection)
         {
@@ -53,14 +53,11 @@ namespace ProjectStarwatch.Overworld.UI
                     PlanetState(run, node, planetId, selection.SelectedPlanetId)));
             }
 
-            var showDetail = TryPlanetDetail(run, node, selection.SelectedPlanetId, out var detail);
             return new StarSystemModel(
                 true,
                 NodeLabel(node),
                 planets,
                 _fleetListQuery.AtLocation(run, node.Id, selection.SelectedFleetId),
-                showDetail,
-                detail,
                 StarSystemStatus(planets.Count));
         }
 
@@ -111,47 +108,6 @@ namespace ProjectStarwatch.Overworld.UI
                 visibility,
                 isSelected: planetId == selectedPlanetId,
                 DisplayName(planetId));
-        }
-
-        private bool TryPlanetDetail(
-            RunState run,
-            MapNode node,
-            ContentId selectedPlanetId,
-            out PlanetDetailModel detail)
-        {
-            detail = default;
-            if (selectedPlanetId.IsEmpty)
-            {
-                return false;
-            }
-
-            var planetVisibility = _visibilityService.GetPlanetVisibility(
-                run.Archive,
-                ObserverId.Player,
-                node.Id,
-                selectedPlanetId);
-            if (planetVisibility == PlanetVisibility.Hidden)
-            {
-                return false;
-            }
-
-            var displayName = DisplayName(selectedPlanetId);
-            var text = "Ready to scan.";
-            var canScan = planetVisibility == PlanetVisibility.SystemExplored;
-            if (_objectDatabase.TryGetPlanet(selectedPlanetId.Value, out var definition))
-            {
-                if (planetVisibility == PlanetVisibility.Scanned)
-                {
-                    text = definition.Summary;
-                }
-            }
-            else if (planetVisibility == PlanetVisibility.Scanned)
-            {
-                text = "Scanned.";
-            }
-
-            detail = new PlanetDetailModel(selectedPlanetId, displayName, text, canScan);
-            return true;
         }
 
         private string DisplayName(ContentId planetId)

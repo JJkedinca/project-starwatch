@@ -82,10 +82,17 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             var model = query.Describe(run);
             var energy = model.Get(ResourceKind.Energy);
+            var industry = model.Get(ResourceKind.Industry);
 
             Assert.That(model.IsEmpireStalled, Is.True);
             Assert.That(energy.Amount, Is.EqualTo(0));
             Assert.That(energy.State, Is.EqualTo(StockpileState.Stalled));
+            // Unpaid upkeep: show the shortfall, not the theoretical net.
+            Assert.That(energy.NetPerSecond, Is.EqualTo(-energy.UpkeepPerSecond));
+            // Other resources are paused too — not their green theoretical rates.
+            Assert.That(industry.State, Is.EqualTo(StockpileState.Stalled));
+            Assert.That(industry.GrossPerSecond, Is.GreaterThan(0f));
+            Assert.That(industry.NetPerSecond, Is.EqualTo(0f));
         }
 
         private static RunState PlaceIndustry(OverworldTestContext stack, int seed)

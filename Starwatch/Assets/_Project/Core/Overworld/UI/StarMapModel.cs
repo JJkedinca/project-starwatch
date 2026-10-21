@@ -50,7 +50,8 @@ namespace ProjectStarwatch.Overworld.UI
     internal readonly struct StarMapCardModel
     {
         public static StarMapCardModel Empty { get; } = new(
-            false,
+            isShown: true,
+            hasSelection: false,
             string.Empty,
             false,
             false,
@@ -60,6 +61,24 @@ namespace ProjectStarwatch.Overworld.UI
             string.Empty,
             0f,
             false);
+
+        /// <summary>
+        /// Hidden while a star system is open — the system header already shows that info.
+        /// </summary>
+        public static StarMapCardModel Hidden { get; } = new(
+            isShown: false,
+            hasSelection: false,
+            string.Empty,
+            false,
+            false,
+            0,
+            0,
+            StarMapFleetRelation.NoneSelected,
+            string.Empty,
+            0f,
+            false);
+
+        public bool IsShown { get; }
 
         public bool HasSelection { get; }
 
@@ -99,7 +118,35 @@ namespace ProjectStarwatch.Overworld.UI
             string fleetName,
             float relationSeconds,
             bool showTravelHint)
+            : this(
+                isShown: true,
+                hasSelection,
+                title,
+                isExplored,
+                hasFleetPresent,
+                bodyCount,
+                scannedBodyCount,
+                fleetRelation,
+                fleetName,
+                relationSeconds,
+                showTravelHint)
         {
+        }
+
+        private StarMapCardModel(
+            bool isShown,
+            bool hasSelection,
+            string title,
+            bool isExplored,
+            bool hasFleetPresent,
+            int bodyCount,
+            int scannedBodyCount,
+            StarMapFleetRelation fleetRelation,
+            string fleetName,
+            float relationSeconds,
+            bool showTravelHint)
+        {
+            IsShown = isShown;
             HasSelection = hasSelection;
             Title = title ?? string.Empty;
             IsExplored = isExplored;
@@ -147,7 +194,8 @@ namespace ProjectStarwatch.Overworld.UI
             Array.Empty<StarMapNodeModel>(),
             Array.Empty<MapRouteSegment>(),
             StarMapCardModel.Empty,
-            Array.Empty<FleetRowModel>());
+            Array.Empty<FleetRowModel>(),
+            Array.Empty<FleetMarkerModel>());
 
         public bool HasRun { get; }
 
@@ -158,6 +206,8 @@ namespace ProjectStarwatch.Overworld.UI
         public StarMapCardModel Card { get; }
 
         public IReadOnlyList<FleetRowModel> Fleets { get; }
+
+        public IReadOnlyList<FleetMarkerModel> FleetMarkers { get; }
 
         public bool HasSelection => Card.HasSelection;
 
@@ -172,13 +222,15 @@ namespace ProjectStarwatch.Overworld.UI
             IReadOnlyList<StarMapNodeModel> nodes,
             IReadOnlyList<MapRouteSegment> routes,
             StarMapCardModel card,
-            IReadOnlyList<FleetRowModel> fleets)
+            IReadOnlyList<FleetRowModel> fleets,
+            IReadOnlyList<FleetMarkerModel> fleetMarkers)
         {
             HasRun = hasRun;
             Nodes = nodes ?? Array.Empty<StarMapNodeModel>();
             Routes = routes ?? Array.Empty<MapRouteSegment>();
             Card = card;
             Fleets = fleets ?? Array.Empty<FleetRowModel>();
+            FleetMarkers = fleetMarkers ?? Array.Empty<FleetMarkerModel>();
         }
     }
 }

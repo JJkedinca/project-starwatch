@@ -165,5 +165,25 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(selection.SelectedFleetId.IsNone, Is.True);
             Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.Target));
         }
+
+        [Test]
+        public void OpenResearch_ReplacesFleetDetails()
+        {
+            var selection = new OverworldSelection();
+            selection.SelectFleet(new EntityId(2));
+            selection.OpenFleetDetails();
+
+            selection.OpenResearch();
+
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.Research));
+
+            selection.OpenFleetDetails();
+
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.FleetDetails));
+
+            selection.CloseFleetDetails();
+
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.Target));
+        }
     }
 }

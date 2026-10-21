@@ -3,10 +3,11 @@ using UnityEngine.UIElements;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Target card for the selected star map node.
+    /// Target card for the selected star map node. Hidden while a star system is open.
     /// </summary>
     internal sealed class StarSystemInspectionView
     {
+        private VisualElement _root;
         private Label _title;
         private VisualElement _chips;
         private Label _bodies;
@@ -24,6 +25,7 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
+            _root = root;
             _title = root.Q<Label>("inspection-title");
             _chips = root.Q<VisualElement>("inspection-chips");
             _bodies = root.Q<Label>("inspection-bodies");
@@ -33,10 +35,15 @@ namespace ProjectStarwatch.Overworld.UI
         }
 
         /// <summary>
-        /// Shows empty selection state.
+        /// Shows empty selection state on the star map.
         /// </summary>
         public void ShowEmpty()
         {
+            if (_root != null)
+            {
+                _root.style.display = DisplayStyle.Flex;
+            }
+
             if (_title != null)
             {
                 _title.text = "Select a star system";
@@ -50,14 +57,29 @@ namespace ProjectStarwatch.Overworld.UI
         }
 
         /// <summary>
-        /// Applies the selected-node card.
+        /// Applies the selected-node card, or hides while a star system is open.
         /// </summary>
         public void Show(StarMapCardModel card)
         {
+            if (!card.IsShown)
+            {
+                if (_root != null)
+                {
+                    _root.style.display = DisplayStyle.None;
+                }
+
+                return;
+            }
+
             if (!card.HasSelection)
             {
                 ShowEmpty();
                 return;
+            }
+
+            if (_root != null)
+            {
+                _root.style.display = DisplayStyle.Flex;
             }
 
             if (_title != null)

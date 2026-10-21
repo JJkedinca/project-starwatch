@@ -77,15 +77,15 @@ namespace ProjectStarwatch.Overworld.UI
         {
             var traveling = TryGetTravel(run, fleet.Id, out var travel);
             var destinationId = traveling ? travel.ToNodeId : default;
-            var locationName = LocationName(fleet.LocationSystemId);
-            var title = CompositionTitle(fleet);
+            var locationName = OverworldNames.StarSystem(_database, fleet.LocationSystemId);
+            var title = OverworldNames.FleetTitle(_database, fleet);
             var speed = FleetSpeed.Effective(fleet, _database, _effectQuery);
             var route = new FleetRouteModel(
                 fleet.LocationSystemId,
                 locationName,
                 destinationId,
-                traveling ? LocationName(destinationId) : string.Empty,
-                traveling ? RemainingSeconds(travel.ArriveTime) : 0f,
+                traveling ? OverworldNames.StarSystem(_database, destinationId) : string.Empty,
+                traveling ? OverworldNames.RemainingSeconds(_clock, travel.ArriveTime) : 0f,
                 traveling);
             return new FleetRowModel(
                 fleet.Id,
@@ -112,12 +112,6 @@ namespace ProjectStarwatch.Overworld.UI
             return false;
         }
 
-        private float RemainingSeconds(GameTime arriveTime)
-        {
-            var remaining = arriveTime.Seconds - _clock.CurrentTime.Seconds;
-            return remaining > 0d ? (float)remaining : 0f;
-        }
-
         private static string Label(string title, string locationName, bool traveling, float speed)
         {
             var label = title + " · " + locationName;
@@ -127,51 +121,6 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             return label + " · speed " + speed.ToString("0.##");
-        }
-
-        private string CompositionTitle(FleetComposition fleet)
-        {
-            if (fleet.Stacks.Count == 0)
-            {
-                return "Fleet";
-            }
-
-            var title = StackText(fleet.Stacks[0]);
-            for (var i = 1; i < fleet.Stacks.Count; i++)
-            {
-                title += ", " + StackText(fleet.Stacks[i]);
-            }
-
-            return title;
-        }
-
-        private string StackText(ShipStack stack)
-        {
-            return stack.Count + " " + ClassName(stack.ClassId);
-        }
-
-        private string ClassName(ContentId classId)
-        {
-            if (_database.ShipCatalog != null
-                && _database.ShipCatalog.TryGet(classId, out var shipClass)
-                && shipClass != null
-                && !string.IsNullOrEmpty(shipClass.DisplayName))
-            {
-                return shipClass.DisplayName;
-            }
-
-            return classId.Value;
-        }
-
-        private string LocationName(ContentId locationId)
-        {
-            if (_database.TryGetStarSystem(locationId.Value, out var system)
-                && !string.IsNullOrEmpty(system.DisplayName))
-            {
-                return system.DisplayName;
-            }
-
-            return locationId.Value;
         }
     }
 }

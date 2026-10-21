@@ -111,12 +111,7 @@ namespace ProjectStarwatch.Overworld.UI
 
         private static string Name(FleetPanelModel model)
         {
-            if (model.Stacks.Count == 0)
-            {
-                return "Fleet";
-            }
-
-            return model.Stacks[0].DisplayName + (model.Stacks.Count > 1 ? " fleet" : string.Empty);
+            return OverworldNames.FleetTitle(model.Stacks);
         }
 
         private static string Status(FleetPanelModel model)

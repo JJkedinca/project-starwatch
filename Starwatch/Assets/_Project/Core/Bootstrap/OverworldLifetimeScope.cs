@@ -62,6 +62,7 @@ namespace ProjectStarwatch.Core.Bootstrap
             builder.Register<FleetRosterPresenter>(Lifetime.Scoped);
             builder.Register<FleetPanelPresenter>(Lifetime.Scoped);
             builder.Register<ShipyardPresenter>(Lifetime.Scoped);
+            builder.Register<OverworldToastPresenter>(Lifetime.Scoped);
             builder.RegisterEntryPoint<OverworldScreenBinder>(Lifetime.Scoped);
         }
     }

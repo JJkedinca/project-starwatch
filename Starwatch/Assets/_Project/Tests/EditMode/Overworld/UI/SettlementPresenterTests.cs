@@ -34,12 +34,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var view = new FakeSettlementView();
             var presenter = CreatePresenter(view, selection, status, stack);
             presenter.Start();
-            var beforeFounding = status.Text;
 
             view.ClickFoundOutpost();
 
-            Assert.That(status.Text, Is.Not.EqualTo(beforeFounding));
-            Assert.That(status.Text, Is.Not.Empty);
+            // Founding success toasts are owned by OverworldToastPresenter (domain event).
             Assert.That(run.Timeline.TryGetColony(prime, out var colony), Is.True);
             Assert.That(colony.Presence, Is.EqualTo(ColonyPresence.Outpost));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(70));
@@ -66,7 +64,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 new OverworldStatus(),
                 stack.Manager,
                 stack.TravelService,
-                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery, database),
+                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery, database, stack.Clock),
                 new StarSystemQuery(stack.VisibilityService, database, fleetListQuery),
                 stack.Events);
             var settlementPresenter = CreatePresenter(settlement, selection, new OverworldStatus(), stack);
@@ -156,7 +154,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var view = new FakeSettlementView();
             var presenter = CreatePresenter(view, selection, status, stack);
             presenter.Start();
-            status.Post(OverworldStatus.kMapHint);
+            status.Post("keep this toast");
             var beforeCommand = status.Text;
 
             view.ClickFoundOutpost();
@@ -164,6 +162,32 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(80));
             Assert.That(status.Text, Is.EqualTo(beforeCommand));
             Assert.That(view.Model.ShowPanel, Is.False);
+            presenter.Dispose();
+        }
+
+        [Test]
+        public void Scan_PostsDisplayNameAndClearsCanScan()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(49));
+            var prime = ContentId.From("home-prime");
+            var selection = new OverworldSelection();
+            selection.EnterSystem(ContentId.From("home-system"));
+            selection.SelectPlanet(prime);
+            var status = new OverworldStatus();
+            var view = new FakeSettlementView();
+            var presenter = CreatePresenter(view, selection, status, stack);
+            presenter.Start();
+            Assert.That(view.Model.Header.CanScan, Is.True);
+            var database = RunTestFixture.CreateObjectDatabase();
+            Assert.That(database.TryGetPlanet(prime.Value, out var planet), Is.True);
+
+            view.ClickScan();
+
+            Assert.That(status.Text, Does.Contain(planet.DisplayName));
+            Assert.That(status.Text, Does.Not.Contain(prime.Value));
+            Assert.That(view.Model.Header.CanScan, Is.False);
+            Assert.That(view.Model.Header.IsScanned, Is.True);
             presenter.Dispose();
         }
 
@@ -207,7 +231,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 stack.Manager,
                 stack.SettlementService,
                 stack.BuildingService,
-                new SettlementQuery(database, new ProductionService(database, stack.Effects)),
+                stack.SensorService,
+                database,
+                new SettlementQuery(
+                    database,
+                    new ProductionService(database, stack.Effects),
+                    stack.ShipProductionService),
                 stack.Events);
         }
 
@@ -253,6 +282,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             public void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip)
             {
             }
+
+            public void ApplyFleetMarkers(IReadOnlyList<FleetMarkerModel> markers)
+            {
+            }
         }
 
         private sealed class FakeSettlementView : ISettlementView
@@ -270,6 +303,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 add { }
                 remove { }
             }
+
+            public event Action ScanRequested;
 
             public event Action<ContentId> PlaceRequested
             {
@@ -296,6 +331,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             public void ClickFoundOutpost()
             {
                 FoundOutpostRequested?.Invoke();
+            }
+
+            public void ClickScan()
+            {
+                ScanRequested?.Invoke();
             }
         }
     }

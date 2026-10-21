@@ -14,6 +14,11 @@
     --star-rim: rgb(255, 246, 220);
 }
 
+/*
+ * Screen stack (back → front). Unity 6 USS has no z-index; later siblings paint on top.
+ * Overworld.root order: top-bar-slot → content → top-bar (chrome) → toast-stack → (future modal).
+ */
+
 .hud-panel {
     background-color: var(--panel-bg);
     border-width: 1px;

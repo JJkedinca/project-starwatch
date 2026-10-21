@@ -9,7 +9,7 @@ using NUnit.Framework;
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
-    /// Star system read model: visible planets and the selected planet's detail.
+    /// Star system read model: visible planets and selection state.
     /// </summary>
     public sealed class StarSystemQueryTests
     {
@@ -30,11 +30,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(query.VisiblePlanets(run, RequireNode(run, belt)), Is.Empty);
             Assert.That(model.IsOpen, Is.True);
             Assert.That(model.Planets, Is.Empty);
-            Assert.That(model.ShowPlanetDetail, Is.False);
         }
 
         [Test]
-        public void Describe_UsesAuthoredNameAndScanCopy()
+        public void Describe_MarksSelectedPlanetAndAuthoredName()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(45));
@@ -51,23 +50,18 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             selection.SelectPlanet(prime);
 
             var row = query.PlanetState(run, home, prime, prime);
-            var ready = query.Describe(run, selection);
+            var model = query.Describe(run, selection);
 
             Assert.That(row.DisplayName, Is.EqualTo(planet.DisplayName));
             Assert.That(row.IsSelected, Is.True);
             Assert.That(row.Visibility, Is.EqualTo(PlanetVisibility.SystemExplored));
-            Assert.That(ready.ShowPlanetDetail, Is.True);
-            Assert.That(ready.PlanetDetail.PlanetId, Is.EqualTo(prime));
-            Assert.That(ready.PlanetDetail.DisplayName, Is.EqualTo(planet.DisplayName));
-            Assert.That(ready.PlanetDetail.CanScan, Is.True);
-            Assert.That(ready.PlanetDetail.Detail, Is.Not.EqualTo(planet.Summary));
-            Assert.That(ready.Title, Is.EqualTo(home.Id.Value));
+            Assert.That(model.IsOpen, Is.True);
+            Assert.That(model.Title, Is.EqualTo(home.Id.Value));
+            Assert.That(model.Planets, Has.Some.Matches<StarSystemPlanetModel>(
+                planetRow => planetRow.PlanetId == prime && planetRow.State.IsSelected));
 
             stack.SensorService.ScanPlanet(run, ObserverId.Player, prime);
-            var scanned = query.Describe(run, selection);
 
-            Assert.That(scanned.PlanetDetail.Detail, Is.EqualTo(planet.Summary));
-            Assert.That(scanned.PlanetDetail.CanScan, Is.False);
             Assert.That(
                 query.PlanetState(run, home, prime, default(ContentId)).Visibility,
                 Is.EqualTo(PlanetVisibility.Scanned));

@@ -74,13 +74,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(81));
             var view = new FakeResearchView();
             var status = new OverworldStatus();
-            var presenter = new ResearchPresenter(
-                view,
-                status,
-                stack.Manager,
-                stack.ResearchService,
-                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService),
-                stack.Events);
+            var presenter = CreatePresenter(view, new OverworldSelection(), status, stack);
             presenter.Start();
             var first = view.Model.Offers[0].Id;
 
@@ -92,7 +86,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 RunTestFixture.CreateObjectDatabase().ResearchCatalog.TryGet(first, out var started),
                 Is.True);
             Assert.That(view.Model.ActiveEffectText, Is.EqualTo(ResearchEffectText.Describe(started.Effect)));
-            Assert.That(view.Model.Offers[0].CanStart, Is.False);
+            // Offers stay startable so the player can click through to PromptSwitch.
+            Assert.That(view.Model.Offers[0].CanStart, Is.True);
             Assert.That(run.Timeline.Research.ActiveId, Is.EqualTo(first));
 
             var other = view.Model.Offers[0].Id;
@@ -114,13 +109,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(84));
             var view = new FakeResearchView();
-            var presenter = new ResearchPresenter(
-                view,
-                new OverworldStatus(),
-                stack.Manager,
-                stack.ResearchService,
-                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService),
-                stack.Events);
+            var selection = new OverworldSelection();
+            var presenter = CreatePresenter(view, selection, new OverworldStatus(), stack);
             presenter.Start();
             var afterStart = view.ApplyCount;
 
@@ -129,8 +119,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(view.ApplyCount, Is.EqualTo(afterStart));
 
-            view.Open();
+            view.RaiseToggle();
 
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.Research));
+            Assert.That(view.IsOpen, Is.True);
             Assert.That(view.ApplyCount, Is.EqualTo(afterStart + 1));
 
             stack.EconomyService.ApplyTick(stack.Manager.CurrentRun);
@@ -147,13 +139,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(86));
             var view = new FakeResearchView();
-            var presenter = new ResearchPresenter(
-                view,
-                new OverworldStatus(),
-                stack.Manager,
-                stack.ResearchService,
-                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService),
-                stack.Events);
+            var presenter = CreatePresenter(view, new OverworldSelection(), new OverworldStatus(), stack);
             presenter.Start();
             var first = view.Model.Offers[0].Id;
             view.RaiseStart(first);
@@ -168,17 +154,57 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Dispose();
         }
 
+        [Test]
+        public void OpenResearch_ReplacesFleetDetailsInTheRightColumn()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(87));
+            var selection = new OverworldSelection();
+            selection.SelectFleet(new EntityId(3));
+            selection.OpenFleetDetails();
+            var view = new FakeResearchView();
+            var presenter = CreatePresenter(view, selection, new OverworldStatus(), stack);
+            presenter.Start();
+
+            view.RaiseToggle();
+
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.Research));
+            Assert.That(view.IsOpen, Is.True);
+
+            view.RaiseToggle();
+
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.Target));
+            Assert.That(view.IsOpen, Is.False);
+            presenter.Dispose();
+        }
+
+        private static ResearchPresenter CreatePresenter(
+            FakeResearchView view,
+            OverworldSelection selection,
+            OverworldStatus status,
+            OverworldTestContext stack)
+        {
+            return new ResearchPresenter(
+                view,
+                selection,
+                status,
+                stack.Manager,
+                stack.ResearchService,
+                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService),
+                stack.Events);
+        }
+
         private sealed class FakeResearchView : IResearchView
         {
             public event System.Action<ContentId> StartRequested;
 
             public event System.Action<ContentId> SwitchConfirmed;
 
-            public event System.Action Opened;
+            public event System.Action ToggleRequested;
 
             public ContentId PromptedId { get; private set; }
 
-            public bool IsOpen { get; set; }
+            public bool IsOpen { get; private set; }
 
             public ResearchPanelModel Model { get; private set; }
 
@@ -190,10 +216,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 Model = model;
             }
 
-            public void Open()
+            public void SetOpen(bool open)
             {
-                IsOpen = true;
-                Opened?.Invoke();
+                IsOpen = open;
             }
 
             public void PromptSwitch(ContentId researchId)
@@ -209,6 +234,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             public void RaiseStart(ContentId researchId)
             {
                 StartRequested?.Invoke(researchId);
+            }
+
+            public void RaiseToggle()
+            {
+                ToggleRequested?.Invoke();
             }
 
             public void ConfirmSwitch()

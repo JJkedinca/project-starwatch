@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Research offers, the active project, and completed research. The stockpile button opens and closes it. One authored button per <see cref="ResearchOfferSelector.kSlotCount"/>.
+    /// Research offers in the right column. The stockpile entry toggles it over the target / settlement.
     /// </summary>
     internal sealed class ResearchPanelView : IResearchView
     {
@@ -15,7 +15,7 @@ namespace ProjectStarwatch.Overworld.UI
 
         public event Action<ContentId> SwitchConfirmed;
 
-        public event Action Opened;
+        public event Action ToggleRequested;
 
         public bool IsOpen => _open;
 
@@ -45,7 +45,7 @@ namespace ProjectStarwatch.Overworld.UI
             _entry = entry;
             if (_entry != null)
             {
-                _entry.clicked += Toggle;
+                _entry.clicked += () => ToggleRequested?.Invoke();
             }
 
             for (var i = 0; i < ResearchOfferSelector.kSlotCount; i++)
@@ -58,6 +58,12 @@ namespace ProjectStarwatch.Overworld.UI
             _completed = panel.Q<Label>("research-completed");
             _hover = panel.Q<Label>("research-hover");
             _confirm = panel.Q<VisualElement>("research-confirm");
+            var close = panel.Q<Button>("research-close");
+            if (close != null)
+            {
+                close.clicked += () => ToggleRequested?.Invoke();
+            }
+
             var confirmYes = panel.Q<Button>("research-confirm-yes");
             var confirmNo = panel.Q<Button>("research-confirm-no");
             if (confirmYes != null)
@@ -92,12 +98,27 @@ namespace ProjectStarwatch.Overworld.UI
             }
         }
 
+        public void SetOpen(bool open)
+        {
+            _open = open;
+            if (_panel != null)
+            {
+                _panel.style.display = open ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (!open)
+            {
+                HideHover();
+                HideConfirm();
+            }
+        }
+
         public void Apply(ResearchPanelModel model)
         {
             model ??= ResearchPanelModel.Empty;
             if (_entry != null)
             {
-                _entry.text = model.HasActive ? "Researching" : "no Active Research";
+                _entry.text = model.HasActive ? "Researching" : "No Active Research";
             }
 
             ApplyOffers(model.Offers);
@@ -106,29 +127,6 @@ namespace ProjectStarwatch.Overworld.UI
             Set(_dropped, model.ScienceDropped ? "Science is being dropped. Start a project to use it." : string.Empty);
             Set(_completed, CompletedText(model));
             _completedEffect = model.CompletedTooltip ?? string.Empty;
-        }
-
-        private void Toggle()
-        {
-            SetOpen(!_open);
-            if (_open)
-            {
-                Opened?.Invoke();
-            }
-            else
-            {
-                HideHover();
-                HideConfirm();
-            }
-        }
-
-        private void SetOpen(bool open)
-        {
-            _open = open;
-            if (_panel != null)
-            {
-                _panel.style.display = open ? DisplayStyle.Flex : DisplayStyle.None;
-            }
         }
 
         private void BindOffer(Button button, int slot)
@@ -165,9 +163,27 @@ namespace ProjectStarwatch.Overworld.UI
                     continue;
                 }
 
-                button.text = shown ? offer.Name : string.Empty;
+                if (shown)
+                {
+                    var eta = offer.EstimatedSeconds > 0f
+                        ? " · ~" + offer.EstimatedSeconds.ToString("0.#") + "s"
+                        : string.Empty;
+                    button.text = offer.Domain + "\n" + offer.Name + "\n⚗ " + offer.Cost.ToString("0.#") + eta;
+                    button.tooltip = string.IsNullOrEmpty(offer.UnavailableReason)
+                        ? offer.EffectText
+                        : offer.UnavailableReason;
+                }
+                else
+                {
+                    button.text = string.Empty;
+                    button.tooltip = string.Empty;
+                }
+
                 _offerEffects[i] = shown ? offer.EffectText : string.Empty;
+                // Keep shown cards clickable so an active project can still be switched.
                 button.SetEnabled(shown);
+                var trulyUnavailable = shown && !offer.CanStart && !string.IsNullOrEmpty(offer.UnavailableReason);
+                button.EnableInClassList("research-offer--dim", trulyUnavailable);
                 button.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
             }
         }
@@ -179,7 +195,11 @@ namespace ProjectStarwatch.Overworld.UI
                 return "No active project.";
             }
 
-            return $"{model.ActiveName} {model.Progress:0.#}/{model.Cost:0.#} at {model.SciencePerSecond:0.#} Science/s";
+            var pct = (model.ProgressFraction * 100f).ToString("0");
+            var eta = model.EstimatedSecondsLeft > 0f
+                ? " · done in " + model.EstimatedSecondsLeft.ToString("0.#") + "s"
+                : string.Empty;
+            return $"{model.ActiveName}  {pct}%{eta}  ({model.Progress:0.#}/{model.Cost:0.#} · {model.SciencePerSecond:0.#}/s)";
         }
 
         private static string CompletedText(ResearchPanelModel model)

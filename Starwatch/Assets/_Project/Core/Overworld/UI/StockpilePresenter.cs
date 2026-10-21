@@ -8,7 +8,8 @@ using VContainer.Unity;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Empire stockpile bar. Resource, settlement, research, and ship events refresh rates and stock.
+    /// Empire stockpile bar. Stock amounts refresh on the economy publish window;
+    /// science ticks only refresh the research segment.
     /// </summary>
     internal sealed class StockpilePresenter : IStartable, IDisposable
     {
@@ -60,13 +61,18 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void OnScienceApplied()
         {
-            Apply();
+            var run = CurrentRun();
+            _view.ApplyResearchProgress(_query.Describe(run));
         }
 
         private void Apply()
         {
-            var run = _runManager.HasActiveRun ? _runManager.CurrentRun : null;
-            _view.Apply(_query.Describe(run));
+            _view.Apply(_query.Describe(CurrentRun()));
+        }
+
+        private RunState CurrentRun()
+        {
+            return _runManager != null && _runManager.HasActiveRun ? _runManager.CurrentRun : null;
         }
     }
 }

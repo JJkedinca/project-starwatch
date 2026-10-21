@@ -64,12 +64,8 @@ namespace ProjectStarwatch.Overworld.UI
             _subscriptions.Add(_events.Subscribe<MapKnowledgeChangedEvent>(OnMapKnowledgeChanged));
             if (!_runManager.HasActiveRun)
             {
-                _status.Post(OverworldStatus.kNoRun);
+                _status.Post(OverworldStatus.kNoRun, StatusKind.Result);
                 _selection.Clear();
-            }
-            else if (!_selection.InStarSystem)
-            {
-                _status.Post(OverworldStatus.kMapHint);
             }
 
             Apply();
@@ -102,20 +98,17 @@ namespace ProjectStarwatch.Overworld.UI
             var previousNode = _selection.SelectedNodeId;
             if (_query.CanEnter(run, nodeId))
             {
+                ClearHover();
                 _selection.EnterSystem(nodeId);
                 if (!wasInSystem || previousNode != nodeId)
                 {
-                    _status.Post(_systemQuery.Describe(run, _selection).Status);
+                    _status.Post(_systemQuery.Describe(run, _selection).Status, StatusKind.Result);
                 }
 
                 return;
             }
 
             _selection.SelectNode(nodeId);
-            if (wasInSystem)
-            {
-                _status.Post(OverworldStatus.kMapHint);
-            }
         }
 
         private void OnNodeHovered(ContentId nodeId)
@@ -124,9 +117,20 @@ namespace ProjectStarwatch.Overworld.UI
             RefreshHover();
         }
 
+        private void ClearHover()
+        {
+            if (_hoverNodeId.IsEmpty)
+            {
+                return;
+            }
+
+            _hoverNodeId = default;
+            RefreshHover();
+        }
+
         private void OnRewind(RewindCompletedEvent _)
         {
-            _hoverNodeId = default;
+            ClearHover();
             if (!_selection.SelectedFleetId.IsNone)
             {
                 _selection.SelectFleet(EntityId.None);
@@ -149,7 +153,6 @@ namespace ProjectStarwatch.Overworld.UI
 
             if (_selection.SelectedFleetId.IsNone)
             {
-                _status.Post(OverworldStatus.kSelectFleet);
                 return;
             }
 
@@ -160,7 +163,7 @@ namespace ProjectStarwatch.Overworld.UI
                 destinationNodeId);
             if (!result.Success)
             {
-                _status.Post(result.Error.Message);
+                _status.Post(result.Error.Message, StatusKind.Error);
             }
         }
 
@@ -201,7 +204,10 @@ namespace ProjectStarwatch.Overworld.UI
 
             _view.ApplyNodes(_nodes);
             RefreshCardAndRoutes();
-            _status.Post(domainEvent.Kind == FleetTravelKind.Arrived ? "Fleet arrived." : "Fleet is traveling.");
+            if (domainEvent.Kind == FleetTravelKind.Started)
+            {
+                _status.Post("Fleet is traveling.", StatusKind.Result);
+            }
         }
 
         private void OnMapKnowledgeChanged(MapKnowledgeChangedEvent domainEvent)
@@ -243,6 +249,7 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             _view.ApplyCard(_query.DescribeCard(run, _selection));
+            RefreshFleetMarkers();
             RefreshHover();
         }
 
@@ -261,7 +268,20 @@ namespace ProjectStarwatch.Overworld.UI
 
             _view.ApplyCard(_query.DescribeCard(run, _selection));
             RefreshRoutes(run);
+            RefreshFleetMarkers();
             RefreshHoverTooltip(run);
+        }
+
+        private void RefreshFleetMarkers()
+        {
+            var run = CurrentRun();
+            if (run == null)
+            {
+                _view.ApplyFleetMarkers(Array.Empty<FleetMarkerModel>());
+                return;
+            }
+
+            _view.ApplyFleetMarkers(_query.DescribeFleetMarkers(run, _selection));
         }
 
         private void RefreshHover()

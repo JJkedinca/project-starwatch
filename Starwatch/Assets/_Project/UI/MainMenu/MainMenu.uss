@@ -8,6 +8,10 @@
     padding: 24px;
 }
 
+.title-screen {
+    align-items: center;
+}
+
 .title {
     font-size: 48px;
     color: var(--text-primary);
@@ -16,10 +20,53 @@
     letter-spacing: 6px;
 }
 
+.version-label {
+    margin-top: 24px;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.new-run-panel {
+    width: 420px;
+    padding: 20px;
+    background-color: var(--panel-bg);
+    border-width: 1px;
+    border-color: var(--panel-border);
+}
+
 .field {
     width: 360px;
     margin-bottom: 12px;
     color: rgb(220, 226, 235);
+}
+
+.seed-row {
+    flex-direction: row;
+    align-items: flex-end;
+    width: 360px;
+    margin-bottom: 12px;
+}
+
+.seed-field {
+    flex-grow: 1;
+    margin-bottom: 0;
+    margin-right: 8px;
+}
+
+.dice-button {
+    width: 40px;
+    height: 36px;
+    background-color: rgb(36, 44, 58);
+    color: var(--nav-cyan);
+    border-width: 1px;
+    border-color: var(--panel-border);
+}
+
+.new-run-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 8px;
 }
 
 .primary-button {
@@ -28,6 +75,11 @@
     margin-top: 12px;
     background-color: rgb(48, 96, 160);
     color: rgb(245, 248, 252);
+}
+
+.new-run-actions > .primary-button,
+.new-run-actions > .secondary-button {
+    width: 160px;
 }
 
 .secondary-button {

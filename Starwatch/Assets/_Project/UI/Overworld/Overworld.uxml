@@ -2,7 +2,6 @@
     <Style src="Overworld.uss" />
     <ui:Template name="StarSystemView" src="StarSystemView.uxml" />
     <ui:Template name="StarSystemInspection" src="StarSystemInspection.uxml" />
-    <ui:Template name="PlanetInspection" src="PlanetInspection.uxml" />
     <ui:Template name="ResourceSummary" src="ResourceSummary.uxml" />
     <ui:Template name="PlanetDevelopment" src="PlanetDevelopment.uxml" />
     <ui:Template name="ColonyStatus" src="ColonyStatus.uxml" />
@@ -15,12 +14,7 @@
     <ui:Template name="FleetBar" src="FleetBar.uxml" />
     <ui:Template name="FleetPanel" src="FleetPanel.uxml" />
     <ui:VisualElement name="root" class="root">
-        <ui:VisualElement name="top-bar" class="top-bar hud-panel">
-            <ui:Label name="title" text="Star Map" class="title" />
-            <ui:Instance template="StockpileBar" />
-            <ui:Label name="status-label" text="" class="status-label" />
-        </ui:VisualElement>
-        <ui:Instance template="ResearchPanel" />
+        <ui:VisualElement name="top-bar-slot" class="top-bar-slot" picking-mode="Ignore" />
         <ui:VisualElement name="content" class="content">
             <ui:VisualElement name="fleet-roster-host" class="fleet-roster-host">
                 <ui:Instance template="FleetRoster" />
@@ -37,25 +31,54 @@
             <ui:VisualElement name="inspection-panel" class="inspection-panel">
                 <ui:Instance template="StarSystemInspection" />
                 <ui:Instance template="FleetPanel" />
-                <ui:Instance template="PlanetInspection" />
-                <ui:ScrollView name="settlement-panel" class="settlement-panel" mode="Vertical" vertical-scroller-visibility="AlwaysVisible">
-                    <ui:VisualElement name="planet-figures" class="planet-figures">
-                        <ui:VisualElement name="planet-base" class="resource-panel">
-                            <ui:Label text="Base" class="resource-panel-title" />
-                            <ui:Instance template="ResourceSummary" />
+                <ui:Instance template="ResearchPanel" />
+                <ui:VisualElement name="settlement-panel" class="settlement-panel">
+                    <ui:VisualElement name="settlement-header" class="settlement-header">
+                        <ui:VisualElement class="settlement-header__top">
+                            <ui:Label name="settlement-planet-name" text="" class="settlement-planet-name" />
+                            <ui:Label name="settlement-scan-chip" text="" class="hud-chip" />
+                            <ui:Button name="settlement-scan" text="Scan" class="action-button settlement-scan" />
+                            <ui:Button name="settlement-abandon" text="Abandon" class="action-button settlement-abandon" />
+                            <ui:Button name="settlement-abandon-confirm" text="Confirm abandon" class="action-button settlement-abandon-confirm" />
                         </ui:VisualElement>
-                        <ui:VisualElement name="planet-production" class="resource-panel">
-                            <ui:Label text="Production" class="resource-panel-title" />
-                            <ui:Instance template="ResourceSummary" />
-                        </ui:VisualElement>
+                        <ui:Label name="settlement-presence" text="" class="settlement-presence" />
+                        <ui:Label name="settlement-footprint" text="" class="settlement-footprint" />
+                        <ui:VisualElement name="settlement-chips" class="settlement-chips" />
                     </ui:VisualElement>
-                    <ui:Instance template="PlanetDevelopment" />
-                    <ui:Instance template="ColonyStatus" />
-                    <ui:Instance template="SettlementCommitment" />
-                    <ui:Instance template="BuildingList" />
-                    <ui:Instance template="ShipyardSection" />
-                </ui:ScrollView>
+                    <ui:VisualElement name="settlement-tabs" class="settlement-tabs">
+                        <ui:Button name="tab-overview" text="OVERVIEW" class="settlement-tab" />
+                        <ui:Button name="tab-buildings" text="BUILDINGS" class="settlement-tab" />
+                        <ui:Button name="tab-shipyard" text="SHIPYARD" class="settlement-tab" />
+                    </ui:VisualElement>
+                    <ui:ScrollView name="settlement-body" class="settlement-body" mode="Vertical" vertical-scroller-visibility="Auto">
+                        <ui:VisualElement name="tab-overview-body" class="settlement-tab-body">
+                            <ui:Label name="settlement-net-line" text="" class="settlement-net-line" />
+                            <ui:VisualElement name="planet-figures" class="planet-figures">
+                                <ui:VisualElement name="planet-base" class="resource-panel">
+                                    <ui:Label text="Base" class="resource-panel-title" />
+                                    <ui:Instance template="ResourceSummary" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="planet-production" class="resource-panel">
+                                    <ui:Label text="Production" class="resource-panel-title" />
+                                    <ui:Instance template="ResourceSummary" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:Instance template="SettlementCommitment" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="tab-buildings-body" class="settlement-tab-body">
+                            <ui:Instance template="BuildingList" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="tab-shipyard-body" class="settlement-tab-body">
+                            <ui:Instance template="ShipyardSection" />
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:VisualElement name="top-bar" class="top-bar hud-panel">
+            <ui:Label name="title" text="Star Map" class="title" />
+            <ui:Instance template="StockpileBar" />
+        </ui:VisualElement>
+        <ui:VisualElement name="toast-stack" class="toast-stack" picking-mode="Ignore" />
     </ui:VisualElement>
 </ui:UXML>

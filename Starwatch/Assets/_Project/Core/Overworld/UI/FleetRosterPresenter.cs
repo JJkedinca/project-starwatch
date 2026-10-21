@@ -14,8 +14,6 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     internal sealed class FleetRosterPresenter : IStartable, IDisposable
     {
-        private const float kRefreshSeconds = 1f;
-
         private readonly IFleetRosterView _view;
         private readonly OverworldSelection _selection;
         private readonly RunManager _runManager;
@@ -23,8 +21,7 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly SimulationClock _clock;
         private readonly DomainEventBus _events;
         private readonly List<IDisposable> _subscriptions = new();
-        private bool _transitActive;
-        private double _nextRefresh;
+        private readonly TransitCountdown _countdown = new();
 
         public FleetRosterPresenter(
             IFleetRosterView view,
@@ -82,32 +79,23 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void OnTimeAdvanced(GameTime time, float deltaSeconds)
         {
-            if (!_transitActive || deltaSeconds <= 0f || time.Seconds + 0.0001d < _nextRefresh)
+            if (_countdown.ShouldRefresh(time, deltaSeconds))
             {
-                return;
+                Apply();
             }
-
-            _nextRefresh = time.Seconds + kRefreshSeconds;
-            Apply();
         }
 
         private void Apply()
         {
             if (!_runManager.HasActiveRun)
             {
-                _transitActive = false;
+                _countdown.Clear();
                 _view.Apply(null);
                 return;
             }
 
             var run = _runManager.CurrentRun;
-            var traveling = run.Timeline.Fleets.ActiveTravels.Count > 0;
-            if (traveling && !_transitActive)
-            {
-                _nextRefresh = _clock.CurrentTime.Seconds + kRefreshSeconds;
-            }
-
-            _transitActive = traveling;
+            _countdown.SetTraveling(run.Timeline.Fleets.ActiveTravels.Count > 0, _clock);
             _view.Apply(_fleetListQuery.All(run, _selection.SelectedFleetId));
         }
     }

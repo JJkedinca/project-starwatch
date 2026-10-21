@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Found-outpost, found-colony, and abandon actions for the selected planet.
+    /// One commitment card: Outpost / Colony choice and Commit.
     /// </summary>
     internal sealed class SettlementCommitmentView
     {
@@ -12,12 +12,15 @@ namespace ProjectStarwatch.Overworld.UI
 
         public event Action FoundColonyClicked;
 
-        public event Action AbandonClicked;
-
         private VisualElement _root;
-        private Button _outpostButton;
-        private Button _colonyButton;
-        private Button _abandonButton;
+        private Button _outpostKind;
+        private Button _colonyKind;
+        private Button _commit;
+        private Label _cost;
+        private Label _escalation;
+        private Label _warning;
+        private SettlementCommitmentModel _model;
+        private bool _preferColony;
 
         /// <summary>
         /// Binds the SettlementCommitment.uxml root.
@@ -30,30 +33,38 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             _root = root;
-            _outpostButton = root.Q<Button>("found-outpost-button");
-            _colonyButton = root.Q<Button>("found-colony-button");
-            _abandonButton = root.Q<Button>("abandon-button");
-            if (_outpostButton != null)
+            _outpostKind = root.Q<Button>("kind-outpost-button");
+            _colonyKind = root.Q<Button>("kind-colony-button");
+            _commit = root.Q<Button>("commit-button");
+            _cost = root.Q<Label>("commitment-cost");
+            _escalation = root.Q<Label>("commitment-escalation");
+            _warning = root.Q<Label>("commitment-warning");
+            if (_outpostKind != null)
             {
-                _outpostButton.clicked += () => FoundOutpostClicked?.Invoke();
+                _outpostKind.clicked += () =>
+                {
+                    _preferColony = false;
+                    RefreshSelection();
+                };
             }
 
-            if (_colonyButton != null)
+            if (_colonyKind != null)
             {
-                _colonyButton.clicked += () => FoundColonyClicked?.Invoke();
+                _colonyKind.clicked += () =>
+                {
+                    _preferColony = true;
+                    RefreshSelection();
+                };
             }
 
-            if (_abandonButton != null)
+            if (_commit != null)
             {
-                _abandonButton.clicked += () => AbandonClicked?.Invoke();
+                _commit.clicked += OnCommit;
             }
 
             Hide();
         }
 
-        /// <summary>
-        /// Hides commitment actions.
-        /// </summary>
         public void Hide()
         {
             if (_root != null)
@@ -62,9 +73,6 @@ namespace ProjectStarwatch.Overworld.UI
             }
         }
 
-        /// <summary>
-        /// Shows the costs and which commitments are available.
-        /// </summary>
         public void Show(SettlementCommitmentModel model)
         {
             if (_root == null)
@@ -72,25 +80,78 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            Set(_outpostButton, model.OutpostLabel, model.CanFoundOutpost);
-            Set(_colonyButton, model.ColonyLabel, model.CanFoundColony);
-            if (_abandonButton != null)
+            _model = model;
+            if (!model.ShowCard)
             {
-                _abandonButton.SetEnabled(model.CanAbandon);
-            }
-
-            _root.style.display = DisplayStyle.Flex;
-        }
-
-        private static void Set(Button button, string label, bool enabled)
-        {
-            if (button == null)
-            {
+                Hide();
                 return;
             }
 
-            button.text = label ?? string.Empty;
-            button.SetEnabled(enabled);
+            if (_preferColony && !model.CanFoundColony && model.CanFoundOutpost)
+            {
+                _preferColony = false;
+            }
+            else if (!_preferColony && !model.CanFoundOutpost && model.CanFoundColony)
+            {
+                _preferColony = true;
+            }
+
+            if (_escalation != null)
+            {
+                _escalation.text = model.EscalationNote;
+                _escalation.style.display = string.IsNullOrEmpty(model.EscalationNote)
+                    ? DisplayStyle.None
+                    : DisplayStyle.Flex;
+            }
+
+            if (_warning != null)
+            {
+                _warning.text = model.Warning;
+                _warning.style.display = string.IsNullOrEmpty(model.Warning)
+                    ? DisplayStyle.None
+                    : DisplayStyle.Flex;
+            }
+
+            RefreshSelection();
+            _root.style.display = DisplayStyle.Flex;
+        }
+
+        private void OnCommit()
+        {
+            if (_preferColony)
+            {
+                FoundColonyClicked?.Invoke();
+                return;
+            }
+
+            FoundOutpostClicked?.Invoke();
+        }
+
+        private void RefreshSelection()
+        {
+            var colony = _preferColony;
+            if (_outpostKind != null)
+            {
+                _outpostKind.SetEnabled(_model.CanFoundOutpost || !_model.CanFoundColony);
+                _outpostKind.EnableInClassList("settlement-commitment__kind--selected", !colony);
+            }
+
+            if (_colonyKind != null)
+            {
+                _colonyKind.SetEnabled(_model.CanFoundColony || !_model.CanFoundOutpost);
+                _colonyKind.EnableInClassList("settlement-commitment__kind--selected", colony);
+            }
+
+            if (_cost != null)
+            {
+                _cost.text = colony ? _model.ColonyCostLabel : _model.OutpostCostLabel;
+            }
+
+            if (_commit != null)
+            {
+                var can = colony ? _model.CanFoundColony : _model.CanFoundOutpost;
+                _commit.SetEnabled(can);
+            }
         }
     }
 }

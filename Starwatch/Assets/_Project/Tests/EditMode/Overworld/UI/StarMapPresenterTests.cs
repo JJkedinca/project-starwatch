@@ -119,8 +119,41 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(view.LastRoutes, Has.Some.Matches<MapRouteSegment>(
                 segment => segment.State == MapRouteState.InTransit));
             Assert.That(view.CardApplyCount, Is.EqualTo(1));
+            Assert.That(view.FleetMarkerApplyCount, Is.GreaterThan(0));
+            Assert.That(view.LastFleetMarkers, Has.Some.Matches<FleetMarkerModel>(
+                marker => marker.Kind == FleetMarkerKind.Transit
+                    && marker.NodeId == home
+                    && marker.DestinationNodeId == forge));
             Assert.That(view.AppliedNodeIds, Is.EquivalentTo(new[] { home, forge }));
             Assert.That(run.Timeline.Fleets.HasTravelingFleetAt(home), Is.True);
+            presenter.Dispose();
+        }
+
+        [Test]
+        public void FleetTravel_ArrivalSnapsMarkerToDestination()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(103));
+            var forge = ContentId.From("forge-system");
+            var fleetId = run.Timeline.Fleets[0].Id;
+            var selection = new OverworldSelection();
+            var view = new FakeStarMapView();
+            var presenter = CreatePresenter(view, selection, stack);
+            presenter.Start();
+            selection.SelectFleet(fleetId);
+
+            Assert.That(stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge).Success, Is.True);
+            Assert.That(view.LastFleetMarkers, Has.Some.Matches<FleetMarkerModel>(
+                marker => marker.Kind == FleetMarkerKind.Transit));
+
+            PumpUntilIdle(stack, run);
+
+            Assert.That(view.LastFleetMarkers, Has.Some.Matches<FleetMarkerModel>(
+                marker => marker.Kind == FleetMarkerKind.Parked
+                    && marker.NodeId == forge
+                    && marker.IsSelected));
+            Assert.That(view.LastFleetMarkers, Has.None.Matches<FleetMarkerModel>(
+                marker => marker.Kind == FleetMarkerKind.Transit));
             presenter.Dispose();
         }
 
@@ -212,7 +245,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             view.RightClickNode(ContentId.From("forge-system"));
 
-            Assert.That(status.Text, Is.EqualTo(OverworldStatus.kSelectFleet));
+            Assert.That(status.Toasts, Is.Empty);
             Assert.That(run.Timeline.Fleets.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.False);
             presenter.Dispose();
         }
@@ -257,7 +290,6 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(selection.SelectedFleetId.IsNone, Is.True);
             view.ClickNode(ContentId.From("forge-system"));
             view.RightClickNode(ContentId.From("forge-system"));
-            Assert.That(status.Text, Is.EqualTo(OverworldStatus.kSelectFleet));
             Assert.That(run.Timeline.Fleets.ActiveTravels, Is.Empty);
             presenter.Dispose();
         }
@@ -489,6 +521,31 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Dispose();
         }
 
+        [Test]
+        public void EnterSystem_ClearsStaleHoverPreview()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(102));
+            var home = ContentId.From("home-system");
+            var forge = ContentId.From("forge-system");
+            var selection = new OverworldSelection();
+            selection.SelectFleet(run.Timeline.Fleets[0].Id);
+            var view = new FakeStarMapView();
+            var presenter = CreatePresenter(view, selection, stack);
+            presenter.Start();
+            view.HoverNode(forge);
+            Assert.That(view.LastRoutes, Has.Some.Matches<MapRouteSegment>(
+                segment => segment.State == MapRouteState.Planned));
+
+            view.ClickNode(home);
+
+            Assert.That(selection.InStarSystem, Is.True);
+            Assert.That(view.LastHoverTooltip.IsShown, Is.False);
+            Assert.That(view.LastRoutes, Has.None.Matches<MapRouteSegment>(
+                segment => segment.State == MapRouteState.Planned));
+            presenter.Dispose();
+        }
+
         private static StarMapPresenter CreatePresenter(
             FakeStarMapView view,
             OverworldSelection selection,
@@ -511,7 +568,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 status,
                 stack.Manager,
                 stack.TravelService,
-                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery, database),
+                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery, database, stack.Clock),
                 new StarSystemQuery(stack.VisibilityService, database, fleetListQuery),
                 stack.Events);
         }
@@ -542,18 +599,25 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             public IReadOnlyList<MapRouteSegment> LastRoutes { get; private set; } = Array.Empty<MapRouteSegment>();
 
+            public IReadOnlyList<FleetMarkerModel> LastFleetMarkers { get; private set; } =
+                Array.Empty<FleetMarkerModel>();
+
+            public int FleetMarkerApplyCount { get; private set; }
+
             public void Apply(StarMapModel model)
             {
                 ApplyCount++;
                 if (model == null || !model.HasRun)
                 {
                     LastRoutes = Array.Empty<MapRouteSegment>();
+                    LastFleetMarkers = Array.Empty<FleetMarkerModel>();
                     AppliedNodeIds.Clear();
                     AppliedStates.Clear();
                     return;
                 }
 
                 LastRoutes = model.Routes;
+                LastFleetMarkers = model.FleetMarkers;
                 LastCard = model.Card;
                 AppliedNodeIds.Clear();
                 AppliedStates.Clear();
@@ -598,11 +662,18 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 LastHoverTooltip = tooltip;
             }
 
+            public void ApplyFleetMarkers(IReadOnlyList<FleetMarkerModel> markers)
+            {
+                LastFleetMarkers = markers ?? Array.Empty<FleetMarkerModel>();
+                FleetMarkerApplyCount++;
+            }
+
             public void ClearPartial()
             {
                 NodeApplyCount = 0;
                 RouteApplyCount = 0;
                 CardApplyCount = 0;
+                FleetMarkerApplyCount = 0;
                 AppliedNodeIds.Clear();
                 AppliedStates.Clear();
             }

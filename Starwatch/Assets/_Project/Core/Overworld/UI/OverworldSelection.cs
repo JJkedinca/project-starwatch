@@ -75,7 +75,7 @@ namespace ProjectStarwatch.Overworld.UI
         }
 
         /// <summary>
-        /// Opens fleet details in the right column for the selected fleet.
+        /// Opens fleet details in the right column for the selected fleet (replaces target / research).
         /// </summary>
         public void OpenFleetDetails()
         {
@@ -89,9 +89,39 @@ namespace ProjectStarwatch.Overworld.UI
         }
 
         /// <summary>
-        /// Returns the right column to the target / planet panels.
+        /// Opens research in the right column (replaces target / fleet details).
+        /// </summary>
+        public void OpenResearch()
+        {
+            if (RightColumnFocus == RightColumnFocus.Research)
+            {
+                return;
+            }
+
+            RightColumnFocus = RightColumnFocus.Research;
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// Returns the right column to the target card or settlement panel.
         /// </summary>
         public void CloseFleetDetails()
+        {
+            CloseRightColumnOverlay();
+        }
+
+        /// <summary>
+        /// Closes research and returns the right column to the target / settlement.
+        /// </summary>
+        public void CloseResearch()
+        {
+            CloseRightColumnOverlay();
+        }
+
+        /// <summary>
+        /// Returns the right column to the target card or settlement panel.
+        /// </summary>
+        public void CloseRightColumnOverlay()
         {
             if (RightColumnFocus == RightColumnFocus.Target)
             {
@@ -164,11 +194,12 @@ namespace ProjectStarwatch.Overworld.UI
     }
 
     /// <summary>
-    /// What the right column shows: the target/planet panels, or fleet details.
+    /// What the right column shows. Overlays replace the target card / settlement.
     /// </summary>
     internal enum RightColumnFocus
     {
         Target = 0,
         FleetDetails = 1,
+        Research = 2,
     }
 }

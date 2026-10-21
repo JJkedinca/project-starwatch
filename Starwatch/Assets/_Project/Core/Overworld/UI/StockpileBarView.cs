@@ -68,20 +68,36 @@ namespace ProjectStarwatch.Overworld.UI
                 var entry = _model.Get(kind);
                 var previous = _previousAmounts.TryGetValue(kind, out var prior) ? prior : entry.Amount;
                 ApplyReadout(readout, entry, _model.CycleSeconds);
-                if (animateGains && entry.Amount > previous)
+                var gain = entry.Amount - previous;
+                if (animateGains && ShouldAnimateGain(gain, entry.GrossPerSecond, _model.CycleSeconds))
                 {
-                    SpawnFloater(readout.Root, entry.Amount - previous);
+                    SpawnFloater(readout.Root, gain);
                 }
 
                 _previousAmounts[kind] = entry.Amount;
             }
 
             _amountsPrimed = true;
-            ApplyResearch(_model);
+            PaintResearch(_model);
             if (_hoveredKind.HasValue)
             {
                 ShowTooltip(_hoveredKind.Value);
             }
+        }
+
+        /// <summary>
+        /// Updates science rate, progress, and the research entry without touching stock amounts.
+        /// </summary>
+        public void ApplyResearchProgress(StockpileModel model)
+        {
+            model ??= StockpileModel.Empty;
+            _model = new StockpileModel(
+                _model.Entries,
+                model.Research,
+                model.CycleSeconds,
+                _model.ColonyLines,
+                _model.IsEmpireStalled);
+            PaintResearch(_model);
         }
 
         private void BindReadout(VisualElement host, ResourceKind kind, string caption)
@@ -163,7 +179,7 @@ namespace ProjectStarwatch.Overworld.UI
             }
         }
 
-        private void ApplyResearch(StockpileModel model)
+        private void PaintResearch(StockpileModel model)
         {
             var research = model.Research;
             if (_scienceRate != null)
@@ -172,6 +188,7 @@ namespace ProjectStarwatch.Overworld.UI
                 _scienceRate.text = perCycle > 0f
                     ? "+" + FormatNumber(perCycle)
                     : string.Empty;
+                _scienceRate.EnableInClassList("hud-rate--warn", research.ScienceDropped);
             }
 
             if (_researchFill != null)
@@ -181,9 +198,19 @@ namespace ProjectStarwatch.Overworld.UI
 
             if (_researchEntry != null)
             {
-                _researchEntry.text = research.HasActive && !string.IsNullOrEmpty(research.ActiveName)
-                    ? research.ActiveName
-                    : "No Active Research";
+                if (research.HasActive && !string.IsNullOrEmpty(research.ActiveName))
+                {
+                    var eta = research.EstimatedSecondsLeft > 0f
+                        ? " · " + research.EstimatedSecondsLeft.ToString("0.#") + "s"
+                        : string.Empty;
+                    _researchEntry.text = research.ActiveName + eta;
+                }
+                else
+                {
+                    _researchEntry.text = "No Active Research";
+                }
+
+                _researchEntry.EnableInClassList("stockpile-research--warn", research.ScienceDropped);
             }
         }
 
@@ -274,6 +301,20 @@ namespace ProjectStarwatch.Overworld.UI
             host.Add(floater);
             host.schedule.Execute(() => floater.AddToClassList("stockpile-floater--fade")).StartingIn(16);
             host.schedule.Execute(() => floater.RemoveFromHierarchy()).StartingIn(820);
+        }
+
+        /// <summary>
+        /// True only for a single economy-cycle grant. Skips rewind / new-run jumps.
+        /// </summary>
+        internal static bool ShouldAnimateGain(int gain, float grossPerSecond, int cycleSeconds)
+        {
+            if (gain <= 0)
+            {
+                return false;
+            }
+
+            var maxAnimated = Math.Max(1, (int)MathF.Ceiling(grossPerSecond * cycleSeconds + 0.001f));
+            return gain <= maxAnimated;
         }
 
         private static string FormatCycleRate(float perSecond, int cycleSeconds)

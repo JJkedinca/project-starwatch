@@ -30,10 +30,12 @@ namespace ProjectStarwatch.Overworld.UI
         void ApplyCard(StarMapCardModel card);
 
         void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip);
+
+        void ApplyFleetMarkers(IReadOnlyList<FleetMarkerModel> markers);
     }
 
     /// <summary>
-    /// Open star system, including the map/system toggle and the selected planet.
+    /// Open star system scene, including the map/system toggle.
     /// </summary>
     internal interface IStarSystemView
     {
@@ -42,8 +44,6 @@ namespace ProjectStarwatch.Overworld.UI
         event Action<ContentId> PlanetSelected;
 
         event Action<EntityId> FleetSelected;
-
-        event Action<ContentId> ScanRequested;
 
         void Apply(StarSystemModel model);
     }
@@ -58,6 +58,8 @@ namespace ProjectStarwatch.Overworld.UI
         event Action FoundColonyRequested;
 
         event Action AbandonRequested;
+
+        event Action ScanRequested;
 
         event Action<ContentId> PlaceRequested;
 
@@ -123,6 +125,11 @@ namespace ProjectStarwatch.Overworld.UI
     internal interface IStockpileView
     {
         void Apply(StockpileModel model);
+
+        /// <summary>
+        /// Refreshes only the research segment. Stock amounts stay on the economy publish window.
+        /// </summary>
+        void ApplyResearchProgress(StockpileModel model);
     }
 
     /// <summary>
@@ -134,9 +141,14 @@ namespace ProjectStarwatch.Overworld.UI
 
         event Action<ContentId> SwitchConfirmed;
 
-        event Action Opened;
+        /// <summary>
+        /// Stockpile entry or close button asked to toggle the right-column research panel.
+        /// </summary>
+        event Action ToggleRequested;
 
         bool IsOpen { get; }
+
+        void SetOpen(bool open);
 
         void Apply(ResearchPanelModel model);
 

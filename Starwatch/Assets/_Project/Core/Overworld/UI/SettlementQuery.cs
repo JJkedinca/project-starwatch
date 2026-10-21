@@ -6,6 +6,7 @@ using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Fleet;
 using ProjectStarwatch.Settlement;
 
 namespace ProjectStarwatch.Overworld.UI
@@ -18,11 +19,17 @@ namespace ProjectStarwatch.Overworld.UI
     {
         private readonly ObjectDatabaseSO _objectDatabase;
         private readonly ProductionService _productionService;
+        private readonly ShipProductionService _shipProductionService;
 
-        public SettlementQuery(ObjectDatabaseSO objectDatabase, ProductionService productionService)
+        public SettlementQuery(
+            ObjectDatabaseSO objectDatabase,
+            ProductionService productionService,
+            ShipProductionService shipProductionService)
         {
             _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
             _productionService = productionService ?? throw new ArgumentNullException(nameof(productionService));
+            _shipProductionService = shipProductionService
+                ?? throw new ArgumentNullException(nameof(shipProductionService));
         }
 
         /// <summary>
@@ -32,7 +39,10 @@ namespace ProjectStarwatch.Overworld.UI
         /// </summary>
         internal SettlementPanelModel Describe(RunState run, OverworldSelection selection)
         {
-            if (run == null || selection == null || !selection.InStarSystem)
+            if (run == null
+                || selection == null
+                || !selection.InStarSystem
+                || selection.RightColumnFocus != RightColumnFocus.Target)
             {
                 return SettlementPanelModel.Hidden;
             }
@@ -48,23 +58,41 @@ namespace ProjectStarwatch.Overworld.UI
                     resources,
                     default,
                     showPlanet: false,
+                    default,
                     string.Empty,
                     string.Empty,
                     default,
-                    Array.Empty<BuildingRowModel>());
+                    Array.Empty<BuildingRowModel>(),
+                    showShipyardTab: false);
             }
 
             run.Timeline.TryGetColony(planetId, out var colony);
             var scanned = IsScanned(run, planetId);
+            var used = UsedFootprint(colony);
+            var presence = PresenceKind(colony);
+            var chips = scanned ? DepositChips(planet) : Array.Empty<string>();
+            var header = new SettlementHeaderModel(
+                planetId,
+                planet.DisplayName,
+                scanned,
+                canScan: !scanned,
+                presence,
+                ColonyLevel(colony),
+                used,
+                planet.FootprintBudget,
+                chips,
+                canAbandon: colony != null);
             return new SettlementPanelModel(
                 showPanel: true,
                 resources,
                 scanned ? DescribeEconomy(planet, colony) : default,
                 showPlanet: true,
+                header,
                 scanned ? DevelopmentText(planet, colony) : "Scan to reveal development.",
                 StatusText(colony),
                 Commitment(run, colony, scanned),
-                BuildingRows(run, planet, colony));
+                BuildingRows(run, planet, colony),
+                showShipyardTab: CanShowShipyardTab(colony));
         }
 
         private PlanetEconomy DescribeEconomy(PlanetDefinition planet, ColonyState colony)
@@ -103,17 +131,69 @@ namespace ProjectStarwatch.Overworld.UI
             return colony.Presence == ColonyPresence.Colony ? "Colony" : "Outpost";
         }
 
+        private static SettlementPresenceKind PresenceKind(ColonyState colony)
+        {
+            if (colony == null)
+            {
+                return SettlementPresenceKind.None;
+            }
+
+            return colony.Presence == ColonyPresence.Colony
+                ? SettlementPresenceKind.Colony
+                : SettlementPresenceKind.Outpost;
+        }
+
+        /// <summary>
+        /// Highest placed building level, or 1 for a founded colony with no buildings yet.
+        /// </summary>
+        private static int ColonyLevel(ColonyState colony)
+        {
+            if (colony == null || colony.Presence != ColonyPresence.Colony)
+            {
+                return 0;
+            }
+
+            var level = 1;
+            foreach (var building in colony.Buildings.Values)
+            {
+                if (building.Level > level)
+                {
+                    level = building.Level;
+                }
+            }
+
+            return level;
+        }
+
+        private bool CanShowShipyardTab(ColonyState colony)
+        {
+            return colony != null
+                && colony.Presence == ColonyPresence.Colony
+                && _shipProductionService.EnablesShipConstruction(colony);
+        }
+
         private static SettlementCommitmentModel Commitment(RunState run, ColonyState colony, bool scanned)
         {
             var ledger = run.Timeline.Resources;
             var isColony = colony != null && colony.Presence == ColonyPresence.Colony;
             var claimed = colony != null;
-            var colonyCost = SettlementCosts.ColonyCost(run.Timeline.ColonyCount());
+            var showCard = !isColony;
+            var colonyCount = run.Timeline.ColonyCount();
+            var colonyCost = SettlementCosts.ColonyCost(colonyCount);
+            var escalation = colonyCount > 0
+                ? "Next colony · settlement #" + (colonyCount + 1)
+                : string.Empty;
+            var warning = !scanned && !claimed
+                ? "Scan before founding a colony."
+                : string.Empty;
             return new SettlementCommitmentModel(
-                "Outpost · " + FormatCost(SettlementCosts.OutpostCost),
+                showCard,
+                FormatCost(SettlementCosts.OutpostCost),
                 !claimed && ledger.CanAfford(SettlementCosts.OutpostCost),
-                "Colony · " + FormatCost(colonyCost),
+                FormatCost(colonyCost),
                 scanned && !isColony && ledger.CanAfford(colonyCost),
+                escalation,
+                warning,
                 claimed);
         }
 
@@ -139,23 +219,44 @@ namespace ProjectStarwatch.Overworld.UI
                 }
 
                 var placed = colony?.FindBuilding(definition.Id);
-                var label = definition.DisplayName + " · footprint " + definition.Footprint;
-                if (placed != null)
-                {
-                    label += " · Lv " + placed.Level;
-                }
-
+                var level = placed != null ? placed.Level : 0;
                 var hasRoom = used + definition.Footprint <= planet.FootprintBudget;
                 rows.Add(new BuildingRowModel(
                     definition.Id,
-                    label,
-                    "Place · " + FormatCost(definition.BuildCost.Amounts),
+                    definition.DisplayName,
+                    definition.Footprint,
+                    level,
+                    FormatCost(definition.BuildCost.Amounts),
+                    OutputSummary(definition),
                     isColony && placed == null && hasRoom && ledger.CanAfford(definition.BuildCost.Amounts),
                     UpgradeLabel(definition, placed),
                     CanUpgrade(ledger, definition, placed, isColony)));
             }
 
             return rows;
+        }
+
+        private static string OutputSummary(BuildingDefinitionSO definition)
+        {
+            var outputs = definition.Output;
+            if (outputs == null || outputs.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var text = string.Empty;
+            for (var i = 0; i < outputs.Count; i++)
+            {
+                var entry = outputs[i];
+                if (text.Length > 0)
+                {
+                    text += ", ";
+                }
+
+                text += "+" + FormatQuantity(entry.Amount) + " " + entry.Kind;
+            }
+
+            return text;
         }
 
         private static bool CanUpgrade(
@@ -207,26 +308,36 @@ namespace ProjectStarwatch.Overworld.UI
             return "Upgrade";
         }
 
-        private static string DepositText(PlanetDefinition planet)
+        private static IReadOnlyList<string> DepositChips(PlanetDefinition planet)
         {
-            var text = string.Empty;
+            List<string> chips = new();
             var kinds = ResourceKinds.All;
             for (var i = 0; i < kinds.Count; i++)
             {
-                if (!planet.HasDeposit(kinds[i]))
+                if (planet.HasDeposit(kinds[i]))
                 {
-                    continue;
+                    chips.Add(kinds[i].ToString());
                 }
-
-                if (text.Length > 0)
-                {
-                    text += ", ";
-                }
-
-                text += kinds[i].ToString();
             }
 
-            return text.Length == 0 ? "none" : text;
+            return chips;
+        }
+
+        private static string DepositText(PlanetDefinition planet)
+        {
+            var chips = DepositChips(planet);
+            if (chips.Count == 0)
+            {
+                return "none";
+            }
+
+            var text = chips[0];
+            for (var i = 1; i < chips.Count; i++)
+            {
+                text += ", " + chips[i];
+            }
+
+            return text;
         }
 
         private static string FormatCost(IReadOnlyList<ResourceAmount> amounts)

@@ -1,10 +1,25 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="MainMenu.uss" />
     <ui:VisualElement name="root" class="root">
-        <ui:Label name="title" text="Starwatch" class="title" />
-        <ui:TextField name="scenario-field" label="Scenario" value="authored-vertical-slice" class="field" />
-        <ui:TextField name="seed-field" label="Seed (optional)" value="" class="field" />
-        <ui:Button name="start-run-button" text="Start Run" class="primary-button" />
-        <ui:Button name="quit-button" text="Quit" class="secondary-button" />
+        <ui:VisualElement name="title-screen" class="title-screen">
+            <ui:Label name="title" text="STARWATCH" class="title" />
+            <ui:Button name="continue-button" text="CONTINUE" class="primary-button" style="display: none;" />
+            <ui:Button name="new-run-button" text="NEW RUN" class="primary-button" />
+            <ui:Button name="settings-button" text="SETTINGS" class="secondary-button" style="display: none;" />
+            <ui:Button name="quit-button" text="QUIT" class="secondary-button" />
+            <ui:Label text="v0.1" class="version-label" />
+        </ui:VisualElement>
+        <ui:VisualElement name="new-run-panel" class="new-run-panel hud-panel" style="display: none;">
+            <ui:Label text="NEW RUN" class="hud-caption" />
+            <ui:DropdownField name="scenario-dropdown" label="SCENARIO" class="field" />
+            <ui:VisualElement class="seed-row">
+                <ui:TextField name="seed-field" label="SEED" value="" class="field seed-field" />
+                <ui:Button name="dice-button" text="⟳" class="dice-button" />
+            </ui:VisualElement>
+            <ui:VisualElement class="new-run-actions">
+                <ui:Button name="back-button" text="BACK" class="secondary-button" />
+                <ui:Button name="launch-button" text="LAUNCH" class="primary-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
