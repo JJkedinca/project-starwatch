@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using ProjectStarwatch.Core.Identifiers;
-using ProjectStarwatch.Core.Run.Timeline;
 
 namespace ProjectStarwatch.Overworld.UI
 {
@@ -12,16 +11,14 @@ namespace ProjectStarwatch.Overworld.UI
     {
         event Action<ContentId> NodeSelected;
 
-        event Action<EntityId> FleetSelected;
-
         event Action<ContentId> TravelRequested;
 
-        void Apply(StarMapModel model);
-
         /// <summary>
-        /// Don't hold the list. It is reused after this call returns.
+        /// Pointer entered a node, or empty when the pointer left.
         /// </summary>
-        void ApplyFleets(IReadOnlyList<FleetChoiceModel> fleets);
+        event Action<ContentId> NodeHovered;
+
+        void Apply(StarMapModel model);
 
         /// <summary>
         /// Don't hold the list. It is reused after this call returns.
@@ -31,10 +28,14 @@ namespace ProjectStarwatch.Overworld.UI
         void ApplyRoutes(IReadOnlyList<MapRouteSegment> routes);
 
         void ApplyCard(StarMapCardModel card);
+
+        void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip);
+
+        void ApplyFleetMarkers(IReadOnlyList<FleetMarkerModel> markers);
     }
 
     /// <summary>
-    /// Open star system, including the map/system toggle and the selected planet.
+    /// Open star system scene, including the map/system toggle.
     /// </summary>
     internal interface IStarSystemView
     {
@@ -43,8 +44,6 @@ namespace ProjectStarwatch.Overworld.UI
         event Action<ContentId> PlanetSelected;
 
         event Action<EntityId> FleetSelected;
-
-        event Action<ContentId> ScanRequested;
 
         void Apply(StarSystemModel model);
     }
@@ -59,6 +58,8 @@ namespace ProjectStarwatch.Overworld.UI
         event Action FoundColonyRequested;
 
         event Action AbandonRequested;
+
+        event Action ScanRequested;
 
         event Action<ContentId> PlaceRequested;
 
@@ -80,7 +81,32 @@ namespace ProjectStarwatch.Overworld.UI
     }
 
     /// <summary>
-    /// Inspection of the selected fleet. Hidden when no fleet is selected.
+    /// Left-column fleet roster. Visible during a run; hidden when there is no run.
+    /// </summary>
+    internal interface IFleetRosterView
+    {
+        event Action<EntityId> FleetSelected;
+
+        /// <summary>
+        /// Pass null to hide. An empty list shows the empty roster during a run.
+        /// </summary>
+        void Apply(IReadOnlyList<FleetRowModel> fleets);
+    }
+
+    /// <summary>
+    /// Selected-fleet summary bar at the bottom of the center column.
+    /// </summary>
+    internal interface IFleetBarView
+    {
+        event Action DetailsRequested;
+
+        event Action CloseRequested;
+
+        void Apply(FleetPanelModel model);
+    }
+
+    /// <summary>
+    /// Fleet details in the right column. Opened from the fleet bar.
     /// </summary>
     internal interface IFleetPanelView
     {
@@ -98,7 +124,12 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     internal interface IStockpileView
     {
-        void Apply(ResourceInventory stockpile);
+        void Apply(StockpileModel model);
+
+        /// <summary>
+        /// Refreshes only the research segment. Stock amounts stay on the economy publish window.
+        /// </summary>
+        void ApplyResearchProgress(StockpileModel model);
     }
 
     /// <summary>
@@ -110,9 +141,14 @@ namespace ProjectStarwatch.Overworld.UI
 
         event Action<ContentId> SwitchConfirmed;
 
-        event Action Opened;
+        /// <summary>
+        /// Stockpile entry or close button asked to toggle the right-column research panel.
+        /// </summary>
+        event Action ToggleRequested;
 
         bool IsOpen { get; }
+
+        void SetOpen(bool open);
 
         void Apply(ResearchPanelModel model);
 

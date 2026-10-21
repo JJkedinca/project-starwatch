@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="fleet-roster" class="fleet-roster hud-panel">
+        <ui:Label text="FLEETS" class="hud-caption fleet-roster-caption" />
+        <ui:ScrollView name="fleet-roster-list" class="fleet-roster-list" mode="Vertical" horizontal-scroller-visibility="Hidden" />
+    </ui:VisualElement>
+</ui:UXML>

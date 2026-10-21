@@ -65,12 +65,20 @@ namespace ProjectStarwatch.Overworld.UI
 
             if (_title != null)
             {
-                _title.text = model.LocationId.IsEmpty ? "Fleet" : model.LocationId.Value;
+                var route = model.Route;
+                _title.text = string.IsNullOrEmpty(route.LocationName)
+                    ? (route.LocationId.IsEmpty ? "Fleet" : route.LocationId.Value)
+                    : route.LocationName;
             }
 
             if (_status != null)
             {
-                _status.text = model.IsTraveling ? "Traveling" : "Idle";
+                var route = model.Route;
+                _status.text = route.IsTraveling
+                    ? "In transit → " + (string.IsNullOrEmpty(route.DestinationName)
+                        ? route.DestinationId.Value
+                        : route.DestinationName)
+                    : "Idle";
             }
 
             if (_speed != null)

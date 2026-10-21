@@ -28,7 +28,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         }
 
         [Test]
-        public void SetRoutes_CreatesOneElementPerSegment()
+        public void SetRoutes_TracksOneSegmentPerRoute()
         {
             var surface = new VisualElement();
             var map = new StarMapView();
@@ -41,83 +41,76 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             map.SetRoutes(new[]
             {
-                new MapRouteSegment(Vector2.zero, Vector2.one),
+                Segment("a", "b", Vector2.zero, Vector2.one, MapRouteState.Known),
             });
 
             Assert.That(map.RouteCount, Is.EqualTo(1));
+            Assert.That(surface.Q<VisualElement>("map-route-layer"), Is.Not.Null);
         }
 
         [Test]
-        public void SetRoutes_KeepsRouteElementsWhenTheSetIsUnchanged()
+        public void SetRoutes_KeepsTheLayerWhenTheSetIsUnchanged()
         {
             var surface = new VisualElement();
             var map = new StarMapView();
             map.Bind(surface);
             var segments = new[]
             {
-                new MapRouteSegment(Vector2.zero, Vector2.one),
+                Segment("a", "b", Vector2.zero, Vector2.one, MapRouteState.Known),
             };
             map.SetRoutes(segments);
-            var route = surface.Q<VisualElement>("map-route");
+            var layer = surface.Q<VisualElement>("map-route-layer");
 
             map.SetRoutes(new[]
             {
-                new MapRouteSegment(Vector2.zero, Vector2.one),
+                Segment("a", "b", Vector2.zero, Vector2.one, MapRouteState.Known),
             });
 
-            Assert.That(surface.Q<VisualElement>("map-route"), Is.SameAs(route));
+            Assert.That(surface.Q<VisualElement>("map-route-layer"), Is.SameAs(layer));
             Assert.That(map.RouteCount, Is.EqualTo(1));
         }
 
         [Test]
-        public void SetRoutes_RebuildsWhenASegmentIsAdded()
+        public void SetRoutes_UpdatesWhenASegmentIsAdded()
         {
             var surface = new VisualElement();
             var map = new StarMapView();
             map.Bind(surface);
             map.SetRoutes(new[]
             {
-                new MapRouteSegment(Vector2.zero, Vector2.one),
+                Segment("a", "b", Vector2.zero, Vector2.one, MapRouteState.Known),
             });
-            var route = surface.Q<VisualElement>("map-route");
 
             map.SetRoutes(new[]
             {
-                new MapRouteSegment(Vector2.zero, Vector2.one),
-                new MapRouteSegment(Vector2.one, new Vector2(2f, 0f)),
+                Segment("a", "b", Vector2.zero, Vector2.one, MapRouteState.Known),
+                Segment("b", "c", Vector2.one, new Vector2(2f, 0f), MapRouteState.Known),
             });
 
             Assert.That(map.RouteCount, Is.EqualTo(2));
-            Assert.That(surface.Q<VisualElement>("map-route"), Is.Not.SameAs(route));
         }
 
         [Test]
-        public void Rebuild_RecreatesRoutesAfterTheNodeSetChanges()
+        public void SetRoutes_UpdatesWhenStateChanges()
         {
             var surface = new VisualElement();
             var map = new StarMapView();
             map.Bind(surface);
-            map.Rebuild(new[]
+            map.SetRoutes(new[]
             {
-                new StarMapNodeModel(ContentId.From("a"), MapNodeKind.System, Vector2.zero, default),
+                Segment("a", "b", Vector2.zero, Vector2.one, MapRouteState.Known),
             });
-            var segment = new MapRouteSegment(Vector2.zero, Vector2.one);
-            map.SetRoutes(new[] { segment });
-            var route = surface.Q<VisualElement>("map-route");
 
-            map.Rebuild(new[]
+            map.SetRoutes(new[]
             {
-                new StarMapNodeModel(ContentId.From("a"), MapNodeKind.System, Vector2.zero, default),
-                new StarMapNodeModel(ContentId.From("b"), MapNodeKind.System, Vector2.one, default),
+                Segment("a", "b", Vector2.zero, Vector2.one, MapRouteState.Planned),
             });
-            map.SetRoutes(new[] { segment });
 
             Assert.That(map.RouteCount, Is.EqualTo(1));
-            Assert.That(surface.Q<VisualElement>("map-route"), Is.Not.SameAs(route));
         }
 
         [Test]
-        public void SetRoutes_BoundsMatchNodeElementCenters()
+        public void Rebuild_KeepsRoutesAfterTheNodeSetChanges()
         {
             var surface = new VisualElement();
             var map = new StarMapView();
@@ -125,36 +118,20 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             map.Rebuild(new[]
             {
                 new StarMapNodeModel(ContentId.From("a"), MapNodeKind.System, Vector2.zero, default),
-                new StarMapNodeModel(ContentId.From("b"), MapNodeKind.System, Vector2.one, default),
             });
             map.SetRoutes(new[]
             {
-                new MapRouteSegment(Vector2.zero, Vector2.one),
+                Segment("a", "b", Vector2.zero, Vector2.one, MapRouteState.Known),
             });
 
-            var nodeA = surface.Q<Button>("node-a");
-            var nodeB = surface.Q<Button>("node-b");
-            var route = surface.Q<VisualElement>("map-route");
-            Assert.That(nodeA, Is.Not.Null);
-            Assert.That(nodeB, Is.Not.Null);
-            Assert.That(route, Is.Not.Null);
-            Assert.That(nodeA.style.width.value.value, Is.EqualTo(MapLayout.kNodeSize));
-            Assert.That(nodeA.style.height.value.value, Is.EqualTo(MapLayout.kNodeSize));
+            map.Rebuild(new[]
+            {
+                new StarMapNodeModel(ContentId.From("a"), MapNodeKind.System, Vector2.zero, default),
+                new StarMapNodeModel(ContentId.From("b"), MapNodeKind.System, Vector2.one, default),
+            });
 
-            var centerA = ElementCenter(nodeA);
-            var centerB = ElementCenter(nodeB);
-            var min = Vector2.Min(centerA, centerB);
-            var max = Vector2.Max(centerA, centerB);
-            var pad = MapLayout.kRoutePad;
-
-            Assert.That(route.style.left.value.value, Is.EqualTo(min.x - pad).Within(0.01f));
-            Assert.That(route.style.top.value.value, Is.EqualTo(min.y - pad).Within(0.01f));
-            Assert.That(
-                route.style.width.value.value,
-                Is.EqualTo(Mathf.Max(1f, max.x - min.x) + (pad * 2f)).Within(0.01f));
-            Assert.That(
-                route.style.height.value.value,
-                Is.EqualTo(Mathf.Max(1f, max.y - min.y) + (pad * 2f)).Within(0.01f));
+            Assert.That(map.RouteCount, Is.EqualTo(1));
+            Assert.That(surface.Q<VisualElement>("map-route-layer"), Is.Not.Null);
         }
 
         [Test]
@@ -197,11 +174,19 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(run.Archive.PlayerMapKnowledge.HasKnownRoute(key), Is.True);
         }
 
-        private static Vector2 ElementCenter(VisualElement element)
+        private static MapRouteSegment Segment(
+            string nodeA,
+            string nodeB,
+            Vector2 positionA,
+            Vector2 positionB,
+            MapRouteState state)
         {
-            return new Vector2(
-                element.style.left.value.value + (element.style.width.value.value * 0.5f),
-                element.style.top.value.value + (element.style.height.value.value * 0.5f));
+            return new MapRouteSegment(
+                ContentId.From(nodeA),
+                ContentId.From(nodeB),
+                positionA,
+                positionB,
+                state);
         }
     }
 }

@@ -42,6 +42,12 @@ namespace ProjectStarwatch.Core.Bootstrap
             builder.Register<IResearchView>(
                 resolver => resolver.Resolve<OverworldScreenView>().Research,
                 Lifetime.Scoped);
+            builder.Register<IFleetRosterView>(
+                resolver => resolver.Resolve<OverworldScreenView>().FleetRoster,
+                Lifetime.Scoped);
+            builder.Register<IFleetBarView>(
+                resolver => resolver.Resolve<OverworldScreenView>().FleetBar,
+                Lifetime.Scoped);
             builder.Register<IFleetPanelView>(
                 resolver => resolver.Resolve<OverworldScreenView>().FleetPanel,
                 Lifetime.Scoped);
@@ -53,8 +59,10 @@ namespace ProjectStarwatch.Core.Bootstrap
             builder.Register<SettlementPresenter>(Lifetime.Scoped);
             builder.Register<StockpilePresenter>(Lifetime.Scoped);
             builder.Register<ResearchPresenter>(Lifetime.Scoped);
+            builder.Register<FleetRosterPresenter>(Lifetime.Scoped);
             builder.Register<FleetPanelPresenter>(Lifetime.Scoped);
             builder.Register<ShipyardPresenter>(Lifetime.Scoped);
+            builder.Register<OverworldToastPresenter>(Lifetime.Scoped);
             builder.RegisterEntryPoint<OverworldScreenBinder>(Lifetime.Scoped);
         }
     }

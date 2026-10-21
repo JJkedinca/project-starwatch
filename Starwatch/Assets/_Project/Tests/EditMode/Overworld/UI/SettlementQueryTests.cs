@@ -22,7 +22,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 RunSeed.FromValue(35),
                 RunTestFixture.UnsettledVerticalSlice());
             var database = RunTestFixture.CreateObjectDatabase();
-            var query = new SettlementQuery(database, new ProductionService(database));
+            var query = new SettlementQuery(database, new ProductionService(database), stack.ShipProductionService);
 
             var model = query.Describe(run, Viewing("home-system", ContentId.From("home-prime")));
 
@@ -32,8 +32,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(model.Resources.GetWhole(ResourceKind.Science), Is.EqualTo(0));
             Assert.That(model.Commitment.CanFoundOutpost, Is.True);
             Assert.That(model.Commitment.CanFoundColony, Is.False);
+            Assert.That(model.Commitment.ShowCard, Is.True);
+            Assert.That(model.Header.Presence, Is.EqualTo(SettlementPresenceKind.None));
+            Assert.That(model.Header.IsScanned, Is.False);
+            Assert.That(model.ShowShipyardTab, Is.False);
             Assert.That(model.Buildings.Count, Is.EqualTo(4));
             Assert.That(BuildingRow(model, "industry-works").CanPlace, Is.False);
+            Assert.That(BuildingRow(model, "industry-works").Footprint, Is.GreaterThan(0));
 
             var homePrime = ContentId.From("home-prime");
             stack.SensorService.ScanPlanet(run, ObserverId.Player, homePrime);
@@ -47,11 +52,32 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(36));
             var database = RunTestFixture.CreateObjectDatabase();
-            var query = new SettlementQuery(database, new ProductionService(database));
+            var query = new SettlementQuery(database, new ProductionService(database), stack.ShipProductionService);
 
             var model = query.Describe(run, new OverworldSelection());
 
             Assert.That(model.ShowPanel, Is.False);
+        }
+
+        [Test]
+        public void Describe_HidesWhileResearchOrFleetDetailsOwnTheColumn()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(38));
+            var database = RunTestFixture.CreateObjectDatabase();
+            var query = new SettlementQuery(database, new ProductionService(database), stack.ShipProductionService);
+            var selection = new OverworldSelection();
+            selection.EnterSystem(ContentId.From("home-system"));
+            selection.SelectPlanet(ContentId.From("home-prime"));
+
+            Assert.That(query.Describe(run, selection).ShowPanel, Is.True);
+
+            selection.OpenResearch();
+            Assert.That(query.Describe(run, selection).ShowPanel, Is.False);
+
+            selection.SelectFleet(run.Timeline.Fleets[0].Id);
+            selection.OpenFleetDetails();
+            Assert.That(query.Describe(run, selection).ShowPanel, Is.False);
         }
 
         [Test]
@@ -60,14 +86,45 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(92));
             var database = RunTestFixture.CreateObjectDatabase();
-            var query = new SettlementQuery(database, new ProductionService(database));
+            var query = new SettlementQuery(database, new ProductionService(database), stack.ShipProductionService);
             var homePrime = ContentId.From("home-prime");
 
             var model = query.Describe(run, Viewing("home-system", homePrime));
 
             Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(homePrime), Is.False);
             Assert.That(model.Economy.IsRevealed, Is.False);
+            Assert.That(model.Header.Level, Is.EqualTo(1));
+            Assert.That(model.Header.CanScan, Is.True);
+            Assert.That(model.ShowShipyardTab, Is.False);
             Assert.That(BuildingRow(model, "industry-works").CanPlace, Is.True);
+
+            Assert.That(
+                stack.BuildingService.Place(run, homePrime, ContentId.From("shipyard")).Success,
+                Is.True);
+            var withYard = query.Describe(run, Viewing("home-system", homePrime));
+            Assert.That(withYard.ShowShipyardTab, Is.True);
+        }
+
+        [Test]
+        public void Describe_ColonyLevelTracksHighestBuildingLevel()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(93));
+            var database = RunTestFixture.CreateObjectDatabase();
+            var query = new SettlementQuery(database, new ProductionService(database), stack.ShipProductionService);
+            var homePrime = ContentId.From("home-prime");
+            Assert.That(
+                stack.BuildingService.Place(run, homePrime, ContentId.From("industry-works")).Success,
+                Is.True);
+            Assert.That(
+                stack.BuildingService.Upgrade(run, homePrime, ContentId.From("industry-works")).Success,
+                Is.True);
+
+            var model = query.Describe(run, Viewing("home-system", homePrime));
+
+            Assert.That(model.Header.Presence, Is.EqualTo(SettlementPresenceKind.Colony));
+            Assert.That(model.Header.Level, Is.EqualTo(2));
+            Assert.That(BuildingRow(model, "industry-works").Level, Is.EqualTo(2));
         }
 
         [Test]
@@ -79,7 +136,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 RunSeed.FromValue(37),
                 RunTestFixture.UnsettledVerticalSlice());
             var database = RunTestFixture.CreateObjectDatabase();
-            var query = new SettlementQuery(database, new ProductionService(database));
+            var query = new SettlementQuery(database, new ProductionService(database), stack.ShipProductionService);
             var homePrime = ContentId.From("home-prime");
             stack.SensorService.ScanPlanet(run, ObserverId.Player, homePrime);
             stack.SettlementService.FoundColony(run, ObserverId.Player, homePrime);
@@ -109,7 +166,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(60));
             var database = RunTestFixture.CreateObjectDatabase();
             var productionService = new ProductionService(database);
-            var query = new SettlementQuery(database, productionService);
+            var query = new SettlementQuery(database, productionService, stack.ShipProductionService);
             var forge = ContentId.From("forge-system");
             var forgeWorld = ContentId.From("forge-world");
             var innerBelt = ContentId.From("forge-inner-belt");
@@ -157,7 +214,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 RunSeed.FromValue(62),
                 RunTestFixture.UnsettledVerticalSlice());
             var database = RunTestFixture.CreateObjectDatabase();
-            var query = new SettlementQuery(database, new ProductionService(database));
+            var query = new SettlementQuery(database, new ProductionService(database), stack.ShipProductionService);
             var homePrime = ContentId.From("home-prime");
             stack.SensorService.ScanPlanet(run, ObserverId.Player, homePrime);
             stack.SettlementService.FoundColony(run, ObserverId.Player, homePrime);
@@ -184,7 +241,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 RunSeed.FromValue(38),
                 RunTestFixture.UnsettledVerticalSlice());
             var database = RunTestFixture.CreateObjectDatabase();
-            var query = new SettlementQuery(database, new ProductionService(database));
+            var query = new SettlementQuery(database, new ProductionService(database), stack.ShipProductionService);
             var homePrime = ContentId.From("home-prime");
             run.Timeline.Resources.TrySpend(new[] { new ResourceAmount(ResourceKind.Industry, 71) });
 

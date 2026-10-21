@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Overworld.uss" />
+    <ui:VisualElement name="fleet-bar" class="fleet-bar hud-panel">
+        <ui:VisualElement class="fleet-bar-main">
+            <ui:Label name="fleet-bar-name" text="" class="fleet-bar-name" />
+            <ui:Label name="fleet-bar-status" text="" class="fleet-bar-status" />
+            <ui:Label name="fleet-bar-ships" text="" class="fleet-bar-ships" />
+            <ui:Label name="fleet-bar-speed" text="" class="fleet-bar-speed" />
+            <ui:VisualElement name="fleet-bar-stacks" class="fleet-bar-stacks" />
+        </ui:VisualElement>
+        <ui:VisualElement class="fleet-bar-actions">
+            <ui:Button name="fleet-bar-details" text="DETAILS" class="fleet-bar-details" />
+            <ui:Button name="fleet-bar-close" text="×" class="fleet-bar-close" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

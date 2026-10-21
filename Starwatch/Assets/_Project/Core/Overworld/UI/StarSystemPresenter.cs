@@ -3,22 +3,19 @@ using System.Collections.Generic;
 using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
-using ProjectStarwatch.Overworld.Services;
 using VContainer.Unity;
 
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Star system intents: select a planet, scan it, and return to the map.
+    /// Star system intents: select a planet and return to the map.
     /// Owns the toggle between the map and the open system.
     /// </summary>
     internal sealed class StarSystemPresenter : IStartable, IDisposable
     {
         private readonly IStarSystemView _view;
         private readonly OverworldSelection _selection;
-        private readonly OverworldStatus _status;
         private readonly RunManager _runManager;
-        private readonly SensorService _sensorService;
         private readonly StarSystemQuery _query;
         private readonly DomainEventBus _events;
         private readonly List<IDisposable> _subscriptions = new();
@@ -26,17 +23,13 @@ namespace ProjectStarwatch.Overworld.UI
         public StarSystemPresenter(
             IStarSystemView view,
             OverworldSelection selection,
-            OverworldStatus status,
             RunManager runManager,
-            SensorService sensorService,
             StarSystemQuery query,
             DomainEventBus events)
         {
             _view = view ?? throw new ArgumentNullException(nameof(view));
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
-            _status = status ?? throw new ArgumentNullException(nameof(status));
             _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
-            _sensorService = sensorService ?? throw new ArgumentNullException(nameof(sensorService));
             _query = query ?? throw new ArgumentNullException(nameof(query));
             _events = events ?? throw new ArgumentNullException(nameof(events));
         }
@@ -46,7 +39,6 @@ namespace ProjectStarwatch.Overworld.UI
             _view.BackRequested += OnBackRequested;
             _view.PlanetSelected += OnPlanetSelected;
             _view.FleetSelected += OnFleetSelected;
-            _view.ScanRequested += OnScanRequested;
             _selection.Changed += OnSelectionChanged;
             _subscriptions.Add(_events.Subscribe<MapKnowledgeChangedEvent>(OnMapKnowledgeChanged));
             _subscriptions.Add(_events.Subscribe<FleetTravelEvent>(_ => RefreshRoster()));
@@ -64,7 +56,6 @@ namespace ProjectStarwatch.Overworld.UI
             _view.BackRequested -= OnBackRequested;
             _view.PlanetSelected -= OnPlanetSelected;
             _view.FleetSelected -= OnFleetSelected;
-            _view.ScanRequested -= OnScanRequested;
             _selection.Changed -= OnSelectionChanged;
             for (var i = 0; i < _subscriptions.Count; i++)
             {
@@ -82,10 +73,6 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             _selection.BackToMap();
-            if (_runManager.HasActiveRun)
-            {
-                _status.Post(OverworldStatus.kMapHint);
-            }
         }
 
         private void OnPlanetSelected(ContentId planetId)
@@ -96,25 +83,6 @@ namespace ProjectStarwatch.Overworld.UI
         private void OnFleetSelected(EntityId fleetId)
         {
             _selection.SelectFleet(fleetId);
-        }
-
-        private void OnScanRequested(ContentId planetId)
-        {
-            var run = CurrentRun();
-            if (run == null || planetId.IsEmpty)
-            {
-                return;
-            }
-
-            var result = _sensorService.ScanPlanet(run, ObserverId.Player, planetId);
-            if (!result.Success)
-            {
-                _status.Post(result.Error.Message);
-                return;
-            }
-
-            _selection.SelectPlanet(planetId);
-            _status.Post("Scanned " + planetId.Value + ".");
         }
 
         private void OnMapKnowledgeChanged(MapKnowledgeChangedEvent domainEvent)

@@ -1,0 +1,50 @@
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Settlement;
+using ProjectStarwatch.Tests.EditMode.Core;
+using NUnit.Framework;
+
+namespace ProjectStarwatch.Tests.EditMode.Settlement
+{
+    /// <summary>
+    /// Empire production quote shared by the economy tick and the stockpile bar.
+    /// </summary>
+    public sealed class EmpireProductionQuoteTests
+    {
+        [Test]
+        public void Build_SumsColonyOutputAndUpkeep()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(101));
+            var database = RunTestFixture.CreateObjectDatabase();
+            var productionService = new ProductionService(database);
+            var home = ContentId.From("home-prime");
+            Assert.That(stack.BuildingService.Place(run, home, ContentId.From("industry-works")).Success, Is.True);
+
+            var quote = EmpireProductionQuote.Build(run, database, productionService, includeLines: true);
+
+            Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(2f));
+            Assert.That(quote.Upkeep.Get(ResourceKind.Energy), Is.EqualTo(1f));
+            Assert.That(quote.Lines, Has.Count.EqualTo(1));
+            Assert.That(quote.Lines[0].PlanetId, Is.EqualTo(home));
+            Assert.That(quote.Lines[0].Output.Get(ResourceKind.Industry), Is.EqualTo(2f));
+        }
+
+        [Test]
+        public void Build_WithoutLines_LeavesTheListEmpty()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(102));
+            var database = RunTestFixture.CreateObjectDatabase();
+            Assert.That(
+                stack.BuildingService.Place(run, ContentId.From("home-prime"), ContentId.From("industry-works")).Success,
+                Is.True);
+
+            var quote = EmpireProductionQuote.Build(run, database, new ProductionService(database));
+
+            Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(2f));
+            Assert.That(quote.Lines, Is.Empty);
+        }
+    }
+}

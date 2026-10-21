@@ -101,13 +101,13 @@ namespace ProjectStarwatch.Overworld.UI
             var label = row.Q<Label>("building-label");
             if (label != null)
             {
-                label.text = model.Label;
+                label.text = FormatLabel(model);
             }
 
             var place = row.Q<Button>("place-button");
             if (place != null)
             {
-                place.text = model.PlaceLabel;
+                place.text = FormatPlace(model);
                 place.SetEnabled(model.CanPlace);
             }
 
@@ -129,11 +129,11 @@ namespace ProjectStarwatch.Overworld.UI
             var buildingId = row.BuildingId;
             var element = new VisualElement { name = RowName(buildingId) };
             element.AddToClassList("building-row");
-            var label = new Label { name = "building-label", text = row.Label };
+            var label = new Label { name = "building-label", text = FormatLabel(row) };
             label.AddToClassList("building-label");
             element.Add(label);
 
-            var place = new Button { name = "place-button", text = row.PlaceLabel };
+            var place = new Button { name = "place-button", text = FormatPlace(row) };
             place.AddToClassList("action-button");
             place.SetEnabled(row.CanPlace);
             place.clicked += () => PlaceClicked?.Invoke(buildingId);
@@ -145,6 +145,24 @@ namespace ProjectStarwatch.Overworld.UI
             upgrade.clicked += () => UpgradeClicked?.Invoke(buildingId);
             element.Add(upgrade);
             return element;
+        }
+
+        private static string FormatLabel(BuildingRowModel model)
+        {
+            var text = model.Name + " · footprint " + model.Footprint;
+            if (model.Level > 0)
+            {
+                text += " · Lv " + model.Level;
+            }
+
+            return text;
+        }
+
+        private static string FormatPlace(BuildingRowModel model)
+        {
+            return string.IsNullOrEmpty(model.CostLabel)
+                ? "Place"
+                : "Place · " + model.CostLabel;
         }
     }
 }

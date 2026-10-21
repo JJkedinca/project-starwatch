@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
-using ProjectStarwatch.Overworld;
+using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Core.Run.Universe;
+using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Overworld;
 using ProjectStarwatch.Overworld.Services;
 
 namespace ProjectStarwatch.Overworld.UI
@@ -17,16 +20,25 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly VisibilityService _visibilityService;
         private readonly TravelService _travelService;
         private readonly FleetListQuery _fleetListQuery;
+        private readonly ObjectDatabaseSO _database;
+        private readonly SimulationClock _clock;
 
-        public StarMapQuery(VisibilityService visibilityService, TravelService travelService, FleetListQuery fleetListQuery)
+        public StarMapQuery(
+            VisibilityService visibilityService,
+            TravelService travelService,
+            FleetListQuery fleetListQuery,
+            ObjectDatabaseSO database,
+            SimulationClock clock)
         {
             _visibilityService = visibilityService ?? throw new ArgumentNullException(nameof(visibilityService));
             _travelService = travelService ?? throw new ArgumentNullException(nameof(travelService));
             _fleetListQuery = fleetListQuery ?? throw new ArgumentNullException(nameof(fleetListQuery));
+            _database = database ?? throw new ArgumentNullException(nameof(database));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         /// <summary>
-        /// Nodes, known routes, and the card for the selected node.
+        /// Nodes, routes, and the card for the selected node.
         /// </summary>
         internal StarMapModel Describe(RunState run, OverworldSelection selection)
         {
@@ -37,7 +49,6 @@ namespace ProjectStarwatch.Overworld.UI
 
             var selectedNodeId = selection == null ? default : selection.SelectedNodeId;
             var selectedFleetId = selection == null ? EntityId.None : selection.SelectedFleetId;
-            var inStarSystem = selection != null && selection.InStarSystem;
             List<StarMapNodeModel> nodes = new();
             foreach (var node in run.Universe.MapGraph.Nodes)
             {
@@ -53,17 +64,113 @@ namespace ProjectStarwatch.Overworld.UI
                     NodeState(run, node, selectedNodeId)));
             }
 
-            var card = DescribeCard(run, selectedNodeId, inStarSystem, selectedFleetId);
             return new StarMapModel(
                 true,
                 nodes,
-                KnownRoutes(run),
-                card.HasSelection,
-                card.Title,
-                card.Summary,
-                card.HasArrival,
-                card.ArrivalSeconds,
-                _fleetListQuery.All(run, selectedFleetId));
+                DescribeRoutes(run, selection, default),
+                DescribeCard(run, selection),
+                _fleetListQuery.All(run, selectedFleetId),
+                DescribeFleetMarkers(run, selection));
+        }
+
+        /// <summary>
+        /// Parked arrows (idle fleets per node) and one transit arrow per traveling fleet.
+        /// </summary>
+        internal List<FleetMarkerModel> DescribeFleetMarkers(RunState run, OverworldSelection selection)
+        {
+            List<FleetMarkerModel> markers = new();
+            if (run == null)
+            {
+                return markers;
+            }
+
+            var selectedFleetId = selection == null ? EntityId.None : selection.SelectedFleetId;
+            var fleets = run.Timeline.Fleets;
+            var graph = run.Universe.MapGraph;
+
+            var travels = fleets.ActiveTravels;
+            for (var i = 0; i < travels.Count; i++)
+            {
+                var travel = travels[i];
+                if (!graph.TryGetNode(travel.FromNodeId, out var fromNode)
+                    || !graph.TryGetNode(travel.ToNodeId, out var toNode))
+                {
+                    continue;
+                }
+
+                var total = (float)(travel.ArriveTime.Seconds - travel.DepartTime.Seconds);
+                if (total < 0f)
+                {
+                    total = 0f;
+                }
+
+                markers.Add(new FleetMarkerModel(
+                    FleetMarkerKind.Transit,
+                    travel.FleetId,
+                    travel.FromNodeId,
+                    travel.ToNodeId,
+                    fromNode.MapPosition,
+                    toNode.MapPosition,
+                    count: 1,
+                    isSelected: travel.FleetId == selectedFleetId,
+                    OverworldNames.RemainingSeconds(_clock, travel.ArriveTime),
+                    total));
+            }
+
+            foreach (var node in graph.Nodes)
+            {
+                if (node == null || node.Id.IsEmpty)
+                {
+                    continue;
+                }
+
+                var visibility = _visibilityService.GetNodeVisibility(
+                    run.Archive,
+                    run.Timeline,
+                    ObserverId.Player,
+                    node.Id);
+                if (visibility == MapNodeVisibility.Hidden)
+                {
+                    continue;
+                }
+
+                var atNode = fleets.FleetsAt(node.Id);
+                var idleCount = 0;
+                var selectedHere = false;
+                for (var i = 0; i < atNode.Count; i++)
+                {
+                    var fleetId = atNode[i];
+                    if (fleets.IsFleetTraveling(fleetId))
+                    {
+                        continue;
+                    }
+
+                    idleCount++;
+                    if (fleetId == selectedFleetId)
+                    {
+                        selectedHere = true;
+                    }
+                }
+
+                if (idleCount <= 0)
+                {
+                    continue;
+                }
+
+                markers.Add(new FleetMarkerModel(
+                    FleetMarkerKind.Parked,
+                    EntityId.None,
+                    node.Id,
+                    default,
+                    node.MapPosition,
+                    node.MapPosition,
+                    idleCount,
+                    selectedHere,
+                    remainingSeconds: 0f,
+                    totalSeconds: 0f));
+            }
+
+            return markers;
         }
 
         /// <summary>
@@ -80,39 +187,88 @@ namespace ProjectStarwatch.Overworld.UI
                 && knowledge.HasExploredNode(nodeId);
         }
 
-        internal List<MapRouteSegment> KnownRoutes(RunState run)
+        /// <summary>
+        /// Known routes plus in-transit legs, and an optional planned hover leg.
+        /// </summary>
+        internal List<MapRouteSegment> DescribeRoutes(
+            RunState run,
+            OverworldSelection selection,
+            ContentId hoverNodeId)
         {
             List<MapRouteSegment> segments = new();
-            if (run == null || !run.Archive.TryGetMapKnowledge(ObserverId.Player, out var knowledge))
+            if (run == null)
             {
                 return segments;
             }
 
-            var graph = run.Universe.MapGraph;
-            for (var i = 0; i < graph.Routes.Count; i++)
+            Dictionary<ContentId, MapRouteSegment> byKey = new();
+            AddKnownRoutes(run, byKey);
+            AddInTransitRoutes(run, byKey);
+
+            if (selection != null
+                && !selection.SelectedFleetId.IsNone
+                && !hoverNodeId.IsEmpty)
             {
-                var route = graph.Routes[i];
-                if (route == null)
+                var preview = TravelPreview(run, selection.SelectedFleetId, hoverNodeId);
+                if (preview.Reachable)
                 {
-                    continue;
+                    TryPutRoute(
+                        byKey,
+                        preview.FromNodeId,
+                        preview.ToNodeId,
+                        MapRouteState.Planned,
+                        run.Universe.MapGraph);
                 }
+            }
 
-                var key = RouteService.MakeRouteKey(route.NodeAId, route.NodeBId);
-                if (!knowledge.HasKnownRoute(key))
-                {
-                    continue;
-                }
-
-                if (!graph.TryGetNode(route.NodeAId, out var nodeA)
-                    || !graph.TryGetNode(route.NodeBId, out var nodeB))
-                {
-                    continue;
-                }
-
-                segments.Add(new MapRouteSegment(nodeA.MapPosition, nodeB.MapPosition));
+            foreach (var pair in byKey)
+            {
+                segments.Add(pair.Value);
             }
 
             return segments;
+        }
+
+        /// <summary>
+        /// Known routes only (no transit or planned overlay).
+        /// </summary>
+        internal List<MapRouteSegment> KnownRoutes(RunState run)
+        {
+            Dictionary<ContentId, MapRouteSegment> byKey = new();
+            AddKnownRoutes(run, byKey);
+            List<MapRouteSegment> segments = new();
+            foreach (var pair in byKey)
+            {
+                segments.Add(pair.Value);
+            }
+
+            return segments;
+        }
+
+        /// <summary>
+        /// Preview of sending <paramref name="fleetId"/> to <paramref name="destinationNodeId"/>.
+        /// </summary>
+        internal TravelPreviewModel TravelPreview(RunState run, EntityId fleetId, ContentId destinationNodeId)
+        {
+            if (run == null
+                || fleetId.IsNone
+                || destinationNodeId.IsEmpty
+                || !run.Timeline.Fleets.TryGetFleet(fleetId, out var fleet))
+            {
+                return TravelPreviewModel.None;
+            }
+
+            if (!_travelService.TryGetTripSeconds(
+                    run,
+                    ObserverId.Player,
+                    fleetId,
+                    destinationNodeId,
+                    out var seconds))
+            {
+                return TravelPreviewModel.None;
+            }
+
+            return new TravelPreviewModel(true, seconds, fleet.LocationSystemId, destinationNodeId);
         }
 
         internal MapNodePresentationState NodeState(RunState run, MapNode node, ContentId selectedNodeId)
@@ -135,7 +291,86 @@ namespace ProjectStarwatch.Overworld.UI
                 return StarMapCardModel.Empty;
             }
 
-            return DescribeCard(run, selection.SelectedNodeId, selection.InStarSystem, selection.SelectedFleetId);
+            // Fleet details and research take the right column; the system header
+            // already covers target info while a star system is open.
+            if (selection.RightColumnFocus != RightColumnFocus.Target || selection.InStarSystem)
+            {
+                return StarMapCardModel.Hidden;
+            }
+
+            if (selection.SelectedNodeId.IsEmpty)
+            {
+                return StarMapCardModel.Empty;
+            }
+
+            if (!run.Universe.MapGraph.TryGetNode(selection.SelectedNodeId, out var node))
+            {
+                return StarMapCardModel.Empty;
+            }
+
+            var visibility = _visibilityService.GetNodeVisibility(
+                run.Archive,
+                run.Timeline,
+                ObserverId.Player,
+                node.Id);
+            var explored = visibility != MapNodeVisibility.Hidden;
+            var fleetPresent = explored && run.Timeline.Fleets.HasFleetAt(node.Id);
+            var bodyCount = node.PlanetIds.Count;
+            var scanned = 0;
+            if (explored && run.Archive.TryGetMapKnowledge(ObserverId.Player, out var knowledge))
+            {
+                for (var i = 0; i < node.PlanetIds.Count; i++)
+                {
+                    if (knowledge.HasScannedPlanet(node.PlanetIds[i]))
+                    {
+                        scanned++;
+                    }
+                }
+            }
+
+            DescribeFleetRelation(
+                run,
+                selection.SelectedFleetId,
+                node.Id,
+                out var relation,
+                out var fleetName,
+                out var relationSeconds);
+            var title = explored ? NodeLabel(node) : "Uncharted space";
+            return new StarMapCardModel(
+                true,
+                title,
+                explored,
+                fleetPresent,
+                bodyCount,
+                scanned,
+                relation,
+                fleetName,
+                relationSeconds,
+                relation == StarMapFleetRelation.Reachable);
+        }
+
+        internal StarMapHoverTooltipModel DescribeHoverTooltip(
+            RunState run,
+            OverworldSelection selection,
+            ContentId hoverNodeId)
+        {
+            if (run == null
+                || selection == null
+                || selection.SelectedFleetId.IsNone
+                || hoverNodeId.IsEmpty
+                || !run.Universe.MapGraph.TryGetNode(hoverNodeId, out var node))
+            {
+                return StarMapHoverTooltipModel.Hidden;
+            }
+
+            var preview = TravelPreview(run, selection.SelectedFleetId, hoverNodeId);
+            var visibility = _visibilityService.GetNodeVisibility(
+                run.Archive,
+                run.Timeline,
+                ObserverId.Player,
+                node.Id);
+            var name = visibility == MapNodeVisibility.Hidden ? "Uncharted space" : NodeLabel(node);
+            return new StarMapHoverTooltipModel(true, name, preview.Seconds, preview.Reachable);
         }
 
         internal void AppendNode(
@@ -179,53 +414,126 @@ namespace ProjectStarwatch.Overworld.UI
             }
         }
 
-        private StarMapCardModel DescribeCard(
+        private void DescribeFleetRelation(
             RunState run,
-            ContentId selectedNodeId,
-            bool inStarSystem,
-            EntityId selectedFleetId)
+            EntityId selectedFleetId,
+            ContentId targetNodeId,
+            out StarMapFleetRelation relation,
+            out string fleetName,
+            out float relationSeconds)
         {
-            if (selectedNodeId.IsEmpty || !run.Universe.MapGraph.TryGetNode(selectedNodeId, out var node))
+            relation = StarMapFleetRelation.NoneSelected;
+            fleetName = string.Empty;
+            relationSeconds = 0f;
+            if (selectedFleetId.IsNone || !run.Timeline.Fleets.TryGetFleet(selectedFleetId, out var fleet))
             {
-                return StarMapCardModel.Empty;
+                return;
             }
 
-            var visibility = _visibilityService.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, node.Id);
-            var arrivalSeconds = 0f;
-            var hasArrival = !selectedFleetId.IsNone
-                && _travelService.TryGetTripSeconds(run, ObserverId.Player, selectedFleetId, node.Id, out arrivalSeconds);
-            if (visibility == MapNodeVisibility.Hidden)
+            fleetName = OverworldNames.FleetTitle(_database, fleet);
+            if (run.Timeline.Fleets.IsFleetTraveling(selectedFleetId))
             {
-                return new StarMapCardModel(
-                    true,
-                    "Uncharted space",
-                    hasArrival
-                        ? "Known route. Travel here to enter."
-                        : "Hidden until a fleet arrives by a known route.",
-                    hasArrival,
-                    hasArrival ? arrivalSeconds : 0f);
+                relation = StarMapFleetRelation.InTransit;
+                return;
             }
 
-            var kindLabel = node.Kind == MapNodeKind.System ? "Star system" : "Non-system node";
-            var summary = kindLabel + " · " + node.Id.Value;
-            if (visibility == MapNodeVisibility.Present)
+            if (fleet.LocationSystemId == targetNodeId)
             {
-                summary += "\nFleet present.";
+                relation = StarMapFleetRelation.AtTarget;
+                return;
             }
 
-            if (!inStarSystem)
+            if (_travelService.TryGetTripSeconds(
+                    run,
+                    ObserverId.Player,
+                    selectedFleetId,
+                    targetNodeId,
+                    out relationSeconds))
             {
-                summary += node.PlanetIds.Count > 0
-                    ? "\nOpen to inspect planets."
-                    : "\nOpen to inspect.";
+                relation = StarMapFleetRelation.Reachable;
+                return;
             }
 
-            return new StarMapCardModel(
-                true,
-                NodeLabel(node),
-                summary,
-                hasArrival,
-                hasArrival ? arrivalSeconds : 0f);
+            relation = StarMapFleetRelation.Unreachable;
+        }
+
+        private void AddKnownRoutes(RunState run, Dictionary<ContentId, MapRouteSegment> byKey)
+        {
+            if (!run.Archive.TryGetMapKnowledge(ObserverId.Player, out var knowledge))
+            {
+                return;
+            }
+
+            var graph = run.Universe.MapGraph;
+            for (var i = 0; i < graph.Routes.Count; i++)
+            {
+                var route = graph.Routes[i];
+                if (route == null)
+                {
+                    continue;
+                }
+
+                var key = RouteService.MakeRouteKey(route.NodeAId, route.NodeBId);
+                if (!knowledge.HasKnownRoute(key))
+                {
+                    continue;
+                }
+
+                TryPutRoute(byKey, route.NodeAId, route.NodeBId, MapRouteState.Known, graph);
+            }
+        }
+
+        private static void AddInTransitRoutes(RunState run, Dictionary<ContentId, MapRouteSegment> byKey)
+        {
+            var travels = run.Timeline.Fleets.ActiveTravels;
+            var graph = run.Universe.MapGraph;
+            for (var i = 0; i < travels.Count; i++)
+            {
+                var travel = travels[i];
+                TryPutRoute(byKey, travel.FromNodeId, travel.ToNodeId, MapRouteState.InTransit, graph);
+            }
+        }
+
+        private static void TryPutRoute(
+            Dictionary<ContentId, MapRouteSegment> byKey,
+            ContentId nodeAId,
+            ContentId nodeBId,
+            MapRouteState state,
+            MapGraph graph)
+        {
+            if (nodeAId.IsEmpty
+                || nodeBId.IsEmpty
+                || !graph.TryGetNode(nodeAId, out var nodeA)
+                || !graph.TryGetNode(nodeBId, out var nodeB))
+            {
+                return;
+            }
+
+            var key = RouteService.MakeRouteKey(nodeAId, nodeBId);
+            if (byKey.TryGetValue(key, out var existing) && Priority(existing.State) > Priority(state))
+            {
+                return;
+            }
+
+            byKey[key] = new MapRouteSegment(
+                nodeAId,
+                nodeBId,
+                nodeA.MapPosition,
+                nodeB.MapPosition,
+                state);
+        }
+
+        private static int Priority(MapRouteState state)
+        {
+            switch (state)
+            {
+                case MapRouteState.Planned:
+                    return 3;
+                case MapRouteState.InTransit:
+                    return 2;
+                default:
+                    return 1;
+            }
         }
 
         private bool IsKnownNeighbor(RunState run, ContentId nodeId)
@@ -244,9 +552,14 @@ namespace ProjectStarwatch.Overworld.UI
             return false;
         }
 
-        private static string NodeLabel(MapNode node)
+        private string NodeLabel(MapNode node)
         {
-            return node == null || node.Id.IsEmpty ? string.Empty : node.Id.Value;
+            if (node == null || node.Id.IsEmpty)
+            {
+                return string.Empty;
+            }
+
+            return OverworldNames.StarSystem(_database, node.Id);
         }
 
         private static bool ContainsNode(List<StarMapNodeModel> nodes, ContentId nodeId)

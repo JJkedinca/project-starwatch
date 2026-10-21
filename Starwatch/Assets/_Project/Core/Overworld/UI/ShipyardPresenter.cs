@@ -89,7 +89,7 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             var result = _shipProductionService.Queue(run, _selection.SelectedPlanetId, classId);
-            _status.Post(result.Success ? "Ship queued." : result.Error.Message);
+            _status.PostCommand(result.Success, "Ship queued.", result.Error.Message);
         }
 
         private void OnCancelRequested(int queueIndex)
@@ -103,11 +103,11 @@ namespace ProjectStarwatch.Overworld.UI
             var result = _shipProductionService.Cancel(run, _selection.SelectedPlanetId, queueIndex);
             if (!result.Success)
             {
-                _status.Post(result.Error.Message);
+                _status.Post(result.Error.Message, StatusKind.Error);
                 return;
             }
 
-            _status.Post("Build cancelled.");
+            _status.Post("Build cancelled.", StatusKind.Result);
             Apply();
         }
 

@@ -177,6 +177,32 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         }
 
         [Test]
+        public void EconomyTick_AppliesResearchScienceEverySecond()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = UnsettledRun(stack, 57);
+            var home = ContentId.From("home-prime");
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, home);
+            stack.SettlementService.FoundColony(run, ObserverId.Player, home);
+            Assert.That(stack.BuildingService.Place(run, home, ContentId.From("laboratory")).Success, Is.True);
+            var offered = run.Timeline.Research.Offers[0];
+            Assert.That(stack.ResearchService.Start(run, offered).Success, Is.True);
+            var notices = ResourceChangeCount(stack.Journal);
+
+            var ticksPerSecond = (int)Math.Round(1f / SimulationLoop.kTickIntervalSeconds);
+            AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond);
+
+            Assert.That(run.Timeline.Research.Points, Is.GreaterThan(0f));
+            Assert.That(run.Timeline.Research.Points, Is.EqualTo(stack.EconomyService.ProducedScience));
+
+            var afterOneSecond = run.Timeline.Research.Points;
+            AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond);
+
+            Assert.That(run.Timeline.Research.Points, Is.EqualTo(afterOneSecond + stack.EconomyService.ProducedScience));
+            Assert.That(ResourceChangeCount(stack.Journal), Is.EqualTo(notices));
+        }
+
+        [Test]
         public void EconomyTick_CreditsOnlyTheSecondsABuildingExisted()
         {
             var stack = RunTestFixture.CreateOverworldStack();

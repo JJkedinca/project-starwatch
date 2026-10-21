@@ -138,7 +138,7 @@ Implementation:
 
 - `FleetRosterView` (thin) bound to a `FleetRoster.uxml` template.
 - `FleetRosterPresenter` owns the subscriptions. It is a cleaner owner than either the map or system presenter, since the roster is shown in both modes.
-- `FleetChoiceModel` gains `DestinationId` and `ArrivalSeconds` (or a status enum plus those fields). `FleetListQuery.All` fills them. Tests extend `FleetListQueryTests`.
+- `FleetRowModel` gains `DestinationId` and `ArrivalSeconds` (or a status enum plus those fields). `FleetListQuery.All` fills them. Tests extend `FleetListQueryTests`.
 
 ### Selected fleet bar
 
@@ -437,7 +437,7 @@ NEW RUN
 | --- | --- | --- | --- |
 | `PlanetPresentationState` | Archetype, size class, settlement kind | `StarSystemQuery` | `StarSystemQueryTests` |
 | `StarSystemModel` | Star type | `StarSystemQuery` | `StarSystemQueryTests` |
-| `FleetChoiceModel` | Destination, arrival seconds | `FleetListQuery` | `FleetListQueryTests` |
+| `FleetRowModel` | Destination, arrival seconds | `FleetListQuery` | `FleetListQueryTests` |
 | `StarMapCardModel` | Fleet relation, chips | `StarMapQuery.DescribeCard` | `StarMapQueryTests` |
 | `MapRouteSegment` | Node ids, route state | `StarMapQuery` | `StarMapQueryTests` |
 | New `TravelPreview` | Path, seconds, reachable | `StarMapQuery.TravelPreview` | `StarMapQueryTests` |
@@ -468,7 +468,7 @@ Each phase leaves the game playable.
 
 ### Phase 3: Fleet roster and fleet bar
 
-- `FleetRosterView` / `FleetRosterPresenter`, the `FleetChoiceModel` additions.
+- `FleetRosterView` / `FleetRosterPresenter`, the `FleetRowModel` additions.
 - `FleetBarView` sharing `FleetPanelModel`.
 - `RightColumnFocus` and fleet details in the right column.
 - Fleet list and Travel button removed from the target card.

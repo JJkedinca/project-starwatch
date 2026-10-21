@@ -20,48 +20,55 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(70));
-            var query = new FleetPanelQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects);
+            var query = new FleetPanelQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects, stack.Clock);
             var selection = new OverworldSelection();
 
+            Assert.That(query.Describe(run, selection).HasFleet, Is.False);
             Assert.That(query.Describe(run, selection).IsOpen, Is.False);
 
             selection.EnterSystem(ContentId.From("home-system"));
             selection.SelectFleet(new EntityId(99));
 
+            Assert.That(query.Describe(run, selection).HasFleet, Is.False);
             Assert.That(query.Describe(run, selection).IsOpen, Is.False);
         }
 
         [Test]
-        public void Describe_StaysClosedOnTheStarMap()
+        public void Describe_ShowsTheBarWithoutOpeningDetails()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(69));
-            var query = new FleetPanelQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects);
+            var query = new FleetPanelQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects, stack.Clock);
             var selection = new OverworldSelection();
             selection.SelectFleet(run.Timeline.Fleets[0].Id);
 
-            Assert.That(query.Describe(run, selection).IsOpen, Is.False);
+            var model = query.Describe(run, selection);
+
+            Assert.That(model.HasFleet, Is.True);
+            Assert.That(model.IsOpen, Is.False);
         }
 
         [Test]
-        public void Describe_ListsTheSelectedFleetsStacks()
+        public void Describe_ListsTheSelectedFleetsStacksWhenDetailsAreOpen()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(71));
             var database = RunTestFixture.CreateObjectDatabase();
-            var query = new FleetPanelQuery(database, stack.Effects);
+            var query = new FleetPanelQuery(database, stack.Effects, stack.Clock);
             var home = ContentId.From("home-system");
             var fleet = run.Timeline.Fleets[0];
             var selection = new OverworldSelection();
             selection.EnterSystem(home);
             selection.SelectFleet(fleet.Id);
+            selection.OpenFleetDetails();
 
             var model = query.Describe(run, selection);
 
+            Assert.That(model.HasFleet, Is.True);
             Assert.That(model.IsOpen, Is.True);
             Assert.That(model.FleetId, Is.EqualTo(fleet.Id));
-            Assert.That(model.LocationId, Is.EqualTo(home));
-            Assert.That(model.IsTraveling, Is.False);
+            Assert.That(model.Route.LocationId, Is.EqualTo(home));
+            Assert.That(model.Route.IsTraveling, Is.False);
             Assert.That(model.Stacks, Has.Count.EqualTo(fleet.Stacks.Count));
             Assert.That(model.Stacks[0].ClassId, Is.EqualTo(fleet.Stacks[0].ClassId));
             Assert.That(model.Stacks[0].Count, Is.EqualTo(fleet.Stacks[0].Count));
@@ -86,10 +93,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                     out var fleetId),
                 Is.True);
             var effects = new FixedTravelSpeed(1.25f);
-            var query = new FleetPanelQuery(database, effects);
+            var query = new FleetPanelQuery(database, effects, stack.Clock);
             var selection = new OverworldSelection();
             selection.EnterSystem(ContentId.From("home-system"));
             selection.SelectFleet(fleetId);
+            selection.OpenFleetDetails();
 
             var model = query.Describe(run, selection);
 

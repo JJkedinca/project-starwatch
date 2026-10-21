@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Settlement;
@@ -29,8 +30,18 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             Completed(run, catalog, out var completedNames, out var completedTooltip);
+            var remaining = 0f;
+            if (active != null && science > 0.0001f)
+            {
+                remaining = (active.PointCost - progress.Points) / science;
+                if (remaining < 0f)
+                {
+                    remaining = 0f;
+                }
+            }
+
             return new ResearchPanelModel(
-                Offers(catalog, progress, progress.HasActive),
+                Offers(catalog, progress, science),
                 progress.HasActive,
                 progress.ActiveId,
                 active != null ? active.DisplayName : string.Empty,
@@ -38,6 +49,7 @@ namespace ProjectStarwatch.Overworld.UI
                 active != null ? active.PointCost : 0f,
                 progress.HasActive ? science : 0f,
                 !progress.HasActive && science > 0f,
+                remaining,
                 completedNames,
                 active != null ? ResearchEffectText.Describe(active.Effect) : string.Empty,
                 completedTooltip);
@@ -66,7 +78,10 @@ namespace ProjectStarwatch.Overworld.UI
             return true;
         }
 
-        private static List<ResearchOfferModel> Offers(ResearchCatalogSO catalog, ResearchProgress progress, bool hasActive)
+        private static List<ResearchOfferModel> Offers(
+            ResearchCatalogSO catalog,
+            ResearchProgress progress,
+            float sciencePerSecond)
         {
             var offers = new List<ResearchOfferModel>();
             var ids = progress.Offers;
@@ -77,11 +92,22 @@ namespace ProjectStarwatch.Overworld.UI
                     continue;
                 }
 
+                var eta = 0f;
+                if (sciencePerSecond > 0.0001f)
+                {
+                    eta = project.PointCost / sciencePerSecond;
+                }
+
+                // Always clickable: the presenter prompts a switch when a project is already active.
                 offers.Add(new ResearchOfferModel(
                     project.Id,
                     project.DisplayName,
-                    !hasActive,
-                    ResearchEffectText.Describe(project.Effect)));
+                    project.Domain,
+                    canStart: true,
+                    ResearchEffectText.Describe(project.Effect),
+                    project.PointCost,
+                    eta,
+                    unavailableReason: string.Empty));
             }
 
             return offers;

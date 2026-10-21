@@ -21,7 +21,8 @@ namespace ProjectStarwatch.Overworld.UI
     }
 
     /// <summary>
-    /// Open star system snapshot: title, planet icons, selected planet, and status text.
+    /// Open star system snapshot: title, planet icons, fleets, and status text.
+    /// Planet / settlement detail lives on the settlement panel.
     /// </summary>
     internal sealed class StarSystemModel
     {
@@ -29,9 +30,7 @@ namespace ProjectStarwatch.Overworld.UI
             false,
             string.Empty,
             Array.Empty<StarSystemPlanetModel>(),
-            Array.Empty<FleetChoiceModel>(),
-            false,
-            default,
+            Array.Empty<FleetRowModel>(),
             string.Empty);
 
         public bool IsOpen { get; }
@@ -40,11 +39,7 @@ namespace ProjectStarwatch.Overworld.UI
 
         public IReadOnlyList<StarSystemPlanetModel> Planets { get; }
 
-        public IReadOnlyList<FleetChoiceModel> Fleets { get; }
-
-        public bool ShowPlanetDetail { get; }
-
-        public PlanetDetailModel PlanetDetail { get; }
+        public IReadOnlyList<FleetRowModel> Fleets { get; }
 
         public string Status { get; }
 
@@ -52,17 +47,13 @@ namespace ProjectStarwatch.Overworld.UI
             bool isOpen,
             string title,
             IReadOnlyList<StarSystemPlanetModel> planets,
-            IReadOnlyList<FleetChoiceModel> fleets,
-            bool showPlanetDetail,
-            PlanetDetailModel planetDetail,
+            IReadOnlyList<FleetRowModel> fleets,
             string status)
         {
             IsOpen = isOpen;
             Title = title ?? string.Empty;
             Planets = planets ?? Array.Empty<StarSystemPlanetModel>();
-            Fleets = fleets ?? Array.Empty<FleetChoiceModel>();
-            ShowPlanetDetail = showPlanetDetail;
-            PlanetDetail = planetDetail;
+            Fleets = fleets ?? Array.Empty<FleetRowModel>();
             Status = status ?? string.Empty;
         }
     }

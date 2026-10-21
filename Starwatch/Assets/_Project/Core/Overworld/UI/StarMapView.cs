@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Owns the map surface, route layer, and map-node element lifecycle.
+    /// Owns the map surface, route layer, hover tooltip, and map-node element lifecycle.
     /// </summary>
     internal sealed class StarMapView
     {
@@ -15,13 +15,20 @@ namespace ProjectStarwatch.Overworld.UI
 
         public event Action<ContentId> NodeRightClicked;
 
+        /// <summary>
+        /// Raised when the pointer enters a node, or with <see cref="ContentId"/> empty on leave.
+        /// </summary>
+        public event Action<ContentId> NodeHovered;
+
         private VisualElement _mapSurface;
-        private VisualElement _routeLayer;
+        private RouteView _routes;
+        private FleetMarkerView _fleetMarkers;
+        private Label _hoverTooltip;
         private readonly Dictionary<ContentId, MapNodeView> _nodesById = new();
-        private readonly List<RouteView> _routes = new();
         private readonly List<MapRouteSegment> _routeSegments = new();
         private float _scale = MapLayout.kDefaultScale;
         private Vector2 _originOffset = MapLayout.kDefaultPadding;
+        private ContentId _hoveredNodeId;
 
         /// <summary>
         /// Binds to the map-surface element from Overworld UXML.
@@ -30,6 +37,8 @@ namespace ProjectStarwatch.Overworld.UI
         {
             _mapSurface = mapSurface;
             EnsureRouteLayer();
+            EnsureFleetMarkerLayer();
+            EnsureHoverTooltip();
         }
 
         /// <summary>
@@ -63,9 +72,19 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            Clear();
+            List<MapRouteSegment> preservedRoutes = null;
+            if (_routeSegments.Count > 0)
+            {
+                preservedRoutes = new List<MapRouteSegment>(_routeSegments);
+            }
+
+            ClearNodes();
             EnsureRouteLayer();
+            EnsureFleetMarkerLayer();
+            EnsureHoverTooltip();
             _originOffset = MapLayout.ComputeOriginOffset(positions, _scale, MapLayout.kDefaultPadding);
+            _routes.SetTransform(_scale, _originOffset);
+            _fleetMarkers.SetTransform(_scale, _originOffset);
 
             for (var i = 0; i < validNodes.Count; i++)
             {
@@ -73,15 +92,29 @@ namespace ProjectStarwatch.Overworld.UI
                 var view = new MapNodeView(node.NodeId, node.Kind);
                 view.Clicked += id => NodeClicked?.Invoke(id);
                 view.RightClicked += id => NodeRightClicked?.Invoke(id);
+                view.PointerEntered += OnNodePointerEntered;
+                view.PointerLeft += OnNodePointerLeft;
                 view.SetMapPosition(node.MapPosition, _scale, _originOffset);
                 _nodesById[node.NodeId] = view;
                 _mapSurface.Add(view.Root);
             }
+
+            BringTooltipToFront();
+
+            if (preservedRoutes != null)
+            {
+                _routeSegments.Clear();
+                for (var i = 0; i < preservedRoutes.Count; i++)
+                {
+                    _routeSegments.Add(preservedRoutes[i]);
+                }
+
+                _routes.SetSegments(_routeSegments);
+            }
         }
 
         /// <summary>
-        /// Creates route lines when the set of segments changes. An existing line stays in
-        /// place so a map refresh can update nodes without redrawing the same routes.
+        /// Replaces the drawn route set when it changes.
         /// </summary>
         public void SetRoutes(IReadOnlyList<MapRouteSegment> segments)
         {
@@ -90,24 +123,56 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            ClearRoutes();
+            _routeSegments.Clear();
+            if (segments != null)
+            {
+                for (var i = 0; i < segments.Count; i++)
+                {
+                    _routeSegments.Add(segments[i]);
+                }
+            }
+
             EnsureRouteLayer();
-            if (_routeLayer == null || segments == null)
+            _routes.SetTransform(_scale, _originOffset);
+            _routes.SetSegments(_routeSegments);
+        }
+
+        /// <summary>
+        /// Replaces parked and in-transit fleet arrows. Transit markers start a USS move.
+        /// </summary>
+        public void SetFleetMarkers(IReadOnlyList<FleetMarkerModel> markers)
+        {
+            EnsureFleetMarkerLayer();
+            _fleetMarkers.SetTransform(_scale, _originOffset);
+            _fleetMarkers.SetMarkers(markers);
+            BringMarkersAboveRoutes();
+            BringTooltipToFront();
+        }
+
+        public void SetHoverTooltip(StarMapHoverTooltipModel tooltip)
+        {
+            EnsureHoverTooltip();
+            if (_hoverTooltip == null)
             {
                 return;
             }
 
-            for (var i = 0; i < segments.Count; i++)
+            if (!tooltip.IsShown || _hoveredNodeId.IsEmpty || !_nodesById.TryGetValue(_hoveredNodeId, out var node))
             {
-                var segment = segments[i];
-                var route = new RouteView();
-                route.SetLocalEndpoints(
-                    MapLayout.ToNodeCenter(segment.MapPositionA, _scale, _originOffset),
-                    MapLayout.ToNodeCenter(segment.MapPositionB, _scale, _originOffset));
-                _routes.Add(route);
-                _routeSegments.Add(segment);
-                _routeLayer.Add(route.Root);
+                _hoverTooltip.style.display = DisplayStyle.None;
+                return;
             }
+
+            _hoverTooltip.text = tooltip.Reachable
+                ? tooltip.TargetName + " · " + tooltip.Seconds.ToString("0.#") + "s"
+                : tooltip.TargetName + " · unreachable";
+            var left = node.Root.style.left.value.value + MapLayout.kNodeSize + 8f;
+            var top = node.Root.style.top.value.value;
+            _hoverTooltip.style.left = left;
+            _hoverTooltip.style.top = top;
+            _hoverTooltip.style.display = DisplayStyle.Flex;
+            node.Root.BringToFront();
+            BringTooltipToFront();
         }
 
         /// <summary>
@@ -128,7 +193,27 @@ namespace ProjectStarwatch.Overworld.UI
         /// </summary>
         public void Clear()
         {
-            ClearRoutes();
+            ClearNodes();
+            _routes?.Clear();
+            _routeSegments.Clear();
+            _fleetMarkers?.Clear();
+        }
+
+        private void ClearNodes()
+        {
+            // Rebuild removes nodes under the pointer without a leave event; clear hover
+            // so the presenter drops a stale dashed course preview.
+            if (!_hoveredNodeId.IsEmpty)
+            {
+                _hoveredNodeId = default;
+                NodeHovered?.Invoke(default);
+            }
+
+            if (_hoverTooltip != null)
+            {
+                _hoverTooltip.style.display = DisplayStyle.None;
+            }
+
             foreach (var pair in _nodesById)
             {
                 pair.Value.Root.RemoveFromHierarchy();
@@ -151,9 +236,37 @@ namespace ProjectStarwatch.Overworld.UI
         public int NodeCount => _nodesById.Count;
 
         /// <summary>
-        /// Number of route elements currently on the map.
+        /// Number of route segments currently drawn.
         /// </summary>
-        public int RouteCount => _routes.Count;
+        public int RouteCount => _routes != null ? _routes.SegmentCount : 0;
+
+        /// <summary>
+        /// Number of fleet marker elements currently on the map.
+        /// </summary>
+        public int FleetMarkerCount => _fleetMarkers != null ? _fleetMarkers.MarkerCount : 0;
+
+        private void OnNodePointerEntered(ContentId nodeId)
+        {
+            _hoveredNodeId = nodeId;
+            if (_nodesById.TryGetValue(nodeId, out var view))
+            {
+                view.Root.BringToFront();
+                BringTooltipToFront();
+            }
+
+            NodeHovered?.Invoke(nodeId);
+        }
+
+        private void OnNodePointerLeft(ContentId nodeId)
+        {
+            if (_hoveredNodeId != nodeId)
+            {
+                return;
+            }
+
+            _hoveredNodeId = default;
+            NodeHovered?.Invoke(default);
+        }
 
         private bool SameNodes(List<StarMapNodeModel> nodes)
         {
@@ -209,7 +322,11 @@ namespace ProjectStarwatch.Overworld.UI
 
         private static bool SameSegment(MapRouteSegment left, MapRouteSegment right)
         {
-            return left.MapPositionA == right.MapPositionA && left.MapPositionB == right.MapPositionB;
+            return left.State == right.State
+                && left.NodeAId == right.NodeAId
+                && left.NodeBId == right.NodeBId
+                && left.MapPositionA == right.MapPositionA
+                && left.MapPositionB == right.MapPositionB;
         }
 
         private void EnsureRouteLayer()
@@ -219,27 +336,81 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            if (_routeLayer != null && _routeLayer.parent == _mapSurface)
+            if (_routes == null)
+            {
+                _routes = new RouteView();
+            }
+
+            if (_routes.Root.parent == _mapSurface)
             {
                 return;
             }
 
-            _routeLayer = new VisualElement();
-            _routeLayer.name = "route-layer";
-            _routeLayer.AddToClassList("map-route-layer");
-            _routeLayer.pickingMode = PickingMode.Ignore;
-            _mapSurface.Insert(0, _routeLayer);
+            _mapSurface.Insert(0, _routes.Root);
         }
 
-        private void ClearRoutes()
+        private void EnsureFleetMarkerLayer()
         {
-            for (var i = 0; i < _routes.Count; i++)
+            if (_mapSurface == null)
             {
-                _routes[i].Root.RemoveFromHierarchy();
+                return;
             }
 
-            _routes.Clear();
-            _routeSegments.Clear();
+            if (_fleetMarkers == null)
+            {
+                _fleetMarkers = new FleetMarkerView();
+            }
+
+            if (_fleetMarkers.Root.parent == _mapSurface)
+            {
+                return;
+            }
+
+            // Above routes, below nodes and tooltip.
+            var insertAt = _routes != null && _routes.Root.parent == _mapSurface ? 1 : 0;
+            _mapSurface.Insert(insertAt, _fleetMarkers.Root);
+        }
+
+        private void EnsureHoverTooltip()
+        {
+            if (_mapSurface == null)
+            {
+                return;
+            }
+
+            if (_hoverTooltip != null && _hoverTooltip.parent == _mapSurface)
+            {
+                return;
+            }
+
+            _hoverTooltip = new Label();
+            _hoverTooltip.name = "map-hover-tooltip";
+            _hoverTooltip.AddToClassList("map-hover-tooltip");
+            _hoverTooltip.pickingMode = PickingMode.Ignore;
+            _hoverTooltip.style.display = DisplayStyle.None;
+            _mapSurface.Add(_hoverTooltip);
+        }
+
+        private void BringMarkersAboveRoutes()
+        {
+            // Routes stay at the back; markers sit above nodes so a transit arrow stays visible.
+            foreach (var pair in _nodesById)
+            {
+                pair.Value.Root.BringToFront();
+            }
+
+            if (_fleetMarkers != null && _fleetMarkers.Root.parent == _mapSurface)
+            {
+                _fleetMarkers.Root.BringToFront();
+            }
+        }
+
+        private void BringTooltipToFront()
+        {
+            if (_hoverTooltip != null && _hoverTooltip.parent == _mapSurface)
+            {
+                _hoverTooltip.BringToFront();
+            }
         }
     }
 }

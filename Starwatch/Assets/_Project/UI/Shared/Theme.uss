@@ -1,0 +1,102 @@
+:root {
+    --bg-deep: rgb(10, 14, 20);
+    --panel-bg: rgb(16, 22, 32);
+    --panel-border: rgb(40, 52, 70);
+    --text-primary: rgb(230, 236, 245);
+    --text-muted: rgb(160, 176, 196);
+    --accent-gold: rgb(240, 200, 90);
+    --nav-cyan: rgb(120, 170, 220);
+    --good-green: rgb(120, 200, 160);
+    --warn-amber: rgb(220, 170, 70);
+    --bad-red: rgb(210, 90, 90);
+    --transit-orange: rgb(240, 140, 60);
+    --star-core: rgb(255, 214, 130);
+    --star-rim: rgb(255, 246, 220);
+}
+
+/*
+ * Screen stack (back → front). Unity 6 USS has no z-index; later siblings paint on top.
+ * Overworld.root order: top-bar-slot → content → top-bar (chrome) → toast-stack → (future modal).
+ */
+
+.hud-panel {
+    background-color: var(--panel-bg);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    border-top-width: 2px;
+    border-top-color: var(--nav-cyan);
+    padding: 8px 10px;
+}
+
+.hud-caption {
+    font-size: 10px;
+    color: var(--nav-cyan);
+    letter-spacing: 3px;
+    -unity-font-style: bold;
+    margin: 0;
+    padding: 0;
+}
+
+.hud-chip {
+    flex-direction: row;
+    align-items: center;
+    padding: 1px 6px;
+    margin-right: 4px;
+    background-color: rgba(20, 32, 48, 0.9);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+.hud-corner {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-color: rgba(120, 170, 220, 0.55);
+}
+
+.hud-corner--tl {
+    left: 8px;
+    top: 8px;
+    border-left-width: 2px;
+    border-top-width: 2px;
+}
+
+.hud-corner--tr {
+    right: 8px;
+    top: 8px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+}
+
+.hud-corner--bl {
+    left: 8px;
+    bottom: 8px;
+    border-left-width: 2px;
+    border-bottom-width: 2px;
+}
+
+.hud-corner--br {
+    right: 8px;
+    bottom: 8px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+}
+
+.hud-rate--positive {
+    color: var(--good-green);
+}
+
+.hud-rate--negative {
+    color: var(--bad-red);
+}
+
+.hud-rate--zero {
+    color: var(--text-muted);
+}
+
+.hud-rate--warn {
+    color: var(--warn-amber);
+}

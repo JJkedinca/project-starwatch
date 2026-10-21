@@ -1,28 +1,128 @@
+/*
+ * Overworld screen stylesheet.
+ * Shared tokens and .hud-* helpers live in UI/Shared/Theme.uss.
+ *
+ * Stack (UXML sibling order under .root, back → front):
+ *   top-bar-slot → content → top-bar (chrome) → toast-stack → (future modal)
+ * Unity 6 USS has no z-index; later siblings paint on top.
+ *
+ * Sections (search for "===="):
+ *   1. Screen shell          — root, top bar, content columns, empty fleet hosts
+ *   2. Research panel        — right-column overlay from the stockpile entry
+ *   3. Stockpile / top bar   — resource readouts, rates, floater, tooltip, research entry
+ *   4. Star map surface      — map panel, routes, overlay host for the system scene
+ *   5. Star system scene     — orbital view, star glow, header
+ *   6. Planet icons          — glyphs, reticles, name plates
+ *   7. System fleet dock     — fleets list inside an open system
+ *   8. Fleet list & panel    — map/system fleet choices and details panel
+ *   9. Shipyard              — settlement shipyard section
+ *  10. Right inspection      — target card, planet detail, settlement, buildings
+ *  11. Map nodes             — star-map node buttons and fleet pips
+ */
+
+@import url("../Shared/Theme.uss");
+
+/* =============================================================================
+ * 1. Screen shell
+ * Overworld.uxml: root → top-bar → research → content
+ *   (fleet-roster-host | center-column | inspection-panel)
+ * ============================================================================= */
+
 .root {
     flex-grow: 1;
     height: 100%;
     flex-direction: column;
     overflow: hidden;
-    background-color: rgb(10, 14, 20);
+    background-color: var(--bg-deep);
     padding: 12px;
+    position: relative;
 }
 
-.header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+/* Reserves vertical space; the real .top-bar is absolute and paints above .content. */
+.top-bar-slot {
+    flex-shrink: 0;
+    min-height: 56px;
     margin-bottom: 8px;
 }
 
-.title {
-    font-size: 28px;
-    color: rgb(230, 236, 245);
-    -unity-font-style: bold;
+.top-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    overflow: visible;
 }
 
-.status-label {
+.title {
+    font-size: 22px;
+    color: var(--text-primary);
+    -unity-font-style: bold;
+    margin-right: 16px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.toast-stack {
+    position: absolute;
+    bottom: 48px;
+    left: 50%;
+    translate: -50% 0;
+    width: 360px;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.toast {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    background-color: var(--panel-bg);
+    border-width: 1px;
+    border-color: var(--panel-border);
+}
+
+.toast__accent {
+    width: 3px;
+    align-self: stretch;
+    margin-right: 8px;
+    background-color: var(--nav-cyan);
+}
+
+.toast--error > .toast__accent {
+    background-color: var(--bad-red);
+}
+
+.toast--result > .toast__accent {
+    background-color: var(--nav-cyan);
+}
+
+.toast--event > .toast__accent {
+    background-color: var(--text-muted);
+}
+
+.toast__label {
+    flex-grow: 1;
+    flex-shrink: 1;
+    font-size: 12px;
+    color: var(--text-primary);
+    white-space: normal;
+}
+
+.toast__dismiss {
+    margin-left: 8px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: var(--text-muted);
     font-size: 14px;
-    color: rgb(160, 176, 196);
+    -unity-text-align: middle-center;
 }
 
 .content {
@@ -32,22 +132,67 @@
     flex-direction: row;
 }
 
-.research-panel {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-start;
+.fleet-roster-host {
+    width: 220px;
+    min-width: 180px;
     flex-shrink: 0;
+    margin-right: 12px;
+    overflow: hidden;
+}
+
+.center-column {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    margin-right: 12px;
+}
+
+.fleet-bar-host {
+    flex-shrink: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+/* =============================================================================
+ * 2. Research panel
+ * ResearchPanel.uxml — right column overlay; toggled from the stockpile entry.
+ * ============================================================================= */
+
+.research-panel {
+    display: none;
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    align-items: stretch;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.research-drawer-header {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 8px;
-    padding: 8px;
-    background-color: rgb(16, 22, 32);
-    border-width: 1px;
-    border-color: rgb(40, 52, 70);
+}
+
+.research-offer--dim {
+    opacity: 0.45;
+}
+
+.stockpile-research--warn {
+    color: var(--warn-amber);
 }
 
 .research-column {
     flex-direction: column;
-    margin-right: 18px;
-    min-width: 180px;
+    margin-bottom: 12px;
+    min-width: 0;
+    width: 100%;
 }
 
 .research-caption {
@@ -63,13 +208,16 @@
 }
 
 .research-offers {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    flex-wrap: nowrap;
 }
 
 .research-offer {
-    margin-right: 6px;
-    margin-bottom: 4px;
+    margin-right: 0;
+    margin-bottom: 6px;
+    white-space: normal;
+    height: auto;
+    min-height: 56px;
 }
 
 .research-hover {
@@ -93,46 +241,159 @@
     margin-left: 8px;
 }
 
+/* =============================================================================
+ * 3. Stockpile / top bar
+ * StockpileBar.uxml + ResourceReadout.uxml — lives inside .top-bar.
+ * Rates use Theme .hud-rate--*; floaters are USS transitions from Apply.
+ * ============================================================================= */
+
 .stockpile-bar {
     flex-direction: row;
-    flex-shrink: 0;
-    justify-content: center;
+    flex-grow: 1;
+    flex-shrink: 1;
     align-items: center;
     min-height: 28px;
-    margin-top: 8px;
-    background-color: rgb(16, 22, 32);
-    border-width: 1px;
-    border-color: rgb(40, 52, 70);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    position: relative;
+    overflow: visible;
+}
+
+.stockpile-readouts {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 .stockpile-item {
-    flex-direction: row;
-    align-items: center;
-    margin-left: 14px;
-    margin-right: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 10px;
+    margin-right: 10px;
+    position: relative;
 }
 
 .stockpile-caption {
-    font-size: 11px;
-    color: rgb(160, 176, 196);
-    margin-right: 6px;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 1px;
+}
+
+.stockpile-amount-row {
+    flex-direction: row;
+    align-items: flex-end;
 }
 
 .stockpile-amount {
-    font-size: 12px;
-    color: rgb(230, 236, 245);
+    font-size: 16px;
+    color: var(--text-primary);
     -unity-font-style: bold;
+    margin-right: 6px;
+}
+
+.stockpile-rate {
+    font-size: 12px;
+}
+
+.stockpile-chip {
+    margin-top: 2px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--bad-red);
+    display: none;
 }
 
 .stockpile-research {
+    flex-direction: row;
+    align-items: center;
     margin-left: 18px;
+    flex-shrink: 0;
 }
+
+.stockpile-science {
+    flex-direction: column;
+    margin-right: 8px;
+}
+
+.stockpile-science-rate {
+    font-size: 12px;
+    color: var(--nav-cyan);
+}
+
+.stockpile-research-progress {
+    width: 72px;
+    height: 6px;
+    margin-top: 2px;
+    background-color: rgb(28, 38, 54);
+}
+
+.stockpile-research-progress-fill {
+    height: 100%;
+    width: 0;
+    background-color: var(--nav-cyan);
+}
+
+.stockpile-floater {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 12px;
+    color: var(--good-green);
+    -unity-font-style: bold;
+    opacity: 1;
+    translate: 0 0;
+    transition-property: opacity, translate;
+    transition-duration: 0.8s;
+}
+
+.stockpile-floater--fade {
+    opacity: 0;
+    translate: 0 -18px;
+}
+
+.stockpile-tooltip {
+    position: absolute;
+    display: none;
+    left: 0;
+    top: 100%;
+    margin-top: 6px;
+    min-width: 220px;
+    max-width: 320px;
+    padding: 8px 10px;
+    background-color: rgba(12, 18, 28, 0.96);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    border-top-width: 2px;
+    border-top-color: var(--nav-cyan);
+}
+
+.stockpile-tooltip__line {
+    font-size: 11px;
+    color: var(--text-primary);
+    white-space: normal;
+    margin-bottom: 2px;
+}
+
+.stockpile-tooltip__muted {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: normal;
+    margin-bottom: 2px;
+}
+
+/* =============================================================================
+ * 4. Star map surface
+ * Center column: map-panel holds map-surface and the star-system-host overlay.
+ * ============================================================================= */
 
 .map-panel {
     flex-grow: 1;
     min-height: 0;
     position: relative;
-    margin-right: 12px;
 }
 
 .map-surface {
@@ -168,7 +429,11 @@
     bottom: 0;
 }
 
-/* ---- Star system: orbital scene ---- */
+/* =============================================================================
+ * 5. Star system scene
+ * StarSystemView.uxml — full-bleed orbital scene over the map when a system is open.
+ * Corner brackets use Theme .hud-corner.
+ * ============================================================================= */
 
 .star-system {
     position: absolute;
@@ -176,9 +441,9 @@
     top: 0;
     right: 0;
     bottom: 0;
-    background-color: rgb(6, 9, 15);
+    background-color: var(--bg-deep);
     border-width: 1px;
-    border-color: rgb(40, 52, 70);
+    border-color: var(--panel-border);
     overflow: hidden;
     display: none;
 }
@@ -242,44 +507,8 @@
     height: 64px;
     border-radius: 32px;
     border-width: 3px;
-    border-color: rgb(255, 246, 220);
-    background-color: rgb(255, 214, 130);
-}
-
-/* HUD frame brackets in the scene corners. */
-.hud-corner {
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    border-color: rgba(120, 170, 220, 0.55);
-}
-
-.hud-corner--tl {
-    left: 8px;
-    top: 8px;
-    border-left-width: 2px;
-    border-top-width: 2px;
-}
-
-.hud-corner--tr {
-    right: 8px;
-    top: 8px;
-    border-right-width: 2px;
-    border-top-width: 2px;
-}
-
-.hud-corner--bl {
-    left: 8px;
-    bottom: 8px;
-    border-left-width: 2px;
-    border-bottom-width: 2px;
-}
-
-.hud-corner--br {
-    right: 8px;
-    bottom: 8px;
-    border-right-width: 2px;
-    border-bottom-width: 2px;
+    border-color: var(--star-rim);
+    background-color: var(--star-core);
 }
 
 .star-system-header {
@@ -316,12 +545,12 @@
     flex-direction: column;
     padding-left: 12px;
     border-left-width: 2px;
-    border-left-color: rgb(240, 200, 90);
+    border-left-color: var(--accent-gold);
 }
 
 .star-system-caption {
     font-size: 10px;
-    color: rgb(240, 200, 90);
+    color: var(--accent-gold);
     letter-spacing: 3px;
     -unity-font-style: bold;
     padding: 0;
@@ -330,7 +559,7 @@
 
 .star-system-title {
     font-size: 26px;
-    color: rgb(236, 242, 250);
+    color: var(--text-primary);
     -unity-font-style: bold;
     letter-spacing: 1px;
     padding: 0;
@@ -339,13 +568,16 @@
 
 .star-system-summary {
     font-size: 11px;
-    color: rgb(130, 150, 176);
+    color: var(--text-muted);
     letter-spacing: 2px;
     padding: 0;
     margin: 2px 0 0 0;
 }
 
-/* ---- Planets ---- */
+/* =============================================================================
+ * 6. Planet icons
+ * Built by PlanetIconView inside the system scene.
+ * ============================================================================= */
 
 .planet-icon {
     position: absolute;
@@ -368,7 +600,7 @@
 
 .planet-icon--selected .planet-icon__reticle,
 .planet-icon--selected:hover .planet-icon__reticle {
-    border-color: rgb(240, 200, 90);
+    border-color: var(--accent-gold);
     scale: 1 1;
 }
 
@@ -463,7 +695,7 @@
 }
 
 .planet-icon--selected .planet-icon__label {
-    border-left-color: rgb(240, 200, 90);
+    border-left-color: var(--accent-gold);
     color: rgb(255, 240, 205);
 }
 
@@ -472,15 +704,18 @@
     padding: 0;
     font-size: 9px;
     letter-spacing: 2px;
-    color: rgb(120, 140, 168);
+    color: var(--text-muted);
     -unity-text-align: middle-center;
 }
 
 .planet-icon--scanned .planet-icon__tag {
-    color: rgb(120, 200, 160);
+    color: var(--good-green);
 }
 
-/* ---- Fleet dock ---- */
+/* =============================================================================
+ * 7. System fleet dock
+ * Fleets present in the open system (bottom-left of the orbital scene).
+ * ============================================================================= */
 
 .system-fleet-dock {
     position: absolute;
@@ -522,10 +757,15 @@
 }
 
 .system-fleet-dock .fleet-choice--selected {
-    border-left-color: rgb(240, 200, 90);
+    border-left-color: var(--accent-gold);
     background-color: rgba(70, 60, 30, 0.9);
     color: rgb(255, 240, 205);
 }
+
+/* =============================================================================
+ * 8. Fleet list & panel
+ * Choice rows (map card / system) and FleetPanel.uxml details (split / merge).
+ * ============================================================================= */
 
 .fleet-list-caption {
     font-size: 11px;
@@ -551,18 +791,155 @@
 }
 
 .fleet-choice--selected {
-    border-color: rgb(240, 200, 90);
+    border-color: var(--accent-gold);
     color: rgb(245, 236, 210);
+}
+
+.fleet-roster {
+    flex-grow: 1;
+    height: 100%;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.fleet-roster-caption {
+    margin-bottom: 8px;
+}
+
+.fleet-roster-list {
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.fleet-roster-row {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    margin-bottom: 6px;
+    padding: 6px 8px;
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: var(--nav-cyan);
+    border-radius: 0;
+    background-color: rgba(30, 44, 64, 0.9);
+    -unity-text-align: middle-left;
+}
+
+.fleet-roster-row:hover {
+    background-color: rgba(48, 70, 100, 0.95);
+}
+
+.fleet-roster-row--selected {
+    border-left-color: var(--accent-gold);
+    background-color: rgba(70, 60, 30, 0.9);
+}
+
+.fleet-roster-row__title {
+    font-size: 12px;
+    color: var(--text-primary);
+    -unity-font-style: bold;
+    margin: 0;
+    padding: 0;
+}
+
+.fleet-roster-row__status {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin: 2px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.fleet-roster-row__ships {
+    font-size: 11px;
+    color: var(--nav-cyan);
+    margin: 2px 0 0 0;
+    padding: 0;
+}
+
+.fleet-bar {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    margin-top: 8px;
+}
+
+.fleet-bar-main {
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    flex-wrap: wrap;
+}
+
+.fleet-bar-name {
+    font-size: 14px;
+    color: var(--text-primary);
+    -unity-font-style: bold;
+    margin-right: 12px;
+}
+
+.fleet-bar-status {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-right: 12px;
+}
+
+.fleet-bar-ships,
+.fleet-bar-speed {
+    font-size: 12px;
+    color: var(--nav-cyan);
+    margin-right: 10px;
+}
+
+.fleet-bar-stacks {
+    flex-direction: row;
+    align-items: center;
+}
+
+.fleet-bar-chip {
+    margin-right: 6px;
+    padding: 2px 6px;
+    background-color: rgba(20, 32, 48, 0.9);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    font-size: 11px;
+    color: var(--text-primary);
+}
+
+.fleet-bar-actions {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.fleet-bar-details {
+    height: 28px;
+    margin-right: 6px;
+    margin-bottom: 0;
+    background-color: rgb(48, 96, 160);
+    color: rgb(245, 248, 252);
+}
+
+.fleet-bar-close {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 0;
+    background-color: rgb(48, 96, 160);
+    color: rgb(245, 248, 252);
 }
 
 .fleet-panel {
     display: none;
     flex-direction: column;
-    flex-shrink: 0;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top-width: 1px;
-    border-top-color: rgb(40, 52, 70);
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
 }
 
 .fleet-panel-header {
@@ -627,6 +1004,11 @@
     color: rgb(245, 248, 252);
 }
 
+/* =============================================================================
+ * 9. Shipyard
+ * ShipyardSection.uxml inside the settlement scroll view.
+ * ============================================================================= */
+
 .shipyard-section {
     display: none;
     flex-direction: column;
@@ -669,29 +1051,94 @@
     background-color: rgb(90, 160, 210);
 }
 
+/* =============================================================================
+ * 10. Right inspection column
+ * Target card (map), settlement dossier (system), or research / fleet overlay.
+ * ============================================================================= */
+
 .inspection-panel {
     width: 320px;
     flex-shrink: 0;
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
-    background-color: rgb(18, 24, 34);
+    position: relative;
+    background-color: var(--panel-bg);
     border-width: 1px;
-    border-color: rgb(40, 52, 70);
+    border-color: var(--panel-border);
     padding: 12px;
+}
+
+.star-system-inspection {
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.inspection-caption {
+    margin-bottom: 6px;
 }
 
 .inspection-title {
     font-size: 18px;
-    color: rgb(230, 236, 245);
+    color: var(--accent-gold);
     margin-bottom: 8px;
     -unity-font-style: bold;
 }
 
-.inspection-summary {
+.inspection-chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.inspection-chip {
+    margin-right: 6px;
+    margin-bottom: 4px;
+}
+
+.inspection-chip--good {
+    color: var(--good-green);
+}
+
+.inspection-chip--muted {
+    color: var(--text-muted);
+}
+
+.inspection-chip--info {
+    color: var(--nav-cyan);
+}
+
+.inspection-info {
     white-space: normal;
-    color: rgb(180, 192, 210);
-    margin-bottom: 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.inspection-relation {
+    white-space: normal;
+    color: var(--nav-cyan);
+    font-size: 13px;
+    margin-top: 8px;
+    margin-bottom: 4px;
+}
+
+.inspection-hint {
+    white-space: normal;
+    color: var(--accent-gold);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.map-hover-tooltip {
+    position: absolute;
+    padding: 4px 8px;
+    background-color: rgba(12, 18, 28, 0.92);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    color: var(--text-primary);
+    font-size: 11px;
 }
 
 .action-button {
@@ -712,37 +1159,123 @@
     margin-bottom: 8px;
 }
 
-.planet-detail {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top-width: 1px;
-    border-top-color: rgb(40, 52, 70);
-    display: none;
-}
-
-.planet-detail-name {
-    color: rgb(220, 228, 240);
-    font-size: 16px;
-    margin-bottom: 6px;
-    -unity-font-style: bold;
-}
-
-.planet-detail-summary {
-    white-space: normal;
-    color: rgb(150, 164, 184);
-    font-size: 12px;
-    margin-bottom: 8px;
-}
-
 .settlement-panel {
     display: none;
+    flex-direction: column;
     flex-grow: 1;
     flex-shrink: 1;
     min-height: 0;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top-width: 1px;
+    margin-top: 0;
+    padding-top: 0;
+    border-top-width: 0;
     border-top-color: rgb(40, 52, 70);
+}
+
+.settlement-header {
+    flex-shrink: 0;
+    margin-bottom: 8px;
+}
+
+.settlement-header__top {
+    flex-direction: row;
+    align-items: center;
+}
+
+.settlement-planet-name {
+    flex-grow: 1;
+    font-size: 16px;
+    color: var(--accent-gold);
+    -unity-font-style: bold;
+}
+
+.settlement-scan,
+.settlement-abandon,
+.settlement-abandon-confirm {
+    margin-left: 8px;
+}
+
+.settlement-abandon-confirm {
+    display: none;
+}
+
+.settlement-presence,
+.settlement-footprint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.settlement-chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.settlement-tabs {
+    flex-direction: row;
+    flex-shrink: 0;
+    margin-bottom: 8px;
+}
+
+.settlement-tab {
+    margin-right: 6px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.settlement-tab--selected {
+    color: var(--nav-cyan);
+    border-bottom-color: var(--nav-cyan);
+}
+
+.settlement-body {
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.settlement-net-line {
+    font-size: 12px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    white-space: normal;
+}
+
+.settlement-commitment__kinds {
+    flex-direction: row;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.settlement-commitment__kind {
+    margin-right: 6px;
+}
+
+.settlement-commitment__kind--selected {
+    border-color: var(--accent-gold);
+}
+
+.settlement-commitment__cost {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.settlement-commitment__note {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.settlement-commitment__warn {
+    font-size: 11px;
+    color: var(--warn-amber);
+}
+
+.settlement-commitment__commit {
+    margin-top: 8px;
 }
 
 .planet-figures {
@@ -820,6 +1353,11 @@
     font-size: 11px;
 }
 
+/* =============================================================================
+ * 11. Map nodes
+ * Star-map node buttons. Size/position come from MapLayout; keep border-width fixed.
+ * ============================================================================= */
+
 .map-node {
     position: absolute;
     /* Width, height, and non-system radius come from MapLayout.kNodeSize. */
@@ -865,38 +1403,62 @@
 }
 
 .map-node--selected {
-    border-color: rgb(240, 200, 90);
+    border-color: var(--accent-gold);
 }
 
-.map-node__orbit {
+.map-fleet-markers {
     position: absolute;
-    display: none;
-    border-width: 2px;
-    border-color: rgba(0, 0, 0, 0);
-    background-color: rgba(0, 0, 0, 0);
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
 }
 
-.map-node__orbit--visible {
-    display: flex;
-    border-color: rgb(240, 210, 80);
-}
-
-.map-node__orbit--traveling {
-    border-color: rgb(240, 140, 60);
-}
-
-.map-node__fleet {
+.fleet-marker {
     position: absolute;
-    width: 8px;
-    height: 8px;
-    border-radius: 4px;
-    background-color: rgba(0, 0, 0, 0);
+    left: 0;
+    top: 0;
+    width: 14px;
+    height: 16px;
 }
 
-.map-node__fleet--visible {
-    background-color: rgb(240, 210, 80);
+.fleet-marker__arrow {
+    position: absolute;
+    left: 1px;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-left-width: 6px;
+    border-right-width: 6px;
+    border-bottom-width: 12px;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-right-color: rgba(0, 0, 0, 0);
+    border-bottom-color: var(--nav-cyan);
+    border-top-width: 0;
+    border-top-color: rgba(0, 0, 0, 0);
 }
 
-.map-node__fleet--traveling {
-    background-color: rgb(240, 140, 60);
+.fleet-marker--selected > .fleet-marker__arrow {
+    border-bottom-color: var(--accent-gold);
+}
+
+.fleet-marker--transit > .fleet-marker__arrow {
+    border-bottom-color: var(--transit-orange);
+}
+
+.fleet-marker--transit.fleet-marker--selected > .fleet-marker__arrow {
+    border-bottom-color: var(--accent-gold);
+}
+
+.fleet-marker__count {
+    position: absolute;
+    right: -8px;
+    bottom: -2px;
+    min-width: 12px;
+    padding-left: 2px;
+    padding-right: 2px;
+    font-size: 10px;
+    color: var(--text-primary);
+    background-color: var(--panel-bg);
+    -unity-text-align: middle-center;
 }

@@ -11,7 +11,7 @@ using NUnit.Framework;
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
-    /// Star system presenter against a fake view: open, scan, and return to the map.
+    /// Star system presenter against a fake view: open and return to the map.
     /// </summary>
     public sealed class StarSystemPresenterTests
     {
@@ -35,7 +35,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             map.ClickNode(belt);
 
             var posted = status.Text;
-            Assert.That(posted, Is.Not.EqualTo(OverworldStatus.kMapHint));
+            Assert.That(posted, Is.Not.Empty);
+            Assert.That(posted, Is.Not.EqualTo(OverworldStatus.kNoRun));
             Assert.That(system.Model.IsOpen, Is.True);
             Assert.That(system.Model.Planets, Is.Empty);
 
@@ -51,32 +52,6 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(selection.InStarSystem, Is.True);
             mapPresenter.Dispose();
             systemPresenter.Dispose();
-        }
-
-        [Test]
-        public void Scan_PostsTheScannedPlanetAndKeepsTheSystemOpen()
-        {
-            var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(49));
-            var prime = ContentId.From("home-prime");
-            var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
-            selection.SelectPlanet(prime);
-            var status = new OverworldStatus();
-            var view = new FakeStarSystemView();
-            var presenter = CreateSystem(view, selection, status, stack);
-            presenter.Start();
-            var beforeScan = status.Text;
-
-            view.ClickScan(prime);
-
-            Assert.That(status.Text, Is.Not.EqualTo(beforeScan));
-            Assert.That(status.Text, Is.Not.Empty);
-            Assert.That(view.Model.IsOpen, Is.True);
-            Assert.That(view.Model.ShowPlanetDetail, Is.True);
-            Assert.That(view.Model.PlanetDetail.PlanetId, Is.EqualTo(prime));
-            Assert.That(view.Model.PlanetDetail.CanScan, Is.False);
-            presenter.Dispose();
         }
 
         [Test]
@@ -102,7 +77,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         }
 
         [Test]
-        public void Back_ReturnsToTheMapHint()
+        public void Back_ReturnsToTheMap()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(50));
@@ -117,7 +92,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(selection.InStarSystem, Is.False);
             Assert.That(view.Model.IsOpen, Is.False);
-            Assert.That(status.Text, Is.EqualTo(OverworldStatus.kMapHint));
+            Assert.That(status.Toasts, Is.Empty);
             presenter.Dispose();
         }
 
@@ -175,17 +150,16 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             OverworldTestContext stack)
         {
             var database = RunTestFixture.CreateObjectDatabase();
-            var fleetListQuery = new FleetListQuery(database, stack.Effects);
+            var fleetListQuery = new FleetListQuery(database, stack.Effects, stack.Clock);
             return new StarMapPresenter(
                 view,
                 selection,
                 status,
                 stack.Manager,
                 stack.TravelService,
-                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery),
+                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery, database, stack.Clock),
                 new StarSystemQuery(stack.VisibilityService, database, fleetListQuery),
-                stack.Events,
-                fleetListQuery);
+                stack.Events);
         }
 
         private static StarSystemPresenter CreateSystem(
@@ -198,13 +172,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             return new StarSystemPresenter(
                 view,
                 selection,
-                status,
                 stack.Manager,
-                stack.SensorService,
                 new StarSystemQuery(
                     stack.VisibilityService,
                     database,
-                    new FleetListQuery(database, stack.Effects)),
+                    new FleetListQuery(database, stack.Effects, stack.Clock)),
                 stack.Events);
         }
 
@@ -212,23 +184,19 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         {
             public event Action<ContentId> NodeSelected;
 
-            public event Action<EntityId> FleetSelected
-            {
-                add { }
-                remove { }
-            }
-
             public event Action<ContentId> TravelRequested
             {
                 add { }
                 remove { }
             }
 
-            public void Apply(StarMapModel model)
+            public event Action<ContentId> NodeHovered
             {
+                add { }
+                remove { }
             }
 
-            public void ApplyFleets(IReadOnlyList<FleetChoiceModel> fleets)
+            public void Apply(StarMapModel model)
             {
             }
 
@@ -241,6 +209,14 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             }
 
             public void ApplyCard(StarMapCardModel card)
+            {
+            }
+
+            public void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip)
+            {
+            }
+
+            public void ApplyFleetMarkers(IReadOnlyList<FleetMarkerModel> markers)
             {
             }
 
@@ -262,8 +238,6 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             public event Action<EntityId> FleetSelected;
 
-            public event Action<ContentId> ScanRequested;
-
             public StarSystemModel Model { get; private set; } = StarSystemModel.Closed;
 
             public void Apply(StarSystemModel model)
@@ -274,11 +248,6 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             public void ClickBack()
             {
                 BackRequested?.Invoke();
-            }
-
-            public void ClickScan(ContentId planetId)
-            {
-                ScanRequested?.Invoke(planetId);
             }
 
             public void ClickFleet(EntityId fleetId)

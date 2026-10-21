@@ -16,18 +16,39 @@ namespace ProjectStarwatch.Overworld.UI
         /// </summary>
         internal const float kNodeSize = 56f;
 
-        /// <summary>
-        /// Gap between the map-node edge and the fleet orbit ring.
-        /// </summary>
-        internal const float kFleetOrbitOutset = 8f;
+        internal const float kFleetMarkerWidth = 14f;
 
-        internal const float kFleetPipSize = 8f;
+        internal const float kFleetMarkerHeight = 16f;
+
+        /// <summary>
+        /// Gap between the node top edge and a parked fleet arrow.
+        /// </summary>
+        internal const float kFleetMarkerParkedGap = 4f;
 
         internal const float kRoutePad = 4f;
 
         internal const float kRouteLineWidth = 3f;
 
-        internal static readonly Color kRouteColor = new Color(0.43f, 0.59f, 0.75f, 0.9f);
+        internal const float kRouteKnownLineWidth = 2f;
+
+        internal const float kRoutePlannedLineWidth = 3f;
+
+        internal const float kRouteTransitLineWidth = 3.5f;
+
+        internal const float kRouteDashLength = 8f;
+
+        internal const float kRouteDashGap = 6f;
+
+        /// <summary>Dim cyan for known routes.</summary>
+        internal static readonly Color kRouteKnownColor = new Color(0.35f, 0.72f, 0.82f, 0.55f);
+
+        /// <summary>Gold for the planned hover course.</summary>
+        internal static readonly Color kRoutePlannedColor = new Color(0.90f, 0.75f, 0.28f, 0.95f);
+
+        /// <summary>Orange for fleets in transit.</summary>
+        internal static readonly Color kRouteTransitColor = new Color(0.95f, 0.55f, 0.20f, 0.95f);
+
+        internal static readonly Color kRouteColor = kRouteKnownColor;
 
         /// <summary>
         /// Padding from the map-surface top-left to the first fitted node edge.

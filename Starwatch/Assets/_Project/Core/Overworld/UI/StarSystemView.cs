@@ -130,7 +130,7 @@ namespace ProjectStarwatch.Overworld.UI
         /// <summary>
         /// Shows the fleets at this system. Rebuilt on each refresh. The dock hides when empty.
         /// </summary>
-        public void SetFleets(IReadOnlyList<FleetChoiceModel> fleets)
+        public void SetFleets(IReadOnlyList<FleetRowModel> fleets)
         {
             _fleets.Apply(fleets);
             if (_fleetDock != null)
@@ -146,7 +146,7 @@ namespace ProjectStarwatch.Overworld.UI
         public void Hide()
         {
             ClearPlanets();
-            SetFleets(Array.Empty<FleetChoiceModel>());
+            SetFleets(Array.Empty<FleetRowModel>());
             if (_root != null)
             {
                 _root.style.display = DisplayStyle.None;

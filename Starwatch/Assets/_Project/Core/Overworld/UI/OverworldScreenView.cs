@@ -20,6 +20,10 @@ namespace ProjectStarwatch.Overworld.UI
 
         internal ResearchPanelView Research { get; } = new();
 
+        internal FleetRosterView FleetRoster { get; } = new();
+
+        internal FleetBarView FleetBar { get; } = new();
+
         internal FleetPanelView FleetPanel { get; } = new();
 
         internal ShipyardSectionView Shipyard { get; } = new();
@@ -28,11 +32,13 @@ namespace ProjectStarwatch.Overworld.UI
         private UIDocument _document;
 
         private OverworldStatus _status;
-        private Label _statusLabel;
+        private readonly ToastStackView _toasts = new();
         private bool _isBound;
 
+        internal ToastStackView Toasts => _toasts;
+
         /// <summary>
-        /// Receives the shared status line. The screen paints it and does not interpret it.
+        /// Receives the shared toast bus. The screen paints it and does not interpret it.
         /// </summary>
         [Inject]
         internal void Construct(OverworldStatus status)
@@ -42,10 +48,7 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void OnDestroy()
         {
-            if (_status != null)
-            {
-                _status.Changed -= OnStatus;
-            }
+            _toasts.Unbind();
         }
 
         /// <summary>
@@ -83,55 +86,51 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            _statusLabel = root.Q<Label>("status-label");
             var title = root.Q<Label>("title");
             var mapSurface = root.Q<VisualElement>("map-surface");
             var starSystem = root.Q<VisualElement>("star-system");
             var starSystemInspection = root.Q<VisualElement>("star-system-inspection");
-            var planetInspection = root.Q<VisualElement>("planet-detail");
             var settlement = root.Q<VisualElement>("settlement-panel");
             var stockpile = root.Q<VisualElement>("stockpile-bar");
             var research = root.Q<VisualElement>("research-panel");
             var researchEntry = stockpile != null ? stockpile.Q<Button>("stockpile-research") : null;
+            var fleetRoster = root.Q<VisualElement>("fleet-roster-host");
+            var fleetBar = root.Q<VisualElement>("fleet-bar");
             var fleetPanel = root.Q<VisualElement>("fleet-panel");
             var shipyard = root.Q<VisualElement>("shipyard-section");
+            var toastStack = root.Q<VisualElement>("toast-stack");
             if (mapSurface == null
                 || starSystem == null
                 || starSystemInspection == null
-                || planetInspection == null
                 || settlement == null
                 || stockpile == null
                 || research == null
                 || researchEntry == null
+                || fleetRoster == null
+                || fleetBar == null
                 || fleetPanel == null
-                || shipyard == null)
+                || shipyard == null
+                || toastStack == null)
             {
-                Debug.LogError("OverworldScreenView could not find the map, star system, fleet, settlement, research, or stockpile roots.");
+                Debug.LogError("OverworldScreenView could not find the map, star system, fleet, settlement, research, stockpile, or toast roots.");
                 return;
             }
 
             StarMap.Bind(mapSurface, starSystemInspection);
-            StarSystem.Bind(starSystem, planetInspection, mapSurface, title);
+            StarSystem.Bind(starSystem, mapSurface, title);
             Settlement.Bind(settlement);
             Stockpile.Bind(stockpile);
             Research.Bind(research, researchEntry);
+            FleetRoster.Bind(fleetRoster);
+            FleetBar.Bind(fleetBar);
             FleetPanel.Bind(fleetPanel);
             Shipyard.Bind(shipyard);
             if (_status != null)
             {
-                _status.Changed += OnStatus;
-                OnStatus(_status.Text);
+                _toasts.Bind(toastStack, _status);
             }
 
             _isBound = true;
-        }
-
-        private void OnStatus(string message)
-        {
-            if (_statusLabel != null)
-            {
-                _statusLabel.text = message ?? string.Empty;
-            }
         }
     }
 
@@ -146,8 +145,10 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly SettlementPresenter _settlementPresenter;
         private readonly StockpilePresenter _stockpilePresenter;
         private readonly ResearchPresenter _researchPresenter;
+        private readonly FleetRosterPresenter _fleetRosterPresenter;
         private readonly FleetPanelPresenter _fleetPanelPresenter;
         private readonly ShipyardPresenter _shipyardPresenter;
+        private readonly OverworldToastPresenter _toastPresenter;
 
         public OverworldScreenBinder(
             OverworldScreenView screen,
@@ -156,8 +157,10 @@ namespace ProjectStarwatch.Overworld.UI
             SettlementPresenter settlementPresenter,
             StockpilePresenter stockpilePresenter,
             ResearchPresenter researchPresenter,
+            FleetRosterPresenter fleetRosterPresenter,
             FleetPanelPresenter fleetPanelPresenter,
-            ShipyardPresenter shipyardPresenter)
+            ShipyardPresenter shipyardPresenter,
+            OverworldToastPresenter toastPresenter)
         {
             _screen = screen;
             _starMapPresenter = starMapPresenter;
@@ -165,18 +168,22 @@ namespace ProjectStarwatch.Overworld.UI
             _settlementPresenter = settlementPresenter;
             _stockpilePresenter = stockpilePresenter;
             _researchPresenter = researchPresenter;
+            _fleetRosterPresenter = fleetRosterPresenter;
             _fleetPanelPresenter = fleetPanelPresenter;
             _shipyardPresenter = shipyardPresenter;
+            _toastPresenter = toastPresenter;
         }
 
         public void Start()
         {
             _screen.Bind();
+            _toastPresenter.Start();
             _starMapPresenter.Start();
             _starSystemPresenter.Start();
             _settlementPresenter.Start();
             _stockpilePresenter.Start();
             _researchPresenter.Start();
+            _fleetRosterPresenter.Start();
             _fleetPanelPresenter.Start();
             _shipyardPresenter.Start();
         }

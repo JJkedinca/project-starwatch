@@ -41,28 +41,33 @@ namespace ProjectStarwatch.Overworld.UI
     }
 
     /// <summary>
-    /// Inspection of the selected fleet while a star system is open.
-    /// Closed on the star map, and when no fleet is selected.
+    /// Selected fleet for the bottom bar and optional details in the right column.
     /// </summary>
     internal sealed class FleetPanelModel
     {
         public static FleetPanelModel Closed { get; } = new(
-            false,
+            hasFleet: false,
+            isOpen: false,
             EntityId.None,
             default,
-            false,
             1f,
             false,
             Array.Empty<FleetStackRow>(),
             Array.Empty<FleetMergeCandidate>());
 
+        /// <summary>
+        /// A fleet is selected. The bottom bar shows.
+        /// </summary>
+        public bool HasFleet { get; }
+
+        /// <summary>
+        /// Fleet details are open in the right column.
+        /// </summary>
         public bool IsOpen { get; }
 
         public EntityId FleetId { get; }
 
-        public ContentId LocationId { get; }
-
-        public bool IsTraveling { get; }
+        public FleetRouteModel Route { get; }
 
         public float TravelSpeed { get; }
 
@@ -72,20 +77,34 @@ namespace ProjectStarwatch.Overworld.UI
 
         public IReadOnlyList<FleetMergeCandidate> MergeCandidates { get; }
 
+        public int ShipCount
+        {
+            get
+            {
+                var total = 0;
+                for (var i = 0; i < Stacks.Count; i++)
+                {
+                    total += Stacks[i].Count;
+                }
+
+                return total;
+            }
+        }
+
         public FleetPanelModel(
+            bool hasFleet,
             bool isOpen,
             EntityId fleetId,
-            ContentId locationId,
-            bool isTraveling,
+            FleetRouteModel route,
             float travelSpeed,
             bool canSplit,
             IReadOnlyList<FleetStackRow> stacks,
             IReadOnlyList<FleetMergeCandidate> mergeCandidates)
         {
+            HasFleet = hasFleet;
             IsOpen = isOpen;
             FleetId = fleetId;
-            LocationId = locationId;
-            IsTraveling = isTraveling;
+            Route = route;
             TravelSpeed = travelSpeed;
             CanSplit = canSplit;
             Stacks = stacks ?? Array.Empty<FleetStackRow>();

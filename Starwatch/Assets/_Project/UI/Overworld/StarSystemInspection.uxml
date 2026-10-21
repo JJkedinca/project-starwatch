@@ -1,10 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="Overworld.uss" />
     <ui:VisualElement name="star-system-inspection" class="star-system-inspection">
+        <ui:Label text="TARGET" class="hud-caption inspection-caption" />
         <ui:Label name="inspection-title" text="Select a star system" class="inspection-title" />
-        <ui:Label name="inspection-summary" text="" class="inspection-summary" />
-        <ui:Label text="Fleets" class="fleet-list-caption" />
-        <ui:VisualElement name="fleet-list" class="fleet-list" />
-        <ui:Label name="travel-arrival" text="" class="travel-arrival" />
+        <ui:VisualElement name="inspection-chips" class="inspection-chips" />
+        <ui:Label name="inspection-bodies" text="" class="inspection-info" />
+        <ui:Label name="inspection-fleets" text="" class="inspection-info" />
+        <ui:Label name="inspection-relation" text="" class="inspection-relation" />
+        <ui:Label name="inspection-hint" text="" class="inspection-hint" />
     </ui:VisualElement>
 </ui:UXML>
