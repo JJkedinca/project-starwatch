@@ -20,6 +20,10 @@ namespace ProjectStarwatch.Overworld.UI
 
         internal ResearchPanelView Research { get; } = new();
 
+        internal FleetRosterView FleetRoster { get; } = new();
+
+        internal FleetBarView FleetBar { get; } = new();
+
         internal FleetPanelView FleetPanel { get; } = new();
 
         internal ShipyardSectionView Shipyard { get; } = new();
@@ -93,6 +97,8 @@ namespace ProjectStarwatch.Overworld.UI
             var stockpile = root.Q<VisualElement>("stockpile-bar");
             var research = root.Q<VisualElement>("research-panel");
             var researchEntry = stockpile != null ? stockpile.Q<Button>("stockpile-research") : null;
+            var fleetRoster = root.Q<VisualElement>("fleet-roster-host");
+            var fleetBar = root.Q<VisualElement>("fleet-bar");
             var fleetPanel = root.Q<VisualElement>("fleet-panel");
             var shipyard = root.Q<VisualElement>("shipyard-section");
             if (mapSurface == null
@@ -103,6 +109,8 @@ namespace ProjectStarwatch.Overworld.UI
                 || stockpile == null
                 || research == null
                 || researchEntry == null
+                || fleetRoster == null
+                || fleetBar == null
                 || fleetPanel == null
                 || shipyard == null)
             {
@@ -115,6 +123,8 @@ namespace ProjectStarwatch.Overworld.UI
             Settlement.Bind(settlement);
             Stockpile.Bind(stockpile);
             Research.Bind(research, researchEntry);
+            FleetRoster.Bind(fleetRoster);
+            FleetBar.Bind(fleetBar);
             FleetPanel.Bind(fleetPanel);
             Shipyard.Bind(shipyard);
             if (_status != null)
@@ -146,6 +156,7 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly SettlementPresenter _settlementPresenter;
         private readonly StockpilePresenter _stockpilePresenter;
         private readonly ResearchPresenter _researchPresenter;
+        private readonly FleetRosterPresenter _fleetRosterPresenter;
         private readonly FleetPanelPresenter _fleetPanelPresenter;
         private readonly ShipyardPresenter _shipyardPresenter;
 
@@ -156,6 +167,7 @@ namespace ProjectStarwatch.Overworld.UI
             SettlementPresenter settlementPresenter,
             StockpilePresenter stockpilePresenter,
             ResearchPresenter researchPresenter,
+            FleetRosterPresenter fleetRosterPresenter,
             FleetPanelPresenter fleetPanelPresenter,
             ShipyardPresenter shipyardPresenter)
         {
@@ -165,6 +177,7 @@ namespace ProjectStarwatch.Overworld.UI
             _settlementPresenter = settlementPresenter;
             _stockpilePresenter = stockpilePresenter;
             _researchPresenter = researchPresenter;
+            _fleetRosterPresenter = fleetRosterPresenter;
             _fleetPanelPresenter = fleetPanelPresenter;
             _shipyardPresenter = shipyardPresenter;
         }
@@ -177,6 +190,7 @@ namespace ProjectStarwatch.Overworld.UI
             _settlementPresenter.Start();
             _stockpilePresenter.Start();
             _researchPresenter.Start();
+            _fleetRosterPresenter.Start();
             _fleetPanelPresenter.Start();
             _shipyardPresenter.Start();
         }

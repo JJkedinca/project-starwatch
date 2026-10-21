@@ -25,7 +25,7 @@ namespace ProjectStarwatch.Overworld.UI
         /// <summary>
         /// Rebuilds one button per fleet. The list is not kept.
         /// </summary>
-        public void Apply(IReadOnlyList<FleetChoiceModel> fleets)
+        public void Apply(IReadOnlyList<FleetRowModel> fleets)
         {
             if (_host == null)
             {

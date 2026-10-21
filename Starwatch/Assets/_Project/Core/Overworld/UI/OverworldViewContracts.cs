@@ -11,16 +11,14 @@ namespace ProjectStarwatch.Overworld.UI
     {
         event Action<ContentId> NodeSelected;
 
-        event Action<EntityId> FleetSelected;
-
         event Action<ContentId> TravelRequested;
 
-        void Apply(StarMapModel model);
-
         /// <summary>
-        /// Don't hold the list. It is reused after this call returns.
+        /// Pointer entered a node, or empty when the pointer left.
         /// </summary>
-        void ApplyFleets(IReadOnlyList<FleetChoiceModel> fleets);
+        event Action<ContentId> NodeHovered;
+
+        void Apply(StarMapModel model);
 
         /// <summary>
         /// Don't hold the list. It is reused after this call returns.
@@ -30,6 +28,8 @@ namespace ProjectStarwatch.Overworld.UI
         void ApplyRoutes(IReadOnlyList<MapRouteSegment> routes);
 
         void ApplyCard(StarMapCardModel card);
+
+        void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip);
     }
 
     /// <summary>
@@ -79,7 +79,32 @@ namespace ProjectStarwatch.Overworld.UI
     }
 
     /// <summary>
-    /// Inspection of the selected fleet. Hidden when no fleet is selected.
+    /// Left-column fleet roster. Visible during a run; hidden when there is no run.
+    /// </summary>
+    internal interface IFleetRosterView
+    {
+        event Action<EntityId> FleetSelected;
+
+        /// <summary>
+        /// Pass null to hide. An empty list shows the empty roster during a run.
+        /// </summary>
+        void Apply(IReadOnlyList<FleetRowModel> fleets);
+    }
+
+    /// <summary>
+    /// Selected-fleet summary bar at the bottom of the center column.
+    /// </summary>
+    internal interface IFleetBarView
+    {
+        event Action DetailsRequested;
+
+        event Action CloseRequested;
+
+        void Apply(FleetPanelModel model);
+    }
+
+    /// <summary>
+    /// Fleet details in the right column. Opened from the fleet bar.
     /// </summary>
     internal interface IFleetPanelView
     {

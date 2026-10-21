@@ -29,7 +29,7 @@ namespace ProjectStarwatch.Overworld.UI
             false,
             string.Empty,
             Array.Empty<StarSystemPlanetModel>(),
-            Array.Empty<FleetChoiceModel>(),
+            Array.Empty<FleetRowModel>(),
             false,
             default,
             string.Empty);
@@ -40,7 +40,7 @@ namespace ProjectStarwatch.Overworld.UI
 
         public IReadOnlyList<StarSystemPlanetModel> Planets { get; }
 
-        public IReadOnlyList<FleetChoiceModel> Fleets { get; }
+        public IReadOnlyList<FleetRowModel> Fleets { get; }
 
         public bool ShowPlanetDetail { get; }
 
@@ -52,7 +52,7 @@ namespace ProjectStarwatch.Overworld.UI
             bool isOpen,
             string title,
             IReadOnlyList<StarSystemPlanetModel> planets,
-            IReadOnlyList<FleetChoiceModel> fleets,
+            IReadOnlyList<FleetRowModel> fleets,
             bool showPlanetDetail,
             PlanetDetailModel planetDetail,
             string status)
@@ -60,7 +60,7 @@ namespace ProjectStarwatch.Overworld.UI
             IsOpen = isOpen;
             Title = title ?? string.Empty;
             Planets = planets ?? Array.Empty<StarSystemPlanetModel>();
-            Fleets = fleets ?? Array.Empty<FleetChoiceModel>();
+            Fleets = fleets ?? Array.Empty<FleetRowModel>();
             ShowPlanetDetail = showPlanetDetail;
             PlanetDetail = planetDetail;
             Status = status ?? string.Empty;

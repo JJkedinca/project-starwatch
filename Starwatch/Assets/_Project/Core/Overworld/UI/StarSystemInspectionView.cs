@@ -3,13 +3,16 @@ using UnityEngine.UIElements;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Side panel for the selected star system: summary and arrival time.
+    /// Target card for the selected star map node.
     /// </summary>
     internal sealed class StarSystemInspectionView
     {
         private Label _title;
-        private Label _summary;
-        private Label _arrival;
+        private VisualElement _chips;
+        private Label _bodies;
+        private Label _fleets;
+        private Label _relation;
+        private Label _hint;
 
         /// <summary>
         /// Binds the StarSystemInspection.uxml root.
@@ -22,8 +25,11 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             _title = root.Q<Label>("inspection-title");
-            _summary = root.Q<Label>("inspection-summary");
-            _arrival = root.Q<Label>("travel-arrival");
+            _chips = root.Q<VisualElement>("inspection-chips");
+            _bodies = root.Q<Label>("inspection-bodies");
+            _fleets = root.Q<Label>("inspection-fleets");
+            _relation = root.Q<Label>("inspection-relation");
+            _hint = root.Q<Label>("inspection-hint");
         }
 
         /// <summary>
@@ -36,41 +42,109 @@ namespace ProjectStarwatch.Overworld.UI
                 _title.text = "Select a star system";
             }
 
-            if (_summary != null)
-            {
-                _summary.text = string.Empty;
-            }
-
-            SetArrival(false, 0f);
+            _chips?.Clear();
+            SetLabel(_bodies, string.Empty);
+            SetLabel(_fleets, string.Empty);
+            SetLabel(_relation, string.Empty);
+            SetLabel(_hint, string.Empty);
         }
 
         /// <summary>
-        /// Updates labels for the selected node.
+        /// Applies the selected-node card.
         /// </summary>
-        public void ShowNode(string title, string summary, bool hasArrival, float arrivalSeconds)
+        public void Show(StarMapCardModel card)
         {
+            if (!card.HasSelection)
+            {
+                ShowEmpty();
+                return;
+            }
+
             if (_title != null)
             {
-                _title.text = title ?? "Unknown";
+                _title.text = card.Title;
             }
 
-            if (_summary != null)
+            ShowChips(card);
+            if (card.IsExplored)
             {
-                _summary.text = summary ?? string.Empty;
+                SetLabel(
+                    _bodies,
+                    card.BodyCount == 0
+                        ? "No bodies"
+                        : card.ScannedBodyCount + " / " + card.BodyCount + " bodies scanned");
+                SetLabel(_fleets, card.HasFleetPresent ? "Fleet present" : "No fleet present");
+            }
+            else
+            {
+                SetLabel(_bodies, "Hidden until a fleet arrives.");
+                SetLabel(_fleets, string.Empty);
             }
 
-            SetArrival(hasArrival, arrivalSeconds);
+            SetLabel(_relation, RelationText(card));
+            SetLabel(
+                _hint,
+                card.ShowTravelHint
+                    ? "Right-click to send " + (string.IsNullOrEmpty(card.FleetName) ? "fleet" : card.FleetName)
+                    : string.Empty);
         }
 
-        private void SetArrival(bool hasArrival, float arrivalSeconds)
+        private void ShowChips(StarMapCardModel card)
         {
-            if (_arrival == null)
+            if (_chips == null)
             {
                 return;
             }
 
-            _arrival.text = hasArrival ? "Arrives in " + arrivalSeconds.ToString("0.#") + "s" : string.Empty;
-            _arrival.style.display = hasArrival ? DisplayStyle.Flex : DisplayStyle.None;
+            _chips.Clear();
+            AddChip(card.IsExplored ? "EXPLORED" : "UNEXPLORED", card.IsExplored ? "inspection-chip--good" : "inspection-chip--muted");
+            if (card.HasFleetPresent)
+            {
+                AddChip("FLEET PRESENT", "inspection-chip--info");
+            }
+
+            if (card.IsExplored && card.BodyCount > 0)
+            {
+                AddChip(card.BodyCount + " BODIES", "inspection-chip--info");
+            }
+        }
+
+        private void AddChip(string text, string stateClass)
+        {
+            var chip = new Label(text);
+            chip.AddToClassList("hud-chip");
+            chip.AddToClassList("inspection-chip");
+            chip.AddToClassList(stateClass);
+            _chips.Add(chip);
+        }
+
+        private static string RelationText(StarMapCardModel card)
+        {
+            var fleet = string.IsNullOrEmpty(card.FleetName) ? "Fleet" : card.FleetName;
+            switch (card.FleetRelation)
+            {
+                case StarMapFleetRelation.AtTarget:
+                    return fleet + " is here";
+                case StarMapFleetRelation.InTransit:
+                    return fleet + " is in transit";
+                case StarMapFleetRelation.Reachable:
+                    return "From " + fleet + " · " + card.RelationSeconds.ToString("0.#") + "s";
+                case StarMapFleetRelation.Unreachable:
+                    return "Unreachable";
+                default:
+                    return "Select a fleet to travel";
+            }
+        }
+
+        private static void SetLabel(Label label, string text)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            label.text = text ?? string.Empty;
+            label.style.display = string.IsNullOrEmpty(text) ? DisplayStyle.None : DisplayStyle.Flex;
         }
     }
 }

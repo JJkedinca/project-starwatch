@@ -33,39 +33,112 @@ namespace ProjectStarwatch.Overworld.UI
     }
 
     /// <summary>
-    /// Selected-node card: title, summary, and the selected fleet's arrival time.
+    /// How the selected fleet relates to the selected map target.
+    /// </summary>
+    internal enum StarMapFleetRelation
+    {
+        NoneSelected = 0,
+        AtTarget = 1,
+        InTransit = 2,
+        Reachable = 3,
+        Unreachable = 4,
+    }
+
+    /// <summary>
+    /// Selected-node target card on the star map.
     /// </summary>
     internal readonly struct StarMapCardModel
     {
-        public static StarMapCardModel Empty { get; } = new(false, string.Empty, string.Empty, false, 0f);
+        public static StarMapCardModel Empty { get; } = new(
+            false,
+            string.Empty,
+            false,
+            false,
+            0,
+            0,
+            StarMapFleetRelation.NoneSelected,
+            string.Empty,
+            0f,
+            false);
 
         public bool HasSelection { get; }
 
         public string Title { get; }
 
-        public string Summary { get; }
+        public bool IsExplored { get; }
 
-        public bool HasArrival { get; }
+        public bool HasFleetPresent { get; }
 
-        public float ArrivalSeconds { get; }
+        public int BodyCount { get; }
+
+        public int ScannedBodyCount { get; }
+
+        public StarMapFleetRelation FleetRelation { get; }
+
+        public string FleetName { get; }
+
+        public float RelationSeconds { get; }
+
+        public bool ShowTravelHint { get; }
+
+        /// <summary>
+        /// Reachable target: trip seconds match StartTravel.
+        /// </summary>
+        public bool HasArrival => FleetRelation == StarMapFleetRelation.Reachable;
+
+        public float ArrivalSeconds => HasArrival ? RelationSeconds : 0f;
 
         public StarMapCardModel(
             bool hasSelection,
             string title,
-            string summary,
-            bool hasArrival,
-            float arrivalSeconds)
+            bool isExplored,
+            bool hasFleetPresent,
+            int bodyCount,
+            int scannedBodyCount,
+            StarMapFleetRelation fleetRelation,
+            string fleetName,
+            float relationSeconds,
+            bool showTravelHint)
         {
             HasSelection = hasSelection;
             Title = title ?? string.Empty;
-            Summary = summary ?? string.Empty;
-            HasArrival = hasArrival;
-            ArrivalSeconds = arrivalSeconds;
+            IsExplored = isExplored;
+            HasFleetPresent = hasFleetPresent;
+            BodyCount = bodyCount < 0 ? 0 : bodyCount;
+            ScannedBodyCount = scannedBodyCount < 0 ? 0 : scannedBodyCount;
+            FleetRelation = fleetRelation;
+            FleetName = fleetName ?? string.Empty;
+            RelationSeconds = relationSeconds < 0f ? 0f : relationSeconds;
+            ShowTravelHint = showTravelHint;
         }
     }
 
     /// <summary>
-    /// Star map snapshot: nodes, known routes, and the selected-node card.
+    /// Hover tooltip over a map node while a fleet is selected.
+    /// </summary>
+    internal readonly struct StarMapHoverTooltipModel
+    {
+        public static StarMapHoverTooltipModel Hidden { get; } = new(false, string.Empty, 0f, false);
+
+        public bool IsShown { get; }
+
+        public string TargetName { get; }
+
+        public float Seconds { get; }
+
+        public bool Reachable { get; }
+
+        public StarMapHoverTooltipModel(bool isShown, string targetName, float seconds, bool reachable)
+        {
+            IsShown = isShown;
+            TargetName = targetName ?? string.Empty;
+            Seconds = seconds < 0f ? 0f : seconds;
+            Reachable = reachable;
+        }
+    }
+
+    /// <summary>
+    /// Star map snapshot: nodes, routes, and the selected-node card.
     /// </summary>
     internal sealed class StarMapModel
     {
@@ -73,12 +146,8 @@ namespace ProjectStarwatch.Overworld.UI
             false,
             Array.Empty<StarMapNodeModel>(),
             Array.Empty<MapRouteSegment>(),
-            false,
-            string.Empty,
-            string.Empty,
-            false,
-            0f,
-            Array.Empty<FleetChoiceModel>());
+            StarMapCardModel.Empty,
+            Array.Empty<FleetRowModel>());
 
         public bool HasRun { get; }
 
@@ -86,38 +155,30 @@ namespace ProjectStarwatch.Overworld.UI
 
         public IReadOnlyList<MapRouteSegment> Routes { get; }
 
-        public bool HasSelection { get; }
+        public StarMapCardModel Card { get; }
 
-        public string Title { get; }
+        public IReadOnlyList<FleetRowModel> Fleets { get; }
 
-        public string Summary { get; }
+        public bool HasSelection => Card.HasSelection;
 
-        public bool HasArrival { get; }
+        public string Title => Card.Title;
 
-        public float ArrivalSeconds { get; }
+        public bool HasArrival => Card.HasArrival;
 
-        public IReadOnlyList<FleetChoiceModel> Fleets { get; }
+        public float ArrivalSeconds => Card.ArrivalSeconds;
 
         public StarMapModel(
             bool hasRun,
             IReadOnlyList<StarMapNodeModel> nodes,
             IReadOnlyList<MapRouteSegment> routes,
-            bool hasSelection,
-            string title,
-            string summary,
-            bool hasArrival,
-            float arrivalSeconds,
-            IReadOnlyList<FleetChoiceModel> fleets)
+            StarMapCardModel card,
+            IReadOnlyList<FleetRowModel> fleets)
         {
             HasRun = hasRun;
             Nodes = nodes ?? Array.Empty<StarMapNodeModel>();
             Routes = routes ?? Array.Empty<MapRouteSegment>();
-            HasSelection = hasSelection;
-            Title = title ?? string.Empty;
-            Summary = summary ?? string.Empty;
-            HasArrival = hasArrival;
-            ArrivalSeconds = arrivalSeconds;
-            Fleets = fleets ?? Array.Empty<FleetChoiceModel>();
+            Card = card;
+            Fleets = fleets ?? Array.Empty<FleetRowModel>();
         }
     }
 }

@@ -5,30 +5,36 @@ using ProjectStarwatch.Core.Effects;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Fleet;
 
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Fleet rows for the star map and the open star system.
+    /// Fleet rows for the roster, star map, and the open star system.
     /// </summary>
     internal sealed class FleetListQuery
     {
         private readonly ObjectDatabaseSO _database;
         private readonly IEffectQuery _effectQuery;
+        private readonly SimulationClock _clock;
 
-        public FleetListQuery(ObjectDatabaseSO database, IEffectQuery effectQuery)
+        public FleetListQuery(
+            ObjectDatabaseSO database,
+            IEffectQuery effectQuery,
+            SimulationClock clock)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
             _effectQuery = effectQuery ?? throw new ArgumentNullException(nameof(effectQuery));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         /// <summary>
         /// Every fleet, in timeline order.
         /// </summary>
-        internal List<FleetChoiceModel> All(RunState run, EntityId selectedFleetId)
+        internal List<FleetRowModel> All(RunState run, EntityId selectedFleetId)
         {
-            List<FleetChoiceModel> rows = new();
+            List<FleetRowModel> rows = new();
             if (run == null)
             {
                 return rows;
@@ -46,9 +52,9 @@ namespace ProjectStarwatch.Overworld.UI
         /// <summary>
         /// Fleets whose current location is this node.
         /// </summary>
-        internal List<FleetChoiceModel> AtLocation(RunState run, ContentId locationId, EntityId selectedFleetId)
+        internal List<FleetRowModel> AtLocation(RunState run, ContentId locationId, EntityId selectedFleetId)
         {
-            List<FleetChoiceModel> rows = new();
+            List<FleetRowModel> rows = new();
             if (run == null || locationId.IsEmpty)
             {
                 return rows;
@@ -67,35 +73,76 @@ namespace ProjectStarwatch.Overworld.UI
             return rows;
         }
 
-        private FleetChoiceModel Describe(RunState run, FleetComposition fleet, EntityId selectedFleetId)
+        private FleetRowModel Describe(RunState run, FleetComposition fleet, EntityId selectedFleetId)
         {
-            var traveling = run.Timeline.Fleets.IsFleetTraveling(fleet.Id);
+            var traveling = TryGetTravel(run, fleet.Id, out var travel);
+            var destinationId = traveling ? travel.ToNodeId : default;
+            var locationName = LocationName(fleet.LocationSystemId);
+            var title = CompositionTitle(fleet);
             var speed = FleetSpeed.Effective(fleet, _database, _effectQuery);
-            return new FleetChoiceModel(
-                fleet.Id,
+            var route = new FleetRouteModel(
                 fleet.LocationSystemId,
-                fleet.ShipCount,
-                traveling,
+                locationName,
+                destinationId,
+                traveling ? LocationName(destinationId) : string.Empty,
+                traveling ? RemainingSeconds(travel.ArriveTime) : 0f,
+                traveling);
+            return new FleetRowModel(
+                fleet.Id,
+                route,
+                new FleetCompositionModel(fleet.ShipCount, title),
                 fleet.Id == selectedFleetId,
                 speed,
-                Label(fleet, traveling, speed));
+                Label(title, locationName, traveling, speed));
         }
 
-        private string Label(FleetComposition fleet, bool traveling, float speed)
+        private static bool TryGetTravel(RunState run, EntityId fleetId, out ActiveTravel travel)
         {
-            var composition = StackText(fleet.Stacks[0]);
-            for (var i = 1; i < fleet.Stacks.Count; i++)
+            var travels = run.Timeline.Fleets.ActiveTravels;
+            for (var i = 0; i < travels.Count; i++)
             {
-                composition += ", " + StackText(fleet.Stacks[i]);
+                if (travels[i].FleetId == fleetId)
+                {
+                    travel = travels[i];
+                    return true;
+                }
             }
 
-            var label = composition + " · " + LocationName(fleet.LocationSystemId);
+            travel = null;
+            return false;
+        }
+
+        private float RemainingSeconds(GameTime arriveTime)
+        {
+            var remaining = arriveTime.Seconds - _clock.CurrentTime.Seconds;
+            return remaining > 0d ? (float)remaining : 0f;
+        }
+
+        private static string Label(string title, string locationName, bool traveling, float speed)
+        {
+            var label = title + " · " + locationName;
             if (traveling)
             {
                 label += " · traveling";
             }
 
             return label + " · speed " + speed.ToString("0.##");
+        }
+
+        private string CompositionTitle(FleetComposition fleet)
+        {
+            if (fleet.Stacks.Count == 0)
+            {
+                return "Fleet";
+            }
+
+            var title = StackText(fleet.Stacks[0]);
+            for (var i = 1; i < fleet.Stacks.Count; i++)
+            {
+                title += ", " + StackText(fleet.Stacks[i]);
+            }
+
+            return title;
         }
 
         private string StackText(ShipStack stack)

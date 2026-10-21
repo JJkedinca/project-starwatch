@@ -58,10 +58,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         private static FleetPanelModel Open(float speed, int count, string classId = "starter-screen")
         {
             return new FleetPanelModel(
-                true,
+                hasFleet: true,
+                isOpen: true,
                 new EntityId(1),
-                ContentId.From("home-system"),
-                false,
+                new FleetRouteModel(ContentId.From("home-system"), "Home", default, string.Empty, 0f, false),
                 speed,
                 true,
                 new[] { new FleetStackRow(ContentId.From(classId), count, "Screen") },

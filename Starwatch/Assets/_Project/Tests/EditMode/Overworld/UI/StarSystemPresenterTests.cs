@@ -175,17 +175,16 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             OverworldTestContext stack)
         {
             var database = RunTestFixture.CreateObjectDatabase();
-            var fleetListQuery = new FleetListQuery(database, stack.Effects);
+            var fleetListQuery = new FleetListQuery(database, stack.Effects, stack.Clock);
             return new StarMapPresenter(
                 view,
                 selection,
                 status,
                 stack.Manager,
                 stack.TravelService,
-                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery),
+                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery, database),
                 new StarSystemQuery(stack.VisibilityService, database, fleetListQuery),
-                stack.Events,
-                fleetListQuery);
+                stack.Events);
         }
 
         private static StarSystemPresenter CreateSystem(
@@ -204,7 +203,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 new StarSystemQuery(
                     stack.VisibilityService,
                     database,
-                    new FleetListQuery(database, stack.Effects)),
+                    new FleetListQuery(database, stack.Effects, stack.Clock)),
                 stack.Events);
         }
 
@@ -212,23 +211,19 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         {
             public event Action<ContentId> NodeSelected;
 
-            public event Action<EntityId> FleetSelected
-            {
-                add { }
-                remove { }
-            }
-
             public event Action<ContentId> TravelRequested
             {
                 add { }
                 remove { }
             }
 
-            public void Apply(StarMapModel model)
+            public event Action<ContentId> NodeHovered
             {
+                add { }
+                remove { }
             }
 
-            public void ApplyFleets(IReadOnlyList<FleetChoiceModel> fleets)
+            public void Apply(StarMapModel model)
             {
             }
 
@@ -241,6 +236,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             }
 
             public void ApplyCard(StarMapCardModel card)
+            {
+            }
+
+            public void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip)
             {
             }
 

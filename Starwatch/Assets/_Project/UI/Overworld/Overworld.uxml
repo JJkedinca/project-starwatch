@@ -11,6 +11,8 @@
     <ui:Template name="ShipyardSection" src="ShipyardSection.uxml" />
     <ui:Template name="StockpileBar" src="StockpileBar.uxml" />
     <ui:Template name="ResearchPanel" src="ResearchPanel.uxml" />
+    <ui:Template name="FleetRoster" src="FleetRoster.uxml" />
+    <ui:Template name="FleetBar" src="FleetBar.uxml" />
     <ui:Template name="FleetPanel" src="FleetPanel.uxml" />
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="top-bar" class="top-bar hud-panel">
@@ -20,13 +22,17 @@
         </ui:VisualElement>
         <ui:Instance template="ResearchPanel" />
         <ui:VisualElement name="content" class="content">
-            <ui:VisualElement name="fleet-roster-host" class="fleet-roster-host" />
+            <ui:VisualElement name="fleet-roster-host" class="fleet-roster-host">
+                <ui:Instance template="FleetRoster" />
+            </ui:VisualElement>
             <ui:VisualElement name="center-column" class="center-column">
                 <ui:VisualElement name="map-panel" class="map-panel">
                     <ui:VisualElement name="map-surface" class="map-surface" />
                     <ui:Instance template="StarSystemView" class="star-system-host" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:VisualElement name="fleet-bar-host" class="fleet-bar-host" />
+                <ui:VisualElement name="fleet-bar-host" class="fleet-bar-host">
+                    <ui:Instance template="FleetBar" />
+                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="inspection-panel" class="inspection-panel">
                 <ui:Instance template="StarSystemInspection" />

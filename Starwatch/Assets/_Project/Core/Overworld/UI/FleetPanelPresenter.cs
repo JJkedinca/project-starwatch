@@ -3,50 +3,64 @@ using System.Collections.Generic;
 using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Fleet;
 using VContainer.Unity;
 
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Opens the fleet panel for the selected fleet while a star system is open.
-    /// A fleet selected on the star map keeps this panel closed.
+    /// Drives the selected-fleet bar and the right-column details panel.
+    /// Transit ETAs sample the clock about once a second while the selected fleet is traveling.
     /// </summary>
     internal sealed class FleetPanelPresenter : IStartable, IDisposable
     {
-        private readonly IFleetPanelView _view;
+        private const float kRefreshSeconds = 1f;
+
+        private readonly IFleetPanelView _detailsView;
+        private readonly IFleetBarView _barView;
         private readonly OverworldSelection _selection;
         private readonly OverworldStatus _status;
         private readonly RunManager _runManager;
         private readonly FleetService _fleetService;
         private readonly FleetPanelQuery _query;
+        private readonly SimulationClock _clock;
         private readonly DomainEventBus _events;
         private readonly List<IDisposable> _subscriptions = new();
+        private bool _transitActive;
+        private double _nextRefresh;
 
         public FleetPanelPresenter(
-            IFleetPanelView view,
+            IFleetPanelView detailsView,
+            IFleetBarView barView,
             OverworldSelection selection,
             OverworldStatus status,
             RunManager runManager,
             FleetService fleetService,
             FleetPanelQuery query,
+            SimulationClock clock,
             DomainEventBus events)
         {
-            _view = view ?? throw new ArgumentNullException(nameof(view));
+            _detailsView = detailsView ?? throw new ArgumentNullException(nameof(detailsView));
+            _barView = barView ?? throw new ArgumentNullException(nameof(barView));
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
             _status = status ?? throw new ArgumentNullException(nameof(status));
             _runManager = runManager ?? throw new ArgumentNullException(nameof(runManager));
             _fleetService = fleetService ?? throw new ArgumentNullException(nameof(fleetService));
             _query = query ?? throw new ArgumentNullException(nameof(query));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _events = events ?? throw new ArgumentNullException(nameof(events));
         }
 
         public void Start()
         {
-            _view.CloseRequested += OnCloseRequested;
-            _view.SplitRequested += OnSplitRequested;
-            _view.MergeRequested += OnMergeRequested;
+            _detailsView.CloseRequested += OnDetailsCloseRequested;
+            _detailsView.SplitRequested += OnSplitRequested;
+            _detailsView.MergeRequested += OnMergeRequested;
+            _barView.DetailsRequested += OnDetailsRequested;
+            _barView.CloseRequested += OnBarCloseRequested;
             _selection.Changed += OnSelectionChanged;
+            _clock.TimeAdvanced += OnTimeAdvanced;
             _subscriptions.Add(_events.Subscribe<FleetTravelEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<FleetCreatedEvent>(_ => Apply()));
             _subscriptions.Add(_events.Subscribe<FleetMergedEvent>(_ => Apply()));
@@ -58,10 +72,13 @@ namespace ProjectStarwatch.Overworld.UI
 
         public void Dispose()
         {
-            _view.CloseRequested -= OnCloseRequested;
-            _view.SplitRequested -= OnSplitRequested;
-            _view.MergeRequested -= OnMergeRequested;
+            _detailsView.CloseRequested -= OnDetailsCloseRequested;
+            _detailsView.SplitRequested -= OnSplitRequested;
+            _detailsView.MergeRequested -= OnMergeRequested;
+            _barView.DetailsRequested -= OnDetailsRequested;
+            _barView.CloseRequested -= OnBarCloseRequested;
             _selection.Changed -= OnSelectionChanged;
+            _clock.TimeAdvanced -= OnTimeAdvanced;
             for (var i = 0; i < _subscriptions.Count; i++)
             {
                 _subscriptions[i].Dispose();
@@ -70,7 +87,17 @@ namespace ProjectStarwatch.Overworld.UI
             _subscriptions.Clear();
         }
 
-        private void OnCloseRequested()
+        private void OnDetailsRequested()
+        {
+            _selection.OpenFleetDetails();
+        }
+
+        private void OnDetailsCloseRequested()
+        {
+            _selection.CloseFleetDetails();
+        }
+
+        private void OnBarCloseRequested()
         {
             _selection.SelectFleet(EntityId.None);
         }
@@ -104,9 +131,29 @@ namespace ProjectStarwatch.Overworld.UI
             Apply();
         }
 
+        private void OnTimeAdvanced(GameTime time, float deltaSeconds)
+        {
+            if (!_transitActive || deltaSeconds <= 0f || time.Seconds + 0.0001d < _nextRefresh)
+            {
+                return;
+            }
+
+            _nextRefresh = time.Seconds + kRefreshSeconds;
+            Apply();
+        }
+
         private void Apply()
         {
-            _view.Apply(_query.Describe(CurrentRun(), _selection));
+            var model = _query.Describe(CurrentRun(), _selection);
+            var traveling = model.HasFleet && model.Route.IsTraveling;
+            if (traveling && !_transitActive)
+            {
+                _nextRefresh = _clock.CurrentTime.Seconds + kRefreshSeconds;
+            }
+
+            _transitActive = traveling;
+            _barView.Apply(model);
+            _detailsView.Apply(model);
         }
 
         private RunState CurrentRun()

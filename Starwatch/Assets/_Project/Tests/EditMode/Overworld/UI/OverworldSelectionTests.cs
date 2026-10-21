@@ -117,5 +117,53 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(raises, Is.EqualTo(1));
         }
+
+        [Test]
+        public void OpenFleetDetails_RequiresASelectedFleet()
+        {
+            var selection = new OverworldSelection();
+            var raises = 0;
+            selection.Changed += () => raises++;
+
+            selection.OpenFleetDetails();
+
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.Target));
+            Assert.That(raises, Is.EqualTo(0));
+
+            selection.SelectFleet(new EntityId(3));
+            selection.OpenFleetDetails();
+
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.FleetDetails));
+            Assert.That(raises, Is.EqualTo(2));
+
+            selection.OpenFleetDetails();
+            Assert.That(raises, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void SelectNode_ClosesFleetDetails()
+        {
+            var selection = new OverworldSelection();
+            selection.SelectFleet(new EntityId(5));
+            selection.OpenFleetDetails();
+
+            selection.SelectNode(ContentId.From("home-system"));
+
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.Target));
+            Assert.That(selection.SelectedFleetId, Is.EqualTo(new EntityId(5)));
+        }
+
+        [Test]
+        public void ClearFleet_ClosesFleetDetails()
+        {
+            var selection = new OverworldSelection();
+            selection.SelectFleet(new EntityId(8));
+            selection.OpenFleetDetails();
+
+            selection.SelectFleet(EntityId.None);
+
+            Assert.That(selection.SelectedFleetId.IsNone, Is.True);
+            Assert.That(selection.RightColumnFocus, Is.EqualTo(RightColumnFocus.Target));
+        }
     }
 }

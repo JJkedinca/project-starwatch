@@ -20,14 +20,17 @@ namespace ProjectStarwatch.Overworld.UI
 
         public EntityId SelectedFleetId { get; private set; }
 
+        public RightColumnFocus RightColumnFocus { get; private set; } = RightColumnFocus.Target;
+
         public bool InStarSystem => Mode == OverworldViewMode.StarSystem;
 
         /// <summary>
         /// Selects a map node and returns to the star map. The planet selection is cleared.
+        /// Fleet details close so the target card shows again.
         /// </summary>
         public void SelectNode(ContentId nodeId)
         {
-            Set(OverworldViewMode.StarMap, nodeId, default);
+            Set(OverworldViewMode.StarMap, nodeId, default, RightColumnFocus.Target);
         }
 
         /// <summary>
@@ -35,11 +38,11 @@ namespace ProjectStarwatch.Overworld.UI
         /// </summary>
         public void EnterSystem(ContentId nodeId)
         {
-            Set(OverworldViewMode.StarSystem, nodeId, default);
+            Set(OverworldViewMode.StarSystem, nodeId, default, RightColumnFocus.Target);
         }
 
         /// <summary>
-        /// Selects a planet while a star system is open.
+        /// Selects a planet while a star system is open. Fleet details close.
         /// </summary>
         public void SelectPlanet(ContentId planetId)
         {
@@ -48,12 +51,12 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            Set(Mode, SelectedNodeId, planetId);
+            Set(Mode, SelectedNodeId, planetId, RightColumnFocus.Target);
         }
 
         /// <summary>
         /// Selects a fleet on the map or in a system. The node and planet stay as they are.
-        /// The fleet panel opens for that fleet only while a star system is open.
+        /// Clearing the fleet also closes fleet details.
         /// </summary>
         public void SelectFleet(EntityId fleetId)
         {
@@ -63,6 +66,39 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             SelectedFleetId = fleetId;
+            if (fleetId.IsNone)
+            {
+                RightColumnFocus = RightColumnFocus.Target;
+            }
+
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// Opens fleet details in the right column for the selected fleet.
+        /// </summary>
+        public void OpenFleetDetails()
+        {
+            if (SelectedFleetId.IsNone || RightColumnFocus == RightColumnFocus.FleetDetails)
+            {
+                return;
+            }
+
+            RightColumnFocus = RightColumnFocus.FleetDetails;
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// Returns the right column to the target / planet panels.
+        /// </summary>
+        public void CloseFleetDetails()
+        {
+            if (RightColumnFocus == RightColumnFocus.Target)
+            {
+                return;
+            }
+
+            RightColumnFocus = RightColumnFocus.Target;
             Changed?.Invoke();
         }
 
@@ -71,7 +107,7 @@ namespace ProjectStarwatch.Overworld.UI
         /// </summary>
         public void BackToMap()
         {
-            Set(OverworldViewMode.StarMap, SelectedNodeId, default);
+            Set(OverworldViewMode.StarMap, SelectedNodeId, default, RightColumnFocus);
         }
 
         /// <summary>
@@ -80,10 +116,12 @@ namespace ProjectStarwatch.Overworld.UI
         public void Clear()
         {
             var clearFleet = !SelectedFleetId.IsNone;
+            var clearDetails = RightColumnFocus != RightColumnFocus.Target;
             SelectedFleetId = EntityId.None;
+            RightColumnFocus = RightColumnFocus.Target;
             if (Mode == OverworldViewMode.StarMap && SelectedNodeId.IsEmpty && SelectedPlanetId.IsEmpty)
             {
-                if (clearFleet)
+                if (clearFleet || clearDetails)
                 {
                     Changed?.Invoke();
                 }
@@ -91,12 +129,19 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            Set(OverworldViewMode.StarMap, default, default);
+            Set(OverworldViewMode.StarMap, default, default, RightColumnFocus.Target);
         }
 
-        private void Set(OverworldViewMode mode, ContentId nodeId, ContentId planetId)
+        private void Set(
+            OverworldViewMode mode,
+            ContentId nodeId,
+            ContentId planetId,
+            RightColumnFocus rightColumnFocus)
         {
-            if (Mode == mode && SelectedNodeId == nodeId && SelectedPlanetId == planetId)
+            if (Mode == mode
+                && SelectedNodeId == nodeId
+                && SelectedPlanetId == planetId
+                && RightColumnFocus == rightColumnFocus)
             {
                 return;
             }
@@ -104,6 +149,7 @@ namespace ProjectStarwatch.Overworld.UI
             Mode = mode;
             SelectedNodeId = nodeId;
             SelectedPlanetId = planetId;
+            RightColumnFocus = rightColumnFocus;
             Changed?.Invoke();
         }
     }
@@ -115,5 +161,14 @@ namespace ProjectStarwatch.Overworld.UI
     {
         StarMap = 0,
         StarSystem = 1,
+    }
+
+    /// <summary>
+    /// What the right column shows: the target/planet panels, or fleet details.
+    /// </summary>
+    internal enum RightColumnFocus
+    {
+        Target = 0,
+        FleetDetails = 1,
     }
 }

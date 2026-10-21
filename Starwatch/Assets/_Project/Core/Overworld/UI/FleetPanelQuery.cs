@@ -4,31 +4,34 @@ using ProjectStarwatch.Core.Effects;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Fleet;
 
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Read model for the fleet panel. Travel speed is the slowest class times the research multiplier.
-    /// Stays closed on the star map. Opens only while a star system is open and a fleet is selected.
+    /// Read model for the fleet bar and details panel.
+    /// The bar shows whenever a fleet is selected. Details open only with <see cref="RightColumnFocus.FleetDetails"/>.
     /// </summary>
     internal sealed class FleetPanelQuery
     {
         private readonly ObjectDatabaseSO _database;
         private readonly IEffectQuery _effectQuery;
+        private readonly SimulationClock _clock;
 
-        public FleetPanelQuery(ObjectDatabaseSO database, IEffectQuery effectQuery)
+        public FleetPanelQuery(
+            ObjectDatabaseSO database,
+            IEffectQuery effectQuery,
+            SimulationClock clock)
         {
             _database = database;
             _effectQuery = effectQuery;
+            _clock = clock;
         }
 
         internal FleetPanelModel Describe(RunState run, OverworldSelection selection)
         {
-            if (run == null
-                || selection == null
-                || !selection.InStarSystem
-                || selection.SelectedFleetId.IsNone)
+            if (run == null || selection == null || selection.SelectedFleetId.IsNone)
             {
                 return FleetPanelModel.Closed;
             }
@@ -45,16 +48,51 @@ namespace ProjectStarwatch.Overworld.UI
                 stacks.Add(new FleetStackRow(stack.ClassId, stack.Count, ClassName(stack.ClassId)));
             }
 
-            var traveling = run.Timeline.Fleets.IsFleetTraveling(fleet.Id);
-            return new FleetPanelModel(
-                true,
-                fleet.Id,
+            var traveling = TryGetTravel(run, fleet.Id, out var travel);
+            var destinationId = traveling ? travel.ToNodeId : default;
+            var route = new FleetRouteModel(
                 fleet.LocationSystemId,
-                traveling,
+                LocationName(fleet.LocationSystemId),
+                destinationId,
+                traveling ? LocationName(destinationId) : string.Empty,
+                traveling ? RemainingSeconds(travel.ArriveTime) : 0f,
+                traveling);
+            return new FleetPanelModel(
+                hasFleet: true,
+                isOpen: selection.RightColumnFocus == RightColumnFocus.FleetDetails,
+                fleet.Id,
+                route,
                 FleetSpeed.Effective(fleet, _database, _effectQuery),
                 !traveling && fleet.ShipCount > 1,
                 stacks,
                 MergeCandidates(run, fleet, traveling));
+        }
+
+        private static bool TryGetTravel(RunState run, EntityId fleetId, out ActiveTravel travel)
+        {
+            var travels = run.Timeline.Fleets.ActiveTravels;
+            for (var i = 0; i < travels.Count; i++)
+            {
+                if (travels[i].FleetId == fleetId)
+                {
+                    travel = travels[i];
+                    return true;
+                }
+            }
+
+            travel = null;
+            return false;
+        }
+
+        private float RemainingSeconds(GameTime arriveTime)
+        {
+            if (_clock == null)
+            {
+                return 0f;
+            }
+
+            var remaining = arriveTime.Seconds - _clock.CurrentTime.Seconds;
+            return remaining > 0d ? (float)remaining : 0f;
         }
 
         private static List<FleetMergeCandidate> MergeCandidates(RunState run, FleetComposition fleet, bool traveling)
@@ -94,6 +132,18 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             return shipClass.DisplayName;
+        }
+
+        private string LocationName(ContentId locationId)
+        {
+            if (_database != null
+                && _database.TryGetStarSystem(locationId.Value, out var system)
+                && !string.IsNullOrEmpty(system.DisplayName))
+            {
+                return system.DisplayName;
+            }
+
+            return locationId.Value;
         }
     }
 }

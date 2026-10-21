@@ -59,17 +59,16 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var map = new FakeStarMapView();
             var settlement = new FakeSettlementView();
             var database = RunTestFixture.CreateObjectDatabase();
-            var fleetListQuery = new FleetListQuery(database, stack.Effects);
+            var fleetListQuery = new FleetListQuery(database, stack.Effects, stack.Clock);
             var mapPresenter = new StarMapPresenter(
                 map,
                 selection,
                 new OverworldStatus(),
                 stack.Manager,
                 stack.TravelService,
-                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery),
+                new StarMapQuery(stack.VisibilityService, stack.TravelService, fleetListQuery, database),
                 new StarSystemQuery(stack.VisibilityService, database, fleetListQuery),
-                stack.Events,
-                fleetListQuery);
+                stack.Events);
             var settlementPresenter = CreatePresenter(settlement, selection, new OverworldStatus(), stack);
             mapPresenter.Start();
             settlementPresenter.Start();
@@ -220,13 +219,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 remove { }
             }
 
-            public event Action<EntityId> FleetSelected
+            public event Action<ContentId> TravelRequested
             {
                 add { }
                 remove { }
             }
 
-            public event Action<ContentId> TravelRequested
+            public event Action<ContentId> NodeHovered
             {
                 add { }
                 remove { }
@@ -239,10 +238,6 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 ApplyCount++;
             }
 
-            public void ApplyFleets(IReadOnlyList<FleetChoiceModel> fleets)
-            {
-            }
-
             public void ApplyNodes(IReadOnlyList<StarMapNodeModel> nodes)
             {
             }
@@ -252,6 +247,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             }
 
             public void ApplyCard(StarMapCardModel card)
+            {
+            }
+
+            public void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip)
             {
             }
         }

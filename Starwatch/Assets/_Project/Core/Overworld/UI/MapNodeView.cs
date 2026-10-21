@@ -15,6 +15,10 @@ namespace ProjectStarwatch.Overworld.UI
 
         public event Action<ContentId> RightClicked;
 
+        public event Action<ContentId> PointerEntered;
+
+        public event Action<ContentId> PointerLeft;
+
         internal Button Root { get; }
 
         private readonly ContentId _nodeId;
@@ -70,6 +74,8 @@ namespace ProjectStarwatch.Overworld.UI
             Root.clicked += () => Clicked?.Invoke(_nodeId);
             // A Button only raises ClickEvent for the left mouse button.
             Root.RegisterCallback<PointerUpEvent>(OnPointerUp);
+            Root.RegisterCallback<PointerEnterEvent>(OnPointerEnter);
+            Root.RegisterCallback<PointerLeaveEvent>(OnPointerLeave);
         }
 
         private void OnPointerUp(PointerUpEvent evt)
@@ -81,6 +87,16 @@ namespace ProjectStarwatch.Overworld.UI
 
             evt.StopPropagation();
             RightClicked?.Invoke(_nodeId);
+        }
+
+        private void OnPointerEnter(PointerEnterEvent evt)
+        {
+            PointerEntered?.Invoke(_nodeId);
+        }
+
+        private void OnPointerLeave(PointerLeaveEvent evt)
+        {
+            PointerLeft?.Invoke(_nodeId);
         }
 
         /// <summary>

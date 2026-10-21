@@ -10,7 +10,7 @@ using NUnit.Framework;
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
     /// <summary>
-    /// Star map read model: routes, node cards, and whether a system can be opened.
+    /// Star map read model: routes, node cards, travel preview, and whether a system can be opened.
     /// </summary>
     public sealed class StarMapQueryTests
     {
@@ -24,6 +24,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var routes = query.KnownRoutes(run);
 
             Assert.That(routes, Has.Count.EqualTo(2));
+            Assert.That(routes[0].State, Is.EqualTo(MapRouteState.Known));
         }
 
         [Test]
@@ -53,6 +54,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(homeState.IsFleetTraveling, Is.True);
             Assert.That(card.HasSelection, Is.True);
             Assert.That(card.HasArrival, Is.False);
+            Assert.That(card.Card.FleetRelation, Is.EqualTo(StarMapFleetRelation.NoneSelected));
         }
 
         [Test]
@@ -72,12 +74,80 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             unselected.SelectNode(forge);
 
             Assert.That(card.HasSelection, Is.True);
+            Assert.That(card.Card.FleetRelation, Is.EqualTo(StarMapFleetRelation.Reachable));
             Assert.That(card.HasArrival, Is.True);
             Assert.That(card.ArrivalSeconds, Is.EqualTo(3f).Within(0.001f));
+            Assert.That(card.Card.ShowTravelHint, Is.True);
             Assert.That(card.Fleets, Has.Count.EqualTo(1));
             Assert.That(card.Fleets[0].FleetId, Is.EqualTo(fleetId));
             Assert.That(card.Fleets[0].IsSelected, Is.True);
-            Assert.That(query.Describe(run, unselected).HasArrival, Is.False);
+            Assert.That(
+                query.Describe(run, unselected).Card.FleetRelation,
+                Is.EqualTo(StarMapFleetRelation.NoneSelected));
+        }
+
+        [Test]
+        public void DescribeCard_MarksAtTargetAndInTransit()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(98));
+            var query = CreateQuery(stack);
+            var home = ContentId.From("home-system");
+            var forge = ContentId.From("forge-system");
+            var fleetId = run.Timeline.Fleets[0].Id;
+            var selection = new OverworldSelection();
+            selection.SelectNode(home);
+            selection.SelectFleet(fleetId);
+
+            Assert.That(query.DescribeCard(run, selection).FleetRelation, Is.EqualTo(StarMapFleetRelation.AtTarget));
+
+            Assert.That(stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge).Success, Is.True);
+            selection.SelectNode(forge);
+
+            Assert.That(query.DescribeCard(run, selection).FleetRelation, Is.EqualTo(StarMapFleetRelation.InTransit));
+        }
+
+        [Test]
+        public void TravelPreview_MatchesTripSecondsWhenReachable()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(99));
+            var query = CreateQuery(stack);
+            var fleetId = run.Timeline.Fleets[0].Id;
+            var forge = ContentId.From("forge-system");
+
+            var preview = query.TravelPreview(run, fleetId, forge);
+
+            Assert.That(preview.Reachable, Is.True);
+            Assert.That(preview.ToNodeId, Is.EqualTo(forge));
+            Assert.That(preview.Seconds, Is.EqualTo(3f).Within(0.001f));
+            Assert.That(query.TravelPreview(run, fleetId, ContentId.From("choke-system")).Reachable, Is.False);
+        }
+
+        [Test]
+        public void DescribeRoutes_MarksInTransitAndPlanned()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(100));
+            var query = CreateQuery(stack);
+            var home = ContentId.From("home-system");
+            var forge = ContentId.From("forge-system");
+            var fleetId = run.Timeline.Fleets[0].Id;
+            var selection = new OverworldSelection();
+            selection.SelectFleet(fleetId);
+
+            var planned = query.DescribeRoutes(run, selection, forge);
+            Assert.That(planned, Has.Some.Matches<MapRouteSegment>(
+                segment => segment.State == MapRouteState.Planned
+                    && RouteService.MakeRouteKey(segment.NodeAId, segment.NodeBId)
+                        == RouteService.MakeRouteKey(home, forge)));
+
+            Assert.That(stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge).Success, Is.True);
+            var traveling = query.DescribeRoutes(run, selection, default);
+            Assert.That(traveling, Has.Some.Matches<MapRouteSegment>(
+                segment => segment.State == MapRouteState.InTransit
+                    && RouteService.MakeRouteKey(segment.NodeAId, segment.NodeBId)
+                        == RouteService.MakeRouteKey(home, forge)));
         }
 
         [Test]
@@ -97,7 +167,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         }
 
         [Test]
-        public void Describe_OmitsTheOpenHintWhileTheSystemIsOpen()
+        public void Describe_KeepsTheCardWhenTheSystemIsOpen()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(45));
@@ -113,18 +183,20 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(onMap.HasSelection, Is.True);
             Assert.That(inSystem.HasSelection, Is.True);
-            Assert.That(onMap.Title, Is.EqualTo(home.Value));
-            Assert.That(inSystem.Title, Is.EqualTo(home.Value));
-            Assert.That(onMap.Summary, Does.StartWith(inSystem.Summary));
-            Assert.That(onMap.Summary.Length, Is.GreaterThan(inSystem.Summary.Length));
+            Assert.That(onMap.Card.IsExplored, Is.True);
+            Assert.That(inSystem.Card.IsExplored, Is.True);
+            Assert.That(onMap.Title, Is.EqualTo(inSystem.Title));
+            Assert.That(onMap.Card.BodyCount, Is.EqualTo(inSystem.Card.BodyCount));
         }
 
         private static StarMapQuery CreateQuery(OverworldTestContext stack)
         {
+            var database = RunTestFixture.CreateObjectDatabase();
             return new StarMapQuery(
                 stack.VisibilityService,
                 stack.TravelService,
-                new FleetListQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects));
+                new FleetListQuery(database, stack.Effects, stack.Clock),
+                database);
         }
 
         private static MapNode RequireNode(RunState run, ContentId nodeId)

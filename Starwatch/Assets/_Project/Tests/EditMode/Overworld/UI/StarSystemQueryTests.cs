@@ -42,7 +42,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var query = new StarSystemQuery(
                 stack.VisibilityService,
                 database,
-                new FleetListQuery(database, stack.Effects));
+                new FleetListQuery(database, stack.Effects, stack.Clock));
             var home = RequireNode(run, ContentId.From("home-system"));
             var prime = ContentId.From("home-prime");
             Assert.That(database.TryGetPlanet(prime.Value, out var planet), Is.True);
@@ -79,7 +79,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             return new StarSystemQuery(
                 stack.VisibilityService,
                 database,
-                new FleetListQuery(database, stack.Effects));
+                new FleetListQuery(database, stack.Effects, stack.Clock));
         }
 
         private static MapNode RequireNode(RunState run, ContentId nodeId)
