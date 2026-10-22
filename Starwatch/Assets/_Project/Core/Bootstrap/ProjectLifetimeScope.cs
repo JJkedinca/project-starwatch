@@ -2,6 +2,7 @@ using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Effects;
 using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Persistence;
+using ProjectStarwatch.Core.Presentation;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Core.Run.Universe;
@@ -30,6 +31,9 @@ namespace ProjectStarwatch.Core.Bootstrap
         [SerializeField]
         private ObjectDatabaseSO _objectDatabase;
 
+        [SerializeField]
+        private StarwatchPresentationDatabaseSO _presentationDatabase;
+
         /// <summary>
         /// Keeps this object alive when Bootstrap unloads into Main Menu.
         /// </summary>
@@ -57,8 +61,15 @@ namespace ProjectStarwatch.Core.Bootstrap
                 return;
             }
 
+            if (_presentationDatabase == null)
+            {
+                Debug.LogError("ProjectLifetimeScope requires an assigned StarwatchPresentationDatabaseSO.");
+                return;
+            }
+
             builder.RegisterInstance(_updateManager);
             builder.RegisterInstance(_objectDatabase);
+            builder.RegisterInstance(_presentationDatabase);
             builder.Register<SimulationClock>(Lifetime.Singleton);
             builder.Register<SimulationLoop>(Lifetime.Singleton);
             builder.Register<ISceneLoader, UnitySceneLoader>(Lifetime.Singleton);

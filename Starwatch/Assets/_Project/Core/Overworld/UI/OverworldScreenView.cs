@@ -1,3 +1,4 @@
+using ProjectStarwatch.Overworld.Map;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VContainer;
@@ -30,6 +31,18 @@ namespace ProjectStarwatch.Overworld.UI
 
         [SerializeField]
         private UIDocument _document;
+
+        [SerializeField]
+        private StarMapWorldPresenter _starMapWorldPresenter;
+
+        [SerializeField]
+        private MapCameraController _mapCameraController;
+
+        [SerializeField]
+        private MapPointerInput _mapPointerInput;
+
+        [SerializeField]
+        private Camera _mapCamera;
 
         private OverworldStatus _status;
         private readonly ToastStackView _toasts = new();
@@ -116,7 +129,23 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
-            StarMap.Bind(mapSurface, starSystemInspection);
+            if (_mapCameraController != null)
+            {
+                _mapCameraController.Configure(_document);
+            }
+
+            if (_mapPointerInput != null)
+            {
+                _mapPointerInput.Configure(_mapCameraController, _mapCamera, _document);
+            }
+
+            StarMap.Bind(
+                mapSurface,
+                starSystemInspection,
+                _starMapWorldPresenter,
+                _mapCameraController,
+                _mapPointerInput,
+                _mapCamera);
             StarSystem.Bind(starSystem, mapSurface, title);
             Settlement.Bind(settlement);
             Stockpile.Bind(stockpile);

@@ -8,5 +8,6 @@
         <ui:Label name="inspection-fleets" text="" class="inspection-info" />
         <ui:Label name="inspection-relation" text="" class="inspection-relation" />
         <ui:Label name="inspection-hint" text="" class="inspection-hint" />
+        <ui:Button name="inspection-travel" text="Travel" class="action-button inspection-travel" />
     </ui:VisualElement>
 </ui:UXML>

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d4e2a91c6b84f3e9a1c5d8e2f0b4a67, type: 3}
+  m_Name: StarMapPresentation
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Overworld.Map.StarMapPresentationSO
+  <NodeHidden>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+  <NodeExplorable>k__BackingField: {r: 0.35, g: 0.55, b: 0.7, a: 0.55}
+  <NodeExplored>k__BackingField: {r: 0.45, g: 0.85, b: 1, a: 1}
+  <NodePresent>k__BackingField: {r: 0.55, g: 0.95, b: 0.75, a: 1}
+  <RouteKnown>k__BackingField: {r: 0.35, g: 0.72, b: 0.82, a: 0.55}
+  <RoutePlanned>k__BackingField: {r: 0.9, g: 0.75, b: 0.28, a: 0.95}
+  <RouteTransit>k__BackingField: {r: 0.95, g: 0.55, b: 0.2, a: 0.95}
+  <FleetMarker>k__BackingField: {r: 0.95, g: 0.85, b: 0.35, a: 1}
+  <FleetMarkerSelected>k__BackingField: {r: 1, g: 0.95, b: 0.55, a: 1}
+  <RouteKnownWidth>k__BackingField: 0.12
+  <RoutePlannedWidth>k__BackingField: 0.18
+  <RouteTransitWidth>k__BackingField: 0.22

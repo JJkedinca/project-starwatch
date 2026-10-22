@@ -58,6 +58,38 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         }
 
         [Test]
+        public void NodeState_KeepsKnownHiddenNeighborsAfterFleetLeavesHome()
+        {
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(44));
+            var query = CreateQuery(stack);
+            var home = ContentId.From("home-system");
+            var forge = ContentId.From("forge-system");
+            var belt = ContentId.From("asteroid-belt");
+            var fleetId = run.Timeline.Fleets[0].Id;
+
+            Assert.That(query.NodeState(run, RequireNode(run, belt), default).IsExplorable, Is.True);
+
+            Assert.That(
+                stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge).Success,
+                Is.True);
+            stack.Clock.SetPaused(false);
+            for (var i = 0; i < 12; i++)
+            {
+                stack.Loop.Pump(1f);
+            }
+
+            Assert.That(run.Timeline.Fleets.TryGetFleet(fleetId, out var fleet), Is.True);
+            Assert.That(fleet.LocationSystemId, Is.EqualTo(forge));
+            Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.True);
+            Assert.That(run.Timeline.Fleets.HasFleetAt(home), Is.False);
+
+            var beltAfter = query.NodeState(run, RequireNode(run, belt), default);
+            Assert.That(beltAfter.Visibility, Is.EqualTo(MapNodeVisibility.Hidden));
+            Assert.That(beltAfter.IsExplorable, Is.True);
+        }
+
+        [Test]
         public void Describe_OffersTravelIntoHiddenNeighbor()
         {
             var stack = RunTestFixture.CreateOverworldStack();
