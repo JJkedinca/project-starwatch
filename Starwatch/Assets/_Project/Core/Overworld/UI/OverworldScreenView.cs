@@ -1,5 +1,7 @@
+using ProjectStarwatch.Core.WorldInput;
 using ProjectStarwatch.Overworld.Map;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using VContainer;
 using VContainer.Unity;
@@ -42,7 +44,13 @@ namespace ProjectStarwatch.Overworld.UI
         private MapPointerInput _mapPointerInput;
 
         [SerializeField]
+        private WorldPointerInput _worldPointerInput;
+
+        [SerializeField]
         private Camera _mapCamera;
+
+        [SerializeField]
+        private InputActionAsset _starwatchInput;
 
         private OverworldStatus _status;
         private readonly ToastStackView _toasts = new();
@@ -129,14 +137,19 @@ namespace ProjectStarwatch.Overworld.UI
                 return;
             }
 
+            if (_worldPointerInput != null)
+            {
+                _worldPointerInput.Configure(_document, _starwatchInput);
+            }
+
             if (_mapCameraController != null)
             {
-                _mapCameraController.Configure(_document);
+                _mapCameraController.Configure(_worldPointerInput, _starwatchInput);
             }
 
             if (_mapPointerInput != null)
             {
-                _mapPointerInput.Configure(_mapCameraController, _mapCamera, _document);
+                _mapPointerInput.Configure(_mapCamera, _worldPointerInput);
             }
 
             StarMap.Bind(

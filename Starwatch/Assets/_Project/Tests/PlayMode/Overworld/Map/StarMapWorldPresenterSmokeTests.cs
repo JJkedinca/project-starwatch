@@ -66,7 +66,7 @@ namespace ProjectStarwatch.Tests.PlayMode.Overworld.Map
             presenter.RebuildNodes(nodes);
             yield return null;
 
-            Assert.That(presenter.PickPoints.Count, Is.EqualTo(2));
+            Assert.That(presenter.ActiveNodeCount, Is.EqualTo(2));
 
             Object.Destroy(root);
             Object.Destroy(nodePrefabGo);

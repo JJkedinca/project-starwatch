@@ -1,14 +1,12 @@
 using System;
-using System.Collections.Generic;
 using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.WorldInput;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.UIElements;
 
 namespace ProjectStarwatch.Overworld.Map
 {
     /// <summary>
-    /// Turns pointer input into node select, travel, and hover. Ignores pointers over HUD panels.
+    /// Map pick consumer: turns WorldPointerInput gestures into node select / travel / hover.
     /// </summary>
     public sealed class MapPointerInput : MonoBehaviour
     {
@@ -22,46 +20,37 @@ namespace ProjectStarwatch.Overworld.Map
         private Camera _camera;
 
         [SerializeField]
-        private UIDocument _uiDocument;
+        private WorldPointerInput _pointerInput;
 
         [SerializeField]
-        private float _pickRadius = 5f;
+        private LayerMask _pickMask;
 
-        private MapCameraController _cameraController;
-        private readonly List<MapPicker.NodePickPoint> _pickPoints = new();
+        [SerializeField]
+        private float _pickTolerancePixels = 24f;
+
+        [SerializeField]
+        private float _pickMaxDistance = 500f;
+
         private ContentId _hoveredNodeId;
-        private InputAction _pointAction;
-        private Vector2 _pressScreen;
-        private bool _primaryPressArmed;
-        private bool _pressWasOverUi;
-        private bool _suppressClickForGesture;
+        private bool _pointerSubscribed;
 
-        internal void Configure(MapCameraController cameraController, Camera camera, UIDocument uiDocument)
+        internal void Configure(Camera camera, WorldPointerInput pointerInput)
         {
-            _cameraController = cameraController;
             if (camera != null)
             {
                 _camera = camera;
             }
 
-            if (uiDocument != null)
+            if (pointerInput == null || pointerInput == _pointerInput)
             {
-                _uiDocument = uiDocument;
-            }
-        }
-
-        internal void SetPickPoints(IReadOnlyList<MapPicker.NodePickPoint> points)
-        {
-            _pickPoints.Clear();
-            if (points == null)
-            {
-                ClearHover();
                 return;
             }
 
-            for (var i = 0; i < points.Count; i++)
+            UnsubscribePointer();
+            _pointerInput = pointerInput;
+            if (isActiveAndEnabled)
             {
-                _pickPoints.Add(points[i]);
+                SubscribePointer();
             }
         }
 
@@ -72,60 +61,70 @@ namespace ProjectStarwatch.Overworld.Map
                 _camera = Camera.main;
             }
 
-            _pointAction = new InputAction("MapPickPoint", InputActionType.Value, "<Pointer>/position");
+            if (_pickMask.value == 0)
+            {
+                _pickMask = StarwatchLayers.MapNode.ToMask();
+            }
         }
 
         private void OnEnable()
         {
-            _pointAction?.Enable();
+            SubscribePointer();
         }
 
         private void OnDisable()
         {
-            _pointAction?.Disable();
+            UnsubscribePointer();
             ClearHover();
         }
 
-        private void OnDestroy()
+        private void SubscribePointer()
         {
-            _pointAction?.Dispose();
+            if (_pointerSubscribed || _pointerInput == null)
+            {
+                return;
+            }
+
+            _pointerInput.Clicked += OnClicked;
+            _pointerInput.LongPressed += OnLongPressed;
+            _pointerInput.Hovered += OnHovered;
+            _pointerInput.HoverCleared += OnHoverCleared;
+            _pointerSubscribed = true;
         }
 
-        private void Update()
+        private void UnsubscribePointer()
         {
-            if (_camera == null || _pointAction == null)
+            if (!_pointerSubscribed || _pointerInput == null)
             {
+                _pointerSubscribed = false;
                 return;
             }
 
-            var screen = _pointAction.ReadValue<Vector2>();
-            var overUi = IsPointerOverBlockingUi(screen);
-
-            if (!overUi)
-            {
-                UpdateHover(screen);
-            }
-            else
-            {
-                ClearHover();
-            }
-
-            TickRightClick(screen, overUi);
-            TickPrimaryClick(screen, overUi);
+            _pointerInput.Clicked -= OnClicked;
+            _pointerInput.LongPressed -= OnLongPressed;
+            _pointerInput.Hovered -= OnHovered;
+            _pointerInput.HoverCleared -= OnHoverCleared;
+            _pointerSubscribed = false;
         }
 
-        private void TickRightClick(Vector2 screen, bool overUi)
+        private void OnClicked(PointerClick click)
         {
-            if (Mouse.current == null || !Mouse.current.rightButton.wasReleasedThisFrame)
+            if (!TryPick(click.ScreenPosition, out var nodeId))
             {
                 return;
             }
 
-            if (overUi)
+            if (click.Button == PointerButton.Secondary)
             {
+                NodeRightClicked?.Invoke(nodeId);
                 return;
             }
 
+            NodeClicked?.Invoke(nodeId);
+        }
+
+        private void OnLongPressed(Vector2 screen)
+        {
             if (!TryPick(screen, out var nodeId))
             {
                 return;
@@ -134,78 +133,7 @@ namespace ProjectStarwatch.Overworld.Map
             NodeRightClicked?.Invoke(nodeId);
         }
 
-        private void TickPrimaryClick(Vector2 screen, bool overUi)
-        {
-            var pressed = IsPrimaryPressed();
-            if (pressed && !_primaryPressArmed)
-            {
-                _primaryPressArmed = true;
-                _pressScreen = screen;
-                _pressWasOverUi = overUi;
-                _suppressClickForGesture = false;
-                return;
-            }
-
-            if (_primaryPressArmed && pressed)
-            {
-                if ((screen - _pressScreen).sqrMagnitude > 36f)
-                {
-                    _suppressClickForGesture = true;
-                }
-
-                if (_cameraController != null && _cameraController.SuppressClick)
-                {
-                    _suppressClickForGesture = true;
-                }
-
-                return;
-            }
-
-            if (!_primaryPressArmed || pressed)
-            {
-                return;
-            }
-
-            _primaryPressArmed = false;
-            var suppress = _suppressClickForGesture
-                || (_cameraController != null && _cameraController.SuppressClick);
-            _suppressClickForGesture = false;
-            if (_pressWasOverUi || overUi || suppress)
-            {
-                return;
-            }
-
-            if (!TryPick(screen, out var nodeId))
-            {
-                return;
-            }
-
-            NodeClicked?.Invoke(nodeId);
-        }
-
-        private static bool IsPrimaryPressed()
-        {
-            if (Mouse.current != null && Mouse.current.leftButton.isPressed)
-            {
-                return true;
-            }
-
-            if (Touchscreen.current != null)
-            {
-                for (var i = 0; i < Touchscreen.current.touches.Count; i++)
-                {
-                    var touch = Touchscreen.current.touches[i];
-                    if (touch.press.isPressed)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private void UpdateHover(Vector2 screen)
+        private void OnHovered(Vector2 screen)
         {
             if (!TryPick(screen, out var nodeId))
             {
@@ -222,6 +150,11 @@ namespace ProjectStarwatch.Overworld.Map
             NodeHovered?.Invoke(nodeId);
         }
 
+        private void OnHoverCleared()
+        {
+            ClearHover();
+        }
+
         private void ClearHover()
         {
             if (_hoveredNodeId.IsEmpty)
@@ -236,13 +169,25 @@ namespace ProjectStarwatch.Overworld.Map
         private bool TryPick(Vector2 screen, out ContentId nodeId)
         {
             nodeId = default;
-            var ray = _camera.ScreenPointToRay(screen);
-            return MapPicker.TryPickNearest(ray, _pickPoints, _pickRadius, out nodeId);
-        }
+            if (_camera == null)
+            {
+                return false;
+            }
 
-        private bool IsPointerOverBlockingUi(Vector2 screen)
-        {
-            return MapHudHitTest.IsOverBlockingPanel(_uiDocument, screen);
+            var query = new WorldPickQuery(_pickMask, _pickTolerancePixels, _pickMaxDistance);
+            if (!WorldPicker.TryPick(_camera, screen, query, out var hit))
+            {
+                return false;
+            }
+
+            var view = hit.collider.GetComponentInParent<MapNodeView>();
+            if (view == null || view.NodeId.IsEmpty)
+            {
+                return false;
+            }
+
+            nodeId = view.NodeId;
+            return true;
         }
     }
 }

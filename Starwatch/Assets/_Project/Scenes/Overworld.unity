@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 205800594}
   - component: {fileID: 205800593}
   - component: {fileID: 205800595}
+  - component: {fileID: 205800596}
   m_Layer: 0
   m_Name: OverworldCamera
   m_TagString: MainCamera
@@ -216,8 +217,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Overworld.Map.MapCameraController
   _camera: {fileID: 205800593}
-  _uiDocument: {fileID: 1823050627}
+  _pointerInput: {fileID: 205800596}
+  _actions: {fileID: -944628639613478452, guid: 1a2b3c4d5e6f708192a3b4c5d6e7f809, type: 3}
   _fixedHeight: 20
+--- !u!114 &205800596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 205800592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c4d5e6f708192a3b4c5d6e7f8091a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.WorldInput.WorldPointerInput
+  _uiDocument: {fileID: 1823050627}
+  _actions: {fileID: -944628639613478452, guid: 1a2b3c4d5e6f708192a3b4c5d6e7f809, type: 3}
+  _gestureSettings:
+    _dragThresholdPixels: 6
+    _longPressSeconds: 0.5
 --- !u!1 &310000000
 GameObject:
   m_ObjectHideFlags: 0
@@ -267,8 +286,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Overworld.Map.MapPointerInput
   _camera: {fileID: 205800593}
-  _uiDocument: {fileID: 1823050627}
-  _pickRadius: 5
+  _pointerInput: {fileID: 205800596}
+  _pickMask:
+    serializedVersion: 2
+    m_Bits: 64
+  _pickTolerancePixels: 24
+  _pickMaxDistance: 500
 --- !u!4 &310000003
 Transform:
   m_ObjectHideFlags: 0
@@ -676,7 +699,9 @@ MonoBehaviour:
   _starMapWorldPresenter: {fileID: 310000001}
   _mapCameraController: {fileID: 205800595}
   _mapPointerInput: {fileID: 310000002}
+  _worldPointerInput: {fileID: 205800596}
   _mapCamera: {fileID: 205800593}
+  _starwatchInput: {fileID: -944628639613478452, guid: 1a2b3c4d5e6f708192a3b4c5d6e7f809, type: 3}
 --- !u!114 &1823050627
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -41,7 +41,6 @@ namespace ProjectStarwatch.Overworld.Map
         private readonly Dictionary<ContentId, Vector3> _nodeWorld = new();
         private readonly List<MapRouteView> _routes = new();
         private readonly Dictionary<string, TransitMarker> _fleetMarkers = new();
-        private readonly List<MapPicker.NodePickPoint> _pickPoints = new();
         private readonly Stack<MapNodeView> _nodePool = new();
         private readonly Stack<MapRouteView> _routePool = new();
         private readonly Stack<FleetMarkerView> _fleetPool = new();
@@ -49,7 +48,22 @@ namespace ProjectStarwatch.Overworld.Map
         private bool _listeningToClock;
         private bool _loggedMissingPresentation;
 
-        internal IReadOnlyList<MapPicker.NodePickPoint> PickPoints => _pickPoints;
+        internal int ActiveNodeCount
+        {
+            get
+            {
+                var count = 0;
+                foreach (var pair in _nodes)
+                {
+                    if (pair.Value != null && pair.Value.isActiveAndEnabled && !pair.Value.NodeId.IsEmpty)
+                    {
+                        count++;
+                    }
+                }
+
+                return count;
+            }
+        }
 
         internal event Action NodesRebuilt;
 
@@ -81,7 +95,6 @@ namespace ProjectStarwatch.Overworld.Map
 
             _nodes.Clear();
             _nodeWorld.Clear();
-            _pickPoints.Clear();
             ClearRoutes();
             ClearFleets();
             _hasCentered = false;
@@ -109,6 +122,7 @@ namespace ProjectStarwatch.Overworld.Map
                     _nodes[model.NodeId] = visual;
                 }
 
+                visual.Bind(model.NodeId);
                 visual.transform.position = world;
                 ApplyNodeVisual(visual, model.State);
                 _nodeWorld[model.NodeId] = world;
@@ -137,7 +151,6 @@ namespace ProjectStarwatch.Overworld.Map
                 }
             }
 
-            RebuildPickPoints();
             NodesRebuilt?.Invoke();
         }
 
@@ -192,7 +205,6 @@ namespace ProjectStarwatch.Overworld.Map
             }
 
             ApplyNodeVisual(visual, state);
-            RebuildPickPoints();
         }
 
         internal void SetRoutes(IReadOnlyList<MapRouteSegment> routes)
@@ -324,25 +336,6 @@ namespace ProjectStarwatch.Overworld.Map
             return null;
         }
 
-        private void RebuildPickPoints()
-        {
-            _pickPoints.Clear();
-            foreach (var pair in _nodes)
-            {
-                if (!pair.Value.isActiveAndEnabled)
-                {
-                    continue;
-                }
-
-                if (!_nodeWorld.TryGetValue(pair.Key, out var world))
-                {
-                    continue;
-                }
-
-                _pickPoints.Add(new MapPicker.NodePickPoint(pair.Key, world));
-            }
-        }
-
         private void OnTimeAdvanced(GameTime time, float deltaSeconds)
         {
             if (_fleetMarkers.Count == 0)
@@ -428,6 +421,7 @@ namespace ProjectStarwatch.Overworld.Map
                 return;
             }
 
+            visual.Bind(default);
             visual.gameObject.SetActive(false);
             _nodePool.Push(visual);
         }

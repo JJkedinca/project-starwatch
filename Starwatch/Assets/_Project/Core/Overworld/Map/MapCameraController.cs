@@ -1,19 +1,20 @@
 using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using ProjectStarwatch.Core.WorldInput;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UIElements;
 
 namespace ProjectStarwatch.Overworld.Map
 {
     /// <summary>
-    /// Top-down perspective map camera: pan only (left-drag, keyboard, touch).
-    /// Sleeps when idle. Does not pan while the pointer is over HUD panels.
+    /// Top-down perspective map camera: pan only (drag via WorldPointerInput, keyboard via MapCamera/Pan).
+    /// Runs a frame loop only while panning or easing.
     /// </summary>
     public sealed class MapCameraController : MonoBehaviour
     {
         public event Action Moved;
 
-        private const float kDragThresholdPixels = 6f;
         private const float kKeyboardPanSpeed = 18f;
         private const float kCenterEaseSeconds = 0.35f;
 
@@ -21,27 +22,52 @@ namespace ProjectStarwatch.Overworld.Map
         private Camera _camera;
 
         [SerializeField]
-        private UIDocument _uiDocument;
+        private WorldPointerInput _pointerInput;
+
+        [SerializeField]
+        private InputActionAsset _actions;
 
         [SerializeField]
         private float _fixedHeight = 20f;
 
         private MapCameraBounds _bounds = MapCameraBounds.Empty;
         private InputAction _panAction;
-        private InputAction _pointAction;
-        private bool _isDragging;
-        private bool _dragPassedThreshold;
-        private bool _dragBlockedByUi;
-        private Vector2 _pressScreenPosition;
-        private Vector2 _lastPointerScreen;
+        private InputActionMap _mapCameraMap;
+        private bool _isPointerDragging;
         private bool _isEasing;
         private Vector3 _easeTarget;
         private float _easeElapsed;
-        private bool _ownsActions = true;
+        private bool _loopRunning;
+        private CancellationTokenSource _loopCts;
+        private bool _pointerSubscribed;
+        private bool _panSubscribed;
 
         internal Camera MapCamera => _camera != null ? _camera : Camera.main;
 
-        internal bool SuppressClick => _isDragging && _dragPassedThreshold;
+        internal void Configure(WorldPointerInput pointerInput, InputActionAsset actions)
+        {
+            if (pointerInput != null && pointerInput != _pointerInput)
+            {
+                UnsubscribePointer();
+                _pointerInput = pointerInput;
+                if (isActiveAndEnabled)
+                {
+                    SubscribePointer();
+                }
+            }
+
+            if (actions == null)
+            {
+                return;
+            }
+
+            if (_actions == actions && _panAction != null)
+            {
+                return;
+            }
+
+            RebindPanAction(actions);
+        }
 
         private void Awake()
         {
@@ -50,52 +76,36 @@ namespace ProjectStarwatch.Overworld.Map
                 _camera = GetComponent<Camera>();
             }
 
-            BuildActions();
+            if (_actions == null)
+            {
+                Debug.LogError("MapCameraController requires an assigned StarwatchInput asset.", this);
+                return;
+            }
+
+            BindPanAction();
         }
 
         private void OnEnable()
         {
-            _panAction?.Enable();
-            _pointAction?.Enable();
+            _mapCameraMap?.Enable();
+            SubscribePointer();
+            SubscribePan();
         }
 
         private void OnDisable()
         {
-            _panAction?.Disable();
-            _pointAction?.Disable();
-            _isDragging = false;
-            _dragPassedThreshold = false;
-            _dragBlockedByUi = false;
+            StopLoop();
+            _isPointerDragging = false;
+            UnsubscribePointer();
+            UnsubscribePan();
+            _mapCameraMap?.Disable();
         }
 
         private void OnDestroy()
         {
-            if (!_ownsActions)
-            {
-                return;
-            }
-
-            _panAction?.Dispose();
-            _pointAction?.Dispose();
-        }
-
-        private void Update()
-        {
-            var camera = MapCamera;
-            if (camera == null)
-            {
-                return;
-            }
-
-            var moved = false;
-            moved |= TickKeyboard(camera);
-            moved |= TickPointerDrag(camera);
-            moved |= TickEase(camera);
-
-            if (moved)
-            {
-                ClampAndRaise(camera);
-            }
+            StopLoop();
+            UnsubscribePointer();
+            UnsubscribePan();
         }
 
         internal void SetBounds(MapCameraBounds bounds)
@@ -105,14 +115,6 @@ namespace ProjectStarwatch.Overworld.Map
             if (camera != null)
             {
                 camera.transform.position = _bounds.ClampCameraPosition(camera.transform.position);
-            }
-        }
-
-        internal void Configure(UIDocument uiDocument)
-        {
-            if (uiDocument != null)
-            {
-                _uiDocument = uiDocument;
             }
         }
 
@@ -137,23 +139,186 @@ namespace ProjectStarwatch.Overworld.Map
             _easeTarget = target;
             _easeElapsed = 0f;
             _isEasing = true;
+            EnsureLoop();
         }
 
-        private void BuildActions()
+        private void RebindPanAction(InputActionAsset actions)
         {
-            _panAction = new InputAction("MapPan", InputActionType.Value, expectedControlType: "Vector2");
-            _panAction.AddCompositeBinding("2DVector")
-                .With("Up", "<Keyboard>/w")
-                .With("Down", "<Keyboard>/s")
-                .With("Left", "<Keyboard>/a")
-                .With("Right", "<Keyboard>/d");
-            _panAction.AddCompositeBinding("2DVector")
-                .With("Up", "<Keyboard>/upArrow")
-                .With("Down", "<Keyboard>/downArrow")
-                .With("Left", "<Keyboard>/leftArrow")
-                .With("Right", "<Keyboard>/rightArrow");
+            var shouldEnable = isActiveAndEnabled;
+            UnsubscribePan();
+            _mapCameraMap?.Disable();
 
-            _pointAction = new InputAction("MapPoint", InputActionType.Value, "<Pointer>/position");
+            _actions = actions;
+            BindPanAction();
+
+            if (shouldEnable)
+            {
+                _mapCameraMap?.Enable();
+                SubscribePan();
+            }
+        }
+
+        private void BindPanAction()
+        {
+            if (_actions == null)
+            {
+                Debug.LogError("MapCameraController requires an assigned StarwatchInput asset.", this);
+                return;
+            }
+
+            _mapCameraMap = _actions.FindActionMap("MapCamera", throwIfNotFound: false);
+            _panAction = _mapCameraMap?.FindAction("Pan", throwIfNotFound: false);
+            if (_panAction == null)
+            {
+                Debug.LogError("StarwatchInput is missing MapCamera/Pan.", this);
+            }
+        }
+
+        private void SubscribePointer()
+        {
+            if (_pointerSubscribed || _pointerInput == null)
+            {
+                return;
+            }
+
+            _pointerInput.DragStarted += OnDragStarted;
+            _pointerInput.Dragged += OnDragged;
+            _pointerInput.DragEnded += OnDragEnded;
+            _pointerSubscribed = true;
+        }
+
+        private void UnsubscribePointer()
+        {
+            if (!_pointerSubscribed || _pointerInput == null)
+            {
+                _pointerSubscribed = false;
+                return;
+            }
+
+            _pointerInput.DragStarted -= OnDragStarted;
+            _pointerInput.Dragged -= OnDragged;
+            _pointerInput.DragEnded -= OnDragEnded;
+            _pointerSubscribed = false;
+        }
+
+        private void SubscribePan()
+        {
+            if (_panSubscribed || _panAction == null)
+            {
+                return;
+            }
+
+            _panAction.performed += OnPanPerformed;
+            _panAction.canceled += OnPanCanceled;
+            _panSubscribed = true;
+        }
+
+        private void UnsubscribePan()
+        {
+            if (!_panSubscribed || _panAction == null)
+            {
+                _panSubscribed = false;
+                return;
+            }
+
+            _panAction.performed -= OnPanPerformed;
+            _panAction.canceled -= OnPanCanceled;
+            _panSubscribed = false;
+        }
+
+        private void OnDragStarted(Vector2 screen)
+        {
+            _isPointerDragging = true;
+            _isEasing = false;
+            EnsureLoop();
+        }
+
+        private void OnDragged(Vector2 screenDelta)
+        {
+            var camera = MapCamera;
+            if (camera == null || screenDelta.sqrMagnitude < 0.0001f)
+            {
+                return;
+            }
+
+            var worldDelta = MapPanMath.ScreenDeltaToWorldDelta(camera, screenDelta, _fixedHeight);
+            camera.transform.position += worldDelta;
+            ClampAndRaise(camera);
+        }
+
+        private void OnDragEnded()
+        {
+            _isPointerDragging = false;
+        }
+
+        private void OnPanPerformed(InputAction.CallbackContext context)
+        {
+            EnsureLoop();
+        }
+
+        private void OnPanCanceled(InputAction.CallbackContext context)
+        {
+        }
+
+        private void EnsureLoop()
+        {
+            if (_loopRunning)
+            {
+                return;
+            }
+
+            _loopCts = new CancellationTokenSource();
+            RunLoopAsync(_loopCts.Token).Forget();
+        }
+
+        private async UniTaskVoid RunLoopAsync(CancellationToken token)
+        {
+            _loopRunning = true;
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    var camera = MapCamera;
+                    var moved = false;
+                    if (camera != null)
+                    {
+                        moved |= TickKeyboard(camera);
+                        moved |= TickEase(camera);
+                        if (moved)
+                        {
+                            ClampAndRaise(camera);
+                        }
+                    }
+
+                    var panHeld = _panAction != null && _panAction.ReadValue<Vector2>().sqrMagnitude > 0.0001f;
+                    if (!_isPointerDragging && !_isEasing && !panHeld)
+                    {
+                        break;
+                    }
+
+                    await UniTask.Yield(PlayerLoopTiming.Update, token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                _loopRunning = false;
+            }
+        }
+
+        private void StopLoop()
+        {
+            if (_loopCts == null)
+            {
+                return;
+            }
+
+            _loopCts.Cancel();
+            _loopCts.Dispose();
+            _loopCts = null;
+            _loopRunning = false;
         }
 
         private bool TickKeyboard(Camera camera)
@@ -181,63 +346,6 @@ namespace ProjectStarwatch.Overworld.Map
             }
 
             camera.transform.position += delta;
-            return true;
-        }
-
-        private bool TickPointerDrag(Camera camera)
-        {
-            if (_pointAction == null)
-            {
-                return false;
-            }
-
-            var screen = _pointAction.ReadValue<Vector2>();
-            var pressed = IsPrimaryPanPressed();
-            if (!pressed)
-            {
-                _isDragging = false;
-                _dragPassedThreshold = false;
-                _dragBlockedByUi = false;
-                return false;
-            }
-
-            if (!_isDragging)
-            {
-                _isDragging = true;
-                _dragPassedThreshold = false;
-                _dragBlockedByUi = MapHudHitTest.IsOverBlockingPanel(_uiDocument, screen);
-                _pressScreenPosition = screen;
-                _lastPointerScreen = screen;
-                return false;
-            }
-
-            if (_dragBlockedByUi)
-            {
-                _lastPointerScreen = screen;
-                return false;
-            }
-
-            if (!_dragPassedThreshold)
-            {
-                if ((screen - _pressScreenPosition).sqrMagnitude
-                    < kDragThresholdPixels * kDragThresholdPixels)
-                {
-                    _lastPointerScreen = screen;
-                    return false;
-                }
-
-                _dragPassedThreshold = true;
-            }
-
-            var screenDelta = screen - _lastPointerScreen;
-            _lastPointerScreen = screen;
-            if (screenDelta.sqrMagnitude < 0.0001f)
-            {
-                return false;
-            }
-
-            var worldDelta = MapPanMath.ScreenDeltaToWorldDelta(camera, screenDelta, _fixedHeight);
-            camera.transform.position += worldDelta;
             _isEasing = false;
             return true;
         }
@@ -271,29 +379,6 @@ namespace ProjectStarwatch.Overworld.Map
                 new Vector3(camera.transform.position.x, _fixedHeight, camera.transform.position.z));
             camera.transform.position = clamped;
             Moved?.Invoke();
-        }
-
-        private static bool IsPrimaryPanPressed()
-        {
-            if (Mouse.current != null)
-            {
-                return Mouse.current.leftButton.isPressed;
-            }
-
-            if (Touchscreen.current == null)
-            {
-                return false;
-            }
-
-            for (var i = 0; i < Touchscreen.current.touches.Count; i++)
-            {
-                if (Touchscreen.current.touches[i].press.isPressed)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 }

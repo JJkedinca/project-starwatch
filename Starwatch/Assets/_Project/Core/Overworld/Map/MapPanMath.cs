@@ -27,11 +27,11 @@ namespace ProjectStarwatch.Overworld.Map
                 height = 0.0001f;
             }
 
-            var center = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, height);
-            var offset = new Vector3(
-                (Screen.width * 0.5f) + screenDelta.x,
-                (Screen.height * 0.5f) + screenDelta.y,
-                height);
+            var rect = camera.pixelRect;
+            var centerX = rect.x + (rect.width * 0.5f);
+            var centerY = rect.y + (rect.height * 0.5f);
+            var center = new Vector3(centerX, centerY, height);
+            var offset = new Vector3(centerX + screenDelta.x, centerY + screenDelta.y, height);
             var worldCenter = camera.ScreenToWorldPoint(center);
             var worldOffset = camera.ScreenToWorldPoint(offset);
             var delta = worldOffset - worldCenter;

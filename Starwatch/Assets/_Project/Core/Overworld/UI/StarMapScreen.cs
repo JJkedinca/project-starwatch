@@ -71,7 +71,6 @@ namespace ProjectStarwatch.Overworld.UI
             {
                 _worldPresenter?.Clear();
                 _labels.Clear();
-                _pointerInput?.SetPickPoints(null);
                 _inspection.ShowEmpty();
                 _cardNodeId = default;
                 return;
@@ -87,7 +86,6 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             _labels.Rebuild(model.Nodes, _worldPresenter);
-            SyncPickPoints();
             _worldPresenter?.SetFleetMarkers(model.FleetMarkers);
             _cardNodeId = model.Card.NodeId;
             _inspection.Show(model.Card);
@@ -106,8 +104,6 @@ namespace ProjectStarwatch.Overworld.UI
                 _worldPresenter.SetNodeState(row.NodeId, row.State);
                 _labels.SetNodeState(row.NodeId, row.State, _worldPresenter);
             }
-
-            SyncPickPoints();
         }
 
         public void ApplyRoutes(IReadOnlyList<MapRouteSegment> routes)
@@ -169,18 +165,7 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void OnNodesRebuilt()
         {
-            SyncPickPoints();
             _labels.RepositionAll();
-        }
-
-        private void SyncPickPoints()
-        {
-            if (_pointerInput == null || _worldPresenter == null)
-            {
-                return;
-            }
-
-            _pointerInput.SetPickPoints(_worldPresenter.PickPoints);
         }
 
         private void ApplyCameraAfterRebuild(IReadOnlyList<StarMapNodeModel> nodes)

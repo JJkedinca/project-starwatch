@@ -1,3 +1,4 @@
+using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Overworld;
 using ProjectStarwatch.Overworld.UI;
 using UnityEngine;
@@ -21,6 +22,13 @@ namespace ProjectStarwatch.Overworld.Map
         private GameObject _fleetIndicator;
 
         private MaterialPropertyBlock _propertyBlock;
+
+        internal ContentId NodeId { get; private set; }
+
+        internal void Bind(ContentId nodeId)
+        {
+            NodeId = nodeId;
+        }
 
         internal void ApplyState(MapNodePresentationState state, Color color)
         {

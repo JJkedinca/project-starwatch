@@ -10,7 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 8522674538273001852}
   - component: {fileID: 83117698160046451}
-  m_Layer: 0
+  - component: {fileID: 83117698160046452}
+  m_Layer: 6
   m_Name: MapNode
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -50,6 +51,27 @@ MonoBehaviour:
   _glowRenderer: {fileID: 2808970183959277996}
   _selectionRing: {fileID: 5841193511567092180}
   _fleetIndicator: {fileID: 6773365117450022311}
+--- !u!135 &83117698160046452
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2326357654793969113}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.75
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &5841193511567092180
 GameObject:
   m_ObjectHideFlags: 0
