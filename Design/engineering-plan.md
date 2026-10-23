@@ -348,7 +348,8 @@ Required types:
 - `GameTime`
 - `SimulationClock`
 - `SimulationSpeed`
-- `ITickable`
+- `IFrameTickable` / `IUpdateManager` (presentation)
+- `ISimulationSystem` / `ISimulationUpdateManager` (gameplay)
 - `UpdateManager`
 
 Responsibilities:

@@ -6,7 +6,7 @@ Work targets **Unity** (`Starwatch/`).
 
 ## Unity — Current
 
-- Replace the Phase 1 map placeholders with an authored icon set. Fog is a visibility class on each map node. The fleet, planets, and star systems are flat UI Toolkit markers. The plan's separate icon assets and `FogOfWarView` were not built.
+- Replace Phase 1 map placeholders with authored icon/art. The galaxy map is 3D world-space (`StarMapWorldPresenter`); fog stays a visibility class on each node. Star-system / planet panels are still UI Toolkit. Deferred map polish (zoom, fleet pick, final art) lives in `Design/scratch/star-map-3d-impl.md`.
 
 ## Unity — Overworld UI (from overworld-ui-impl)
 

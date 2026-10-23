@@ -81,7 +81,7 @@ Everything is authored in the Overworld scene and on prefabs, then wired with `[
 - **Keyboard:** WASD and arrows via `MapCamera/Pan`.
 - **Bounds:** camera stays within node bounds plus a margin.
 - **Start:** centers on the home system when Overworld loads.
-- **Updates:** UniTask frame loop only while dragging, keyboard pan is held, or easing.
+- **Updates:** registers as `IFrameTickable` on `IUpdateManager` only while dragging, keyboard pan is held, or easing.
 
 ### Picking
 
