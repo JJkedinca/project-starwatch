@@ -19,7 +19,7 @@ ProjectStarwatch is a fantasy roguelike: FTL-style overworld adventure plus auto
 - Favor composition: interfaces, small components, injected services.
 - Prefer ScriptableObjects for content data; avoid hard-coding balance numbers in MonoBehaviours.
 - Static definitions and scene setup belong on assets, not in startup code. Author content as ScriptableObjects. Author known components on prefabs or scenes and assign them with `[SerializeField]`. Use `AddComponent`, `CreateInstance`, or factory construction only when the object must exist at runtime and cannot be authored ahead of time. Tests may still construct stand-ins.
-- Do not abuse `Update` / `FixedUpdate`. Prefer `UpdateManager` + `ITickable.ManagedUpdate`, MessagePipe events, or UniTask delays/timers.
+- Do not abuse `Update` / `FixedUpdate`. Prefer `UpdateManager` + `IFrameTickable.ManagedUpdate` (presentation / real time), `ISimulationSystem` via `ISimulationUpdateManager` (gameplay), MessagePipe events, or UniTask delays/timers.
 - Log unexpected edge cases and silent failures (`Debug.LogWarning` / `LogError`) that would break gameplay.
 - Comments explain purpose when non-obvious — not line-by-line narration.
 - Extract a small options/params struct when a method grows past ~5 parameters.
@@ -46,7 +46,7 @@ ProjectStarwatch is a fantasy roguelike: FTL-style overworld adventure plus auto
 - **DomainEventBus** is the domain event bus. After a service commits state (travel, fleets, exploration, buildings, enemy actions), it publishes a typed event from `DomainEvents`. The bus appends the journal and notifies subscribers on that call. Subscribers react. Do not poll the simulation tick to discover those changes.
 - **UniTask** for async (scene flow, saves, delays).
 - **No Unity DOTS/ECS** unless profiling later demands it. Optional plain C# buffers for hot sim state are fine.
-- **Prefer No Ticking**: Use events when possible instead of lazy refreshing/checks.
+- **Prefer No Ticking**: Use events when possible instead of lazy refreshing/checks. When a frame tick is required, register an `IFrameTickable` with `IUpdateManager` only while active; do not put presentation work on the simulation clock.
 
 ## Content / “Data Tables”
 

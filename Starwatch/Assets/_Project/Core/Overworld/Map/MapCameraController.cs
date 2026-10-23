@@ -1,17 +1,17 @@
 using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
+using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Core.WorldInput;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using VContainer;
 
 namespace ProjectStarwatch.Overworld.Map
 {
     /// <summary>
     /// Top-down perspective map camera: pan only (drag via WorldPointerInput, keyboard via MapCamera/Pan).
-    /// Runs a frame loop only while panning or easing.
+    /// Registers for frame ticks only while panning or easing.
     /// </summary>
-    public sealed class MapCameraController : MonoBehaviour
+    public sealed class MapCameraController : MonoBehaviour, IFrameTickable
     {
         public event Action Moved;
 
@@ -30,6 +30,7 @@ namespace ProjectStarwatch.Overworld.Map
         [SerializeField]
         private float _fixedHeight = 20f;
 
+        private IUpdateManager _updateManager;
         private MapCameraBounds _bounds = MapCameraBounds.Empty;
         private InputAction _panAction;
         private InputActionMap _mapCameraMap;
@@ -37,12 +38,17 @@ namespace ProjectStarwatch.Overworld.Map
         private bool _isEasing;
         private Vector3 _easeTarget;
         private float _easeElapsed;
-        private bool _loopRunning;
-        private CancellationTokenSource _loopCts;
+        private bool _frameRegistered;
         private bool _pointerSubscribed;
         private bool _panSubscribed;
 
         internal Camera MapCamera => _camera != null ? _camera : Camera.main;
+
+        [Inject]
+        public void Construct(IUpdateManager updateManager)
+        {
+            _updateManager = updateManager;
+        }
 
         internal void Configure(WorldPointerInput pointerInput, InputActionAsset actions)
         {
@@ -90,11 +96,34 @@ namespace ProjectStarwatch.Overworld.Map
             _mapCameraMap?.Enable();
             SubscribePointer();
             SubscribePan();
+            if (NeedsFrameTicks())
+            {
+                EnsureFrameRegistered();
+            }
+        }
+
+        public void ManagedUpdate(float unscaledDeltaTime)
+        {
+            var camera = MapCamera;
+            if (camera != null)
+            {
+                var moved = TickKeyboard(camera, unscaledDeltaTime);
+                moved |= TickEase(camera, unscaledDeltaTime);
+                if (moved)
+                {
+                    ClampAndRaise(camera);
+                }
+            }
+
+            if (!NeedsFrameTicks())
+            {
+                UnregisterFrame();
+            }
         }
 
         private void OnDisable()
         {
-            StopLoop();
+            UnregisterFrame();
             _isPointerDragging = false;
             UnsubscribePointer();
             UnsubscribePan();
@@ -103,7 +132,7 @@ namespace ProjectStarwatch.Overworld.Map
 
         private void OnDestroy()
         {
-            StopLoop();
+            UnregisterFrame();
             UnsubscribePointer();
             UnsubscribePan();
         }
@@ -139,7 +168,7 @@ namespace ProjectStarwatch.Overworld.Map
             _easeTarget = target;
             _easeElapsed = 0f;
             _isEasing = true;
-            EnsureLoop();
+            EnsureFrameRegistered();
         }
 
         private void RebindPanAction(InputActionAsset actions)
@@ -230,7 +259,7 @@ namespace ProjectStarwatch.Overworld.Map
         {
             _isPointerDragging = true;
             _isEasing = false;
-            EnsureLoop();
+            EnsureFrameRegistered();
         }
 
         private void OnDragged(Vector2 screenDelta)
@@ -253,75 +282,46 @@ namespace ProjectStarwatch.Overworld.Map
 
         private void OnPanPerformed(InputAction.CallbackContext context)
         {
-            EnsureLoop();
+            EnsureFrameRegistered();
         }
 
         private void OnPanCanceled(InputAction.CallbackContext context)
         {
         }
 
-        private void EnsureLoop()
+        private void EnsureFrameRegistered()
         {
-            if (_loopRunning)
+            if (_frameRegistered || _updateManager == null)
             {
                 return;
             }
 
-            _loopCts = new CancellationTokenSource();
-            RunLoopAsync(_loopCts.Token).Forget();
+            _updateManager.Register(this);
+            _frameRegistered = true;
         }
 
-        private async UniTaskVoid RunLoopAsync(CancellationToken token)
+        private void UnregisterFrame()
         {
-            _loopRunning = true;
-            try
-            {
-                while (!token.IsCancellationRequested)
-                {
-                    var camera = MapCamera;
-                    var moved = false;
-                    if (camera != null)
-                    {
-                        moved |= TickKeyboard(camera);
-                        moved |= TickEase(camera);
-                        if (moved)
-                        {
-                            ClampAndRaise(camera);
-                        }
-                    }
-
-                    var panHeld = _panAction != null && _panAction.ReadValue<Vector2>().sqrMagnitude > 0.0001f;
-                    if (!_isPointerDragging && !_isEasing && !panHeld)
-                    {
-                        break;
-                    }
-
-                    await UniTask.Yield(PlayerLoopTiming.Update, token);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                _loopRunning = false;
-            }
-        }
-
-        private void StopLoop()
-        {
-            if (_loopCts == null)
+            if (!_frameRegistered)
             {
                 return;
             }
 
-            _loopCts.Cancel();
-            _loopCts.Dispose();
-            _loopCts = null;
-            _loopRunning = false;
+            _updateManager?.Unregister(this);
+            _frameRegistered = false;
         }
 
-        private bool TickKeyboard(Camera camera)
+        private bool NeedsFrameTicks()
+        {
+            if (_isPointerDragging || _isEasing)
+            {
+                return true;
+            }
+
+            return _panAction != null && _panAction.ReadValue<Vector2>().sqrMagnitude > 0.0001f;
+        }
+
+        private bool TickKeyboard(Camera camera, float unscaledDeltaTime)
         {
             if (_panAction == null)
             {
@@ -339,7 +339,7 @@ namespace ProjectStarwatch.Overworld.Map
                 pan,
                 _fixedHeight,
                 kKeyboardPanSpeed,
-                Time.unscaledDeltaTime);
+                unscaledDeltaTime);
             if (delta.sqrMagnitude < 0.0000001f)
             {
                 return false;
@@ -350,14 +350,14 @@ namespace ProjectStarwatch.Overworld.Map
             return true;
         }
 
-        private bool TickEase(Camera camera)
+        private bool TickEase(Camera camera, float unscaledDeltaTime)
         {
             if (!_isEasing)
             {
                 return false;
             }
 
-            _easeElapsed += Time.unscaledDeltaTime;
+            _easeElapsed += unscaledDeltaTime;
             var t = Mathf.Clamp01(_easeElapsed / kCenterEaseSeconds);
             var smoothed = t * t * (3f - (2f * t));
             camera.transform.position = Vector3.Lerp(

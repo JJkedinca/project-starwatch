@@ -68,10 +68,12 @@ namespace ProjectStarwatch.Core.Bootstrap
             }
 
             builder.RegisterInstance(_updateManager);
+            builder.RegisterInstance<IUpdateManager>(_updateManager);
             builder.RegisterInstance(_objectDatabase);
             builder.RegisterInstance(_presentationDatabase);
             builder.Register<SimulationClock>(Lifetime.Singleton);
             builder.Register<SimulationLoop>(Lifetime.Singleton);
+            builder.Register<ISimulationUpdateManager>(resolver => resolver.Resolve<SimulationLoop>(), Lifetime.Singleton);
             builder.Register<ISceneLoader, UnitySceneLoader>(Lifetime.Singleton);
             builder.Register<SceneFlow>(Lifetime.Singleton);
             builder.Register<TimelineFactory>(Lifetime.Singleton);
@@ -103,14 +105,14 @@ namespace ProjectStarwatch.Core.Bootstrap
             builder.RegisterEntryPoint<GameEntryPoint>();
             builder.RegisterBuildCallback(container =>
             {
-                var loop = container.Resolve<SimulationLoop>();
+                var simulation = container.Resolve<ISimulationUpdateManager>();
                 var economyTick = container.Resolve<EconomyTickSystem>();
                 // Travel, then economy, then research, then ship production.
-                loop.Register(container.Resolve<TravelSystem>());
-                loop.Register(economyTick);
-                loop.Register(container.Resolve<ResearchTickSystem>());
-                loop.Register(container.Resolve<ShipProductionSystem>());
-                _updateManager.Configure(loop);
+                simulation.Register(container.Resolve<TravelSystem>());
+                simulation.Register(economyTick);
+                simulation.Register(container.Resolve<ResearchTickSystem>());
+                simulation.Register(container.Resolve<ShipProductionSystem>());
+                _updateManager.Configure(simulation);
             });
         }
     }

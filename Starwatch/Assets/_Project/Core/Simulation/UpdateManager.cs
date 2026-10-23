@@ -1,31 +1,70 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ProjectStarwatch.Core.Simulation
 {
     /// <summary>
-    /// Single Unity Update owner. Feeds real-time delta into SimulationLoop;
-    /// does not call feature systems directly.
+    /// Single Unity Update owner. Ticks opt-in frame consumers, then pumps simulation.
     /// </summary>
-    public sealed class UpdateManager : MonoBehaviour
+    public sealed class UpdateManager : MonoBehaviour, IUpdateManager
     {
-        private SimulationLoop _simulationLoop;
+        private readonly List<IFrameTickable> _frameTickables = new();
+        private readonly List<IFrameTickable> _tickSnapshot = new();
+        private ISimulationUpdateManager _simulation;
 
         /// <summary>
-        /// Injects the fixed-rate simulation loop driven each frame.
+        /// Injects the simulation update manager driven each frame after frame tickables.
         /// </summary>
-        internal void Configure(SimulationLoop simulationLoop)
+        internal void Configure(ISimulationUpdateManager simulation)
         {
-            _simulationLoop = simulationLoop;
+            _simulation = simulation;
         }
 
-        private void Update()
+        public void Register(IFrameTickable tickable)
         {
-            if (_simulationLoop == null)
+            if (tickable == null || _frameTickables.Contains(tickable))
             {
                 return;
             }
 
-            _simulationLoop.Pump(Time.deltaTime);
+            _frameTickables.Add(tickable);
+        }
+
+        public void Unregister(IFrameTickable tickable)
+        {
+            if (tickable == null)
+            {
+                return;
+            }
+
+            _frameTickables.Remove(tickable);
+        }
+
+        private void Update()
+        {
+            Tick(Time.unscaledDeltaTime, Time.deltaTime);
+        }
+
+        /// <summary>
+        /// Runs one frame of presentation ticks then simulation pump. Used by Unity Update and tests.
+        /// Snapshots the list so register/unregister during a callback cannot double-tick or skip.
+        /// </summary>
+        internal void Tick(float unscaledDeltaTime, float scaledDeltaTime)
+        {
+            _tickSnapshot.Clear();
+            _tickSnapshot.AddRange(_frameTickables);
+            for (var i = 0; i < _tickSnapshot.Count; i++)
+            {
+                var tickable = _tickSnapshot[i];
+                if (!_frameTickables.Contains(tickable))
+                {
+                    continue;
+                }
+
+                tickable.ManagedUpdate(unscaledDeltaTime);
+            }
+
+            _simulation?.Pump(scaledDeltaTime);
         }
     }
 }
