@@ -18,9 +18,7 @@ MonoBehaviour:
   <MinPlanetScale>k__BackingField: 0.45
   <MaxPlanetScale>k__BackingField: 0.85
   <OrbitRingWidth>k__BackingField: 0.08
-  <SelectedOrbitRingWidth>k__BackingField: 0.14
   <OrbitRing>k__BackingField: {r: 0.47, g: 0.6, b: 0.78, a: 0.35}
-  <OrbitRingSelected>k__BackingField: {r: 0.94, g: 0.78, b: 0.35, a: 0.75}
   <PlanetUnscanned>k__BackingField: {r: 0.35, g: 0.4, b: 0.5, a: 1}
   <PlanetScanned>k__BackingField: {r: 0.55, g: 0.75, b: 0.95, a: 1}
   <PlanetSelected>k__BackingField: {r: 0.95, g: 0.85, b: 0.4, a: 1}

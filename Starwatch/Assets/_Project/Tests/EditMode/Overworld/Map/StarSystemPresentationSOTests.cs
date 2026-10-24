@@ -26,18 +26,5 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Map
 
             Object.DestroyImmediate(presentation);
         }
-
-        [Test]
-        public void ResolveOrbit_UsesSelectedWidthsAndColors()
-        {
-            var presentation = ScriptableObject.CreateInstance<StarSystemPresentationSO>();
-
-            Assert.That(presentation.ResolveOrbitColor(true), Is.EqualTo(presentation.OrbitRingSelected));
-            Assert.That(presentation.ResolveOrbitWidth(true), Is.EqualTo(presentation.SelectedOrbitRingWidth));
-            Assert.That(presentation.ResolveOrbitColor(false), Is.EqualTo(presentation.OrbitRing));
-            Assert.That(presentation.ResolveOrbitWidth(false), Is.EqualTo(presentation.OrbitRingWidth));
-
-            Object.DestroyImmediate(presentation);
-        }
     }
 }

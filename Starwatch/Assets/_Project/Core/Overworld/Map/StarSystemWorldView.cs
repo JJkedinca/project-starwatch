@@ -25,18 +25,14 @@ namespace ProjectStarwatch.Overworld.Map
 
             internal Vector3 World { get; }
 
-            internal float OrbitRadius { get; }
-
             internal PlacedPlanetEntry(
                 SystemPlanetView view,
                 SystemOrbitRingView orbit,
-                Vector3 world,
-                float orbitRadius)
+                Vector3 world)
             {
                 View = view;
                 Orbit = orbit;
                 World = world;
-                OrbitRadius = orbitRadius;
             }
         }
 
@@ -164,8 +160,8 @@ namespace ProjectStarwatch.Overworld.Map
                 visual.Bind(model.PlanetId);
                 visual.transform.position = world;
                 ApplyPlanetVisual(visual, model.State);
-                ApplyOrbitVisual(orbit, radius, model.State.IsSelected);
-                _planets[model.PlanetId] = new PlacedPlanetEntry(visual, orbit, world, radius);
+                ApplyOrbitVisual(orbit, radius);
+                _planets[model.PlanetId] = new PlacedPlanetEntry(visual, orbit, world);
             }
 
             PooledMapSync.ReleaseAbsent(_planets, keep, (_, entry) => ReleaseEntry(entry));
@@ -180,7 +176,6 @@ namespace ProjectStarwatch.Overworld.Map
             }
 
             ApplyPlanetVisual(entry.View, state);
-            ApplyOrbitVisual(entry.Orbit, entry.OrbitRadius, state.IsSelected);
         }
 
         internal MapCameraBounds BuildBounds()
@@ -222,18 +217,14 @@ namespace ProjectStarwatch.Overworld.Map
             visual.ApplyState(state, _presentation.ResolvePlanetColor(state), scale);
         }
 
-        private void ApplyOrbitVisual(SystemOrbitRingView orbit, float radius, bool selected)
+        private void ApplyOrbitVisual(SystemOrbitRingView orbit, float radius)
         {
             if (orbit == null)
             {
                 return;
             }
 
-            orbit.Apply(
-                kStarWorld,
-                radius,
-                _presentation.ResolveOrbitColor(selected),
-                _presentation.ResolveOrbitWidth(selected));
+            orbit.Apply(kStarWorld, radius, _presentation.OrbitRing, _presentation.OrbitRingWidth);
         }
 
         private void ReleaseEntry(PlacedPlanetEntry entry)

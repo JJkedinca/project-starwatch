@@ -29,13 +29,7 @@ namespace ProjectStarwatch.Overworld.Map
         public float OrbitRingWidth { get; private set; } = 0.08f;
 
         [field: SerializeField]
-        public float SelectedOrbitRingWidth { get; private set; } = 0.14f;
-
-        [field: SerializeField]
         public Color OrbitRing { get; private set; } = new(0.47f, 0.6f, 0.78f, 0.35f);
-
-        [field: SerializeField]
-        public Color OrbitRingSelected { get; private set; } = new(0.94f, 0.78f, 0.35f, 0.75f);
 
         [field: SerializeField]
         public Color PlanetUnscanned { get; private set; } = new(0.35f, 0.4f, 0.5f, 1f);
@@ -57,16 +51,6 @@ namespace ProjectStarwatch.Overworld.Map
             }
 
             return state.Visibility == PlanetVisibility.Scanned ? PlanetScanned : PlanetUnscanned;
-        }
-
-        internal Color ResolveOrbitColor(bool isSelected)
-        {
-            return isSelected ? OrbitRingSelected : OrbitRing;
-        }
-
-        internal float ResolveOrbitWidth(bool isSelected)
-        {
-            return isSelected ? SelectedOrbitRingWidth : OrbitRingWidth;
         }
     }
 }

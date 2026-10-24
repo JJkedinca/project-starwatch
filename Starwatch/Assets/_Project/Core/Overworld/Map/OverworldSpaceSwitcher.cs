@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace ProjectStarwatch.Overworld.Map
@@ -27,6 +28,8 @@ namespace ProjectStarwatch.Overworld.Map
         private MapCameraBounds _savedGalaxyBounds = MapCameraBounds.Empty;
         private bool _hasSavedGalaxyCamera;
 
+        internal event Action<OverworldSpace> SpaceChanged;
+
         internal OverworldSpace Active => _active;
 
         internal bool IsGalaxyActive => _active == OverworldSpace.Galaxy;
@@ -47,6 +50,7 @@ namespace ProjectStarwatch.Overworld.Map
 
             _active = OverworldSpace.Galaxy;
             ApplyActive(force: false);
+            SpaceChanged?.Invoke(_active);
             if (!_hasSavedGalaxyCamera || _cameraController == null)
             {
                 return;
@@ -80,6 +84,7 @@ namespace ProjectStarwatch.Overworld.Map
 
             _active = OverworldSpace.StarSystem;
             ApplyActive(force: false);
+            SpaceChanged?.Invoke(_active);
         }
 
         private void ApplyActive(bool force)

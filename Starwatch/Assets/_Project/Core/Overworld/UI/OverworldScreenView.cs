@@ -121,6 +121,7 @@ namespace ProjectStarwatch.Overworld.UI
             var title = root.Q<Label>("title");
             var mapSurface = root.Q<VisualElement>("map-surface");
             var starSystem = root.Q<VisualElement>("star-system");
+            var inspectionPanel = root.Q<VisualElement>("inspection-panel");
             var starSystemInspection = root.Q<VisualElement>("star-system-inspection");
             var settlement = root.Q<VisualElement>("settlement-panel");
             var stockpile = root.Q<VisualElement>("stockpile-bar");
@@ -133,6 +134,7 @@ namespace ProjectStarwatch.Overworld.UI
             var toastStack = root.Q<VisualElement>("toast-stack");
             if (mapSurface == null
                 || starSystem == null
+                || inspectionPanel == null
                 || starSystemInspection == null
                 || settlement == null
                 || stockpile == null
@@ -180,7 +182,7 @@ namespace ProjectStarwatch.Overworld.UI
                 starSystem,
                 mapSurface,
                 title,
-                settlement,
+                inspectionPanel,
                 _starSystemWorldView,
                 _mapCameraController,
                 _systemPointerInput,

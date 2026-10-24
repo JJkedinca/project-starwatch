@@ -66,6 +66,11 @@ namespace ProjectStarwatch.Overworld.UI
             {
                 _worldView.NodesRebuilt += OnNodesRebuilt;
             }
+
+            if (_spaceSwitcher != null)
+            {
+                _spaceSwitcher.SpaceChanged += OnSpaceChanged;
+            }
         }
 
         public void Apply(StarMapModel model)
@@ -135,6 +140,7 @@ namespace ProjectStarwatch.Overworld.UI
         {
             if (!IsGalaxyActive)
             {
+                _labels.Clear();
                 return;
             }
 
@@ -168,6 +174,11 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void OnPointerHover(ContentId nodeId)
         {
+            if (!IsGalaxyActive)
+            {
+                return;
+            }
+
             _labels.SetHover(nodeId);
             if (!nodeId.IsEmpty && _worldView != null && _worldView.TryGetNodeWorld(nodeId, out var world))
             {
@@ -177,10 +188,19 @@ namespace ProjectStarwatch.Overworld.UI
             NodeHovered?.Invoke(nodeId);
         }
 
+        private void OnSpaceChanged(OverworldSpace space)
+        {
+            if (space != OverworldSpace.Galaxy)
+            {
+                _labels.Clear();
+            }
+        }
+
         private void OnCameraMoved()
         {
             if (!IsGalaxyActive)
             {
+                _labels.Clear();
                 return;
             }
 
@@ -191,6 +211,7 @@ namespace ProjectStarwatch.Overworld.UI
         {
             if (!IsGalaxyActive)
             {
+                _labels.Clear();
                 return;
             }
 
