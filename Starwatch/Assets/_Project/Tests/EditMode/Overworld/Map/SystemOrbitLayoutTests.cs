@@ -75,20 +75,16 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Map
         }
 
         [Test]
-        public void PlanetScaleAndHue_AreStableAndBounded()
+        public void PlanetScale_IsStableAndBounded()
         {
             var planetId = ContentId.From("home-moon");
             const float minScale = 0.45f;
             const float maxScale = 0.85f;
-            const int hueCount = 5;
 
             var scale = SystemOrbitLayout.PlanetScale(planetId, minScale, maxScale);
-            var hue = SystemOrbitLayout.HueVariant(planetId, hueCount);
 
             Assert.That(scale, Is.EqualTo(SystemOrbitLayout.PlanetScale(planetId, minScale, maxScale)));
             Assert.That(scale, Is.InRange(minScale, maxScale));
-            Assert.That(hue, Is.EqualTo(SystemOrbitLayout.HueVariant(planetId, hueCount)));
-            Assert.That(hue, Is.InRange(0, hueCount - 1));
         }
     }
 }

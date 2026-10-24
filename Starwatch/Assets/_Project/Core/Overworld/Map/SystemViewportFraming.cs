@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace ProjectStarwatch.Overworld.Map
 {
@@ -7,6 +8,28 @@ namespace ProjectStarwatch.Overworld.Map
     /// </summary>
     internal static class SystemViewportFraming
     {
+        /// <summary>
+        /// Fraction of the visual-tree width covered by <paramref name="rightPanel"/> (0 when hidden/unlaid).
+        /// </summary>
+        internal static float MeasureRightPanelInsetNormalized(VisualElement rightPanel)
+        {
+            if (rightPanel == null
+                || rightPanel.panel == null
+                || rightPanel.resolvedStyle.display == DisplayStyle.None)
+            {
+                return 0f;
+            }
+
+            var panelWidth = rightPanel.worldBound.width;
+            var rootWidth = rightPanel.panel.visualTree.worldBound.width;
+            if (panelWidth <= 0.0001f || rootWidth <= 0.0001f)
+            {
+                return 0f;
+            }
+
+            return Mathf.Clamp01(panelWidth / rootWidth);
+        }
+
         /// <summary>
         /// Camera XZ focus so <paramref name="starWorld"/> sits at the center of the uncovered viewport.
         /// With a top-down camera, shifting the camera opposite the panel inset recenters content.

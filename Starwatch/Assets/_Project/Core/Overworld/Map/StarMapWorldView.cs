@@ -160,28 +160,11 @@ namespace ProjectStarwatch.Overworld.Map
                 _nodeWorld[model.NodeId] = world;
             }
 
-            List<ContentId> remove = null;
-            foreach (var pair in _nodes)
+            PooledMapSync.ReleaseAbsent(_nodes, keep, (id, visual) =>
             {
-                if (keep.Contains(pair.Key))
-                {
-                    continue;
-                }
-
-                remove ??= new List<ContentId>();
-                remove.Add(pair.Key);
-            }
-
-            if (remove != null)
-            {
-                for (var i = 0; i < remove.Count; i++)
-                {
-                    var id = remove[i];
-                    ReleaseNode(_nodes[id]);
-                    _nodes.Remove(id);
-                    _nodeWorld.Remove(id);
-                }
-            }
+                ReleaseNode(visual);
+                _nodeWorld.Remove(id);
+            });
 
             NodesRebuilt?.Invoke();
         }
@@ -275,27 +258,7 @@ namespace ProjectStarwatch.Overworld.Map
                 hasTransit |= model.IsTransit;
             }
 
-            List<string> remove = null;
-            foreach (var pair in _fleetMarkers)
-            {
-                if (keep.Contains(pair.Key))
-                {
-                    continue;
-                }
-
-                remove ??= new List<string>();
-                remove.Add(pair.Key);
-            }
-
-            if (remove != null)
-            {
-                for (var i = 0; i < remove.Count; i++)
-                {
-                    var key = remove[i];
-                    ReleaseFleet(_fleetMarkers[key].View);
-                    _fleetMarkers.Remove(key);
-                }
-            }
+            PooledMapSync.ReleaseAbsent(_fleetMarkers, keep, (_, entry) => ReleaseFleet(entry.View));
 
             if (hasTransit)
             {

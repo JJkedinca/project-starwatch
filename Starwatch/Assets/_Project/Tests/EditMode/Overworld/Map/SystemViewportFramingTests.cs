@@ -10,6 +10,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Map
     public sealed class SystemViewportFramingTests
     {
         [Test]
+        public void MeasureRightPanelInset_NullPanel_IsZero()
+        {
+            Assert.That(SystemViewportFraming.MeasureRightPanelInsetNormalized(null), Is.EqualTo(0f));
+        }
+
+        [Test]
         public void CameraFocus_ZeroInset_CentersOnStar()
         {
             var camera = CreateTopDownCamera();

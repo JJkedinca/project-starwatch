@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Data;
@@ -13,23 +14,37 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     internal sealed class ResearchQuery
     {
-        private readonly ObjectDatabaseSO _database;
+        private readonly ResearchCatalogSO _catalog;
         private readonly EconomyService _economyService;
 
         public ResearchQuery(ObjectDatabaseSO database, EconomyService economyService)
         {
-            _database = database;
-            _economyService = economyService;
+            if (database == null)
+            {
+                throw new ArgumentNullException(nameof(database));
+            }
+
+            _catalog = database.ResearchCatalog
+                ?? throw new ArgumentException(
+                    "ObjectDatabaseSO.ResearchCatalog is required.",
+                    nameof(database));
+            _economyService = economyService ?? throw new ArgumentNullException(nameof(economyService));
         }
 
         public ResearchPanelModel Describe(RunState run)
         {
-            if (!TryRead(run, out var catalog, out var progress, out var active, out var science))
+            if (run == null)
             {
                 return ResearchPanelModel.Empty;
             }
 
-            Completed(run, catalog, out var completedNames, out var completedTooltip);
+            var progress = run.Timeline.Research;
+            var active = progress.HasActive && _catalog.TryGet(progress.ActiveId, out var project)
+                ? project
+                : null;
+            var science = _economyService.ProducedScience;
+
+            Completed(run, out var completedNames, out var completedTooltip);
             var remaining = 0f;
             if (active != null && science > 0.0001f)
             {
@@ -41,7 +56,7 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             return new ResearchPanelModel(
-                Offers(catalog, progress, science),
+                Offers(progress, science),
                 progress.HasActive,
                 progress.ActiveId,
                 active != null ? active.DisplayName : string.Empty,
@@ -55,31 +70,7 @@ namespace ProjectStarwatch.Overworld.UI
                 completedTooltip);
         }
 
-        private bool TryRead(
-            RunState run,
-            out ResearchCatalogSO catalog,
-            out ResearchProgress progress,
-            out ResearchDefinitionSO active,
-            out float science)
-        {
-            if (run == null || _database == null || _database.ResearchCatalog == null)
-            {
-                catalog = null;
-                progress = null;
-                active = null;
-                science = 0f;
-                return false;
-            }
-
-            catalog = _database.ResearchCatalog;
-            progress = run.Timeline.Research;
-            active = progress.HasActive && catalog.TryGet(progress.ActiveId, out var project) ? project : null;
-            science = _economyService != null ? _economyService.ProducedScience : 0f;
-            return true;
-        }
-
-        private static List<ResearchOfferModel> Offers(
-            ResearchCatalogSO catalog,
+        private List<ResearchOfferModel> Offers(
             ResearchProgress progress,
             float sciencePerSecond)
         {
@@ -87,7 +78,7 @@ namespace ProjectStarwatch.Overworld.UI
             var ids = progress.Offers;
             for (var i = 0; i < ids.Count; i++)
             {
-                if (!catalog.TryGet(ids[i], out var project) || project == null)
+                if (!_catalog.TryGet(ids[i], out var project) || project == null)
                 {
                     continue;
                 }
@@ -113,15 +104,14 @@ namespace ProjectStarwatch.Overworld.UI
             return offers;
         }
 
-        private static void Completed(
+        private void Completed(
             RunState run,
-            ResearchCatalogSO catalog,
             out List<string> names,
             out string tooltip)
         {
             names = new List<string>();
             tooltip = string.Empty;
-            var researches = catalog.Researches;
+            var researches = _catalog.Researches;
             for (var i = 0; i < researches.Count; i++)
             {
                 var research = researches[i];

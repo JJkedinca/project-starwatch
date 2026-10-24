@@ -19,21 +19,11 @@ namespace ProjectStarwatch.Overworld.Map
         [field: SerializeField]
         public float CameraBoundsMargin { get; private set; } = 4f;
 
-        /// <summary>
-        /// Fraction of the screen width covered by the right-column panels (settlement, etc.).
-        /// Used to frame the star in the uncovered viewport.
-        /// </summary>
-        [field: SerializeField]
-        public float RightPanelInsetNormalized { get; private set; } = 0.32f;
-
         [field: SerializeField]
         public float MinPlanetScale { get; private set; } = 0.45f;
 
         [field: SerializeField]
         public float MaxPlanetScale { get; private set; } = 0.85f;
-
-        [field: SerializeField]
-        public int HueVariantCount { get; private set; } = 5;
 
         [field: SerializeField]
         public float OrbitRingWidth { get; private set; } = 0.08f;

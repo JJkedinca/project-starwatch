@@ -15,10 +15,8 @@ MonoBehaviour:
   <MinOrbitRadius>k__BackingField: 4
   <MaxOrbitRadius>k__BackingField: 12
   <CameraBoundsMargin>k__BackingField: 4
-  <RightPanelInsetNormalized>k__BackingField: 0.32
   <MinPlanetScale>k__BackingField: 0.45
   <MaxPlanetScale>k__BackingField: 0.85
-  <HueVariantCount>k__BackingField: 5
   <OrbitRingWidth>k__BackingField: 0.08
   <SelectedOrbitRingWidth>k__BackingField: 0.14
   <OrbitRing>k__BackingField: {r: 0.47, g: 0.6, b: 0.78, a: 0.35}

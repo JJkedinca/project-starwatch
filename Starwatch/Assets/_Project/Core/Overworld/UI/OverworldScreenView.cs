@@ -180,6 +180,7 @@ namespace ProjectStarwatch.Overworld.UI
                 starSystem,
                 mapSurface,
                 title,
+                settlement,
                 _starSystemWorldView,
                 _mapCameraController,
                 _systemPointerInput,

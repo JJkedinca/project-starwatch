@@ -43,14 +43,25 @@ namespace ProjectStarwatch.Overworld.UI
                 return StarSystemModel.Closed;
             }
 
-            var planetIds = VisiblePlanets(run, node);
+            var orbitSlotCount = node.PlanetIds.Count;
             List<StarSystemPlanetModel> planets = new();
-            for (var i = 0; i < planetIds.Count; i++)
+            for (var i = 0; i < orbitSlotCount; i++)
             {
-                var planetId = planetIds[i];
+                var planetId = node.PlanetIds[i];
+                var visibility = _visibilityService.GetPlanetVisibility(
+                    run.Archive,
+                    ObserverId.Player,
+                    node.Id,
+                    planetId);
+                if (visibility == PlanetVisibility.Hidden)
+                {
+                    continue;
+                }
+
                 planets.Add(new StarSystemPlanetModel(
                     planetId,
-                    PlanetState(run, node, planetId, selection.SelectedPlanetId)));
+                    PlanetState(run, node, planetId, selection.SelectedPlanetId),
+                    orbitIndex: i));
             }
 
             return new StarSystemModel(
@@ -58,7 +69,8 @@ namespace ProjectStarwatch.Overworld.UI
                 NodeLabel(node),
                 planets,
                 _fleetListQuery.AtLocation(run, node.Id, selection.SelectedFleetId),
-                StarSystemStatus(planets.Count));
+                StarSystemStatus(planets.Count),
+                orbitSlotCount);
         }
 
         /// <summary>

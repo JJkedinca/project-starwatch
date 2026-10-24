@@ -14,7 +14,6 @@ namespace ProjectStarwatch.Overworld.Map
     /// </summary>
     public sealed class StarSystemWorldView : MonoBehaviour
     {
-
         /// <summary>
         /// One planet currently shown in the system: pooled view plus layout used for orbits and labels.
         /// </summary>
@@ -22,13 +21,20 @@ namespace ProjectStarwatch.Overworld.Map
         {
             internal SystemPlanetView View { get; }
 
+            internal SystemOrbitRingView Orbit { get; }
+
             internal Vector3 World { get; }
 
             internal float OrbitRadius { get; }
 
-            internal PlacedPlanetEntry(SystemPlanetView view, Vector3 world, float orbitRadius)
+            internal PlacedPlanetEntry(
+                SystemPlanetView view,
+                SystemOrbitRingView orbit,
+                Vector3 world,
+                float orbitRadius)
             {
                 View = view;
+                Orbit = orbit;
                 World = world;
                 OrbitRadius = orbitRadius;
             }
@@ -54,10 +60,8 @@ namespace ProjectStarwatch.Overworld.Map
 
         private StarSystemPresentationSO _presentation;
         private readonly Dictionary<ContentId, PlacedPlanetEntry> _planets = new();
-        private readonly List<SystemOrbitRingView> _orbits = new();
         private ObjectPool<SystemPlanetView> _planetPool;
         private ObjectPool<SystemOrbitRingView> _orbitPool;
-        private ContentId _selectedPlanetId;
 
         internal event Action PlanetsRebuilt;
 
@@ -101,23 +105,15 @@ namespace ProjectStarwatch.Overworld.Map
         {
             foreach (var pair in _planets)
             {
-                ReleasePlanet(pair.Value.View);
+                ReleaseEntry(pair.Value);
             }
 
             _planets.Clear();
-            ClearOrbits();
-            _selectedPlanetId = default;
             PlanetsRebuilt?.Invoke();
         }
 
-        internal void Rebuild(IReadOnlyList<StarSystemPlanetModel> planets)
+        internal void Rebuild(IReadOnlyList<StarSystemPlanetModel> planets, int orbitSlotCount)
         {
-            var minRadius = _presentation.MinOrbitRadius;
-            var maxRadius = _presentation.MaxOrbitRadius;
-            var minScale = _presentation.MinPlanetScale;
-            var maxScale = _presentation.MaxPlanetScale;
-            var hueCount = _presentation.HueVariantCount;
-
             if (_starView != null)
             {
                 _starView.transform.position = kStarWorld;
@@ -126,7 +122,7 @@ namespace ProjectStarwatch.Overworld.Map
 
             HashSet<ContentId> keep = new();
             var count = planets?.Count ?? 0;
-            ClearOrbits();
+            var slots = orbitSlotCount > 0 ? orbitSlotCount : count;
             for (var i = 0; i < count; i++)
             {
                 var model = planets[i];
@@ -136,20 +132,29 @@ namespace ProjectStarwatch.Overworld.Map
                 }
 
                 keep.Add(model.PlanetId);
-                var radius = SystemOrbitLayout.OrbitRadius(i, count, minRadius, maxRadius);
-                var angle = SystemOrbitLayout.OrbitAngle(i, model.PlanetId);
+                var radius = SystemOrbitLayout.OrbitRadius(
+                    model.OrbitIndex,
+                    slots,
+                    _presentation.MinOrbitRadius,
+                    _presentation.MaxOrbitRadius);
+                var angle = SystemOrbitLayout.OrbitAngle(model.OrbitIndex, model.PlanetId);
                 var world = SystemOrbitLayout.PlanetWorld(kStarWorld, radius, angle);
 
                 SystemPlanetView visual;
+                SystemOrbitRingView orbit;
                 if (_planets.TryGetValue(model.PlanetId, out var existing))
                 {
                     visual = existing.View;
+                    orbit = existing.Orbit;
                 }
                 else
                 {
                     visual = RentPlanet();
-                    if (visual == null)
+                    orbit = RentOrbit();
+                    if (visual == null || orbit == null)
                     {
+                        ReleasePlanet(visual);
+                        ReleaseOrbit(orbit);
                         continue;
                     }
 
@@ -158,49 +163,12 @@ namespace ProjectStarwatch.Overworld.Map
 
                 visual.Bind(model.PlanetId);
                 visual.transform.position = world;
-                ApplyPlanetVisual(visual, model.State, minScale, maxScale, hueCount);
-                _planets[model.PlanetId] = new PlacedPlanetEntry(visual, world, radius);
-
-                var orbit = RentOrbit();
-                if (orbit != null)
-                {
-                    var selected = model.State.IsSelected;
-                    if (selected)
-                    {
-                        _selectedPlanetId = model.PlanetId;
-                    }
-
-                    orbit.Apply(
-                        kStarWorld,
-                        radius,
-                        _presentation.ResolveOrbitColor(selected),
-                        _presentation.ResolveOrbitWidth(selected));
-                    _orbits.Add(orbit);
-                }
+                ApplyPlanetVisual(visual, model.State);
+                ApplyOrbitVisual(orbit, radius, model.State.IsSelected);
+                _planets[model.PlanetId] = new PlacedPlanetEntry(visual, orbit, world, radius);
             }
 
-            List<ContentId> remove = null;
-            foreach (var pair in _planets)
-            {
-                if (keep.Contains(pair.Key))
-                {
-                    continue;
-                }
-
-                remove ??= new List<ContentId>();
-                remove.Add(pair.Key);
-            }
-
-            if (remove != null)
-            {
-                for (var i = 0; i < remove.Count; i++)
-                {
-                    var id = remove[i];
-                    ReleasePlanet(_planets[id].View);
-                    _planets.Remove(id);
-                }
-            }
-
+            PooledMapSync.ReleaseAbsent(_planets, keep, (_, entry) => ReleaseEntry(entry));
             PlanetsRebuilt?.Invoke();
         }
 
@@ -211,23 +179,8 @@ namespace ProjectStarwatch.Overworld.Map
                 return;
             }
 
-            ApplyPlanetVisual(
-                entry.View,
-                state,
-                _presentation.MinPlanetScale,
-                _presentation.MaxPlanetScale,
-                _presentation.HueVariantCount);
-
-            if (state.IsSelected)
-            {
-                _selectedPlanetId = planetId;
-            }
-            else if (_selectedPlanetId == planetId)
-            {
-                _selectedPlanetId = default;
-            }
-
-            RefreshOrbitHighlights();
+            ApplyPlanetVisual(entry.View, state);
+            ApplyOrbitVisual(entry.Orbit, entry.OrbitRadius, state.IsSelected);
         }
 
         internal MapCameraBounds BuildBounds()
@@ -243,8 +196,6 @@ namespace ProjectStarwatch.Overworld.Map
 
         internal Vector3 StarWorld => kStarWorld;
 
-        internal float RightPanelInsetNormalized => _presentation.RightPanelInsetNormalized;
-
         internal bool TryGetPlanetWorld(ContentId planetId, out Vector3 worldPosition)
         {
             if (!_planets.TryGetValue(planetId, out var entry))
@@ -257,53 +208,38 @@ namespace ProjectStarwatch.Overworld.Map
             return true;
         }
 
-        private void RefreshOrbitHighlights()
-        {
-            ClearOrbits();
-            foreach (var pair in _planets)
-            {
-                var selected = pair.Key == _selectedPlanetId;
-                var orbit = RentOrbit();
-                if (orbit == null)
-                {
-                    continue;
-                }
-
-                orbit.Apply(
-                    kStarWorld,
-                    pair.Value.OrbitRadius,
-                    _presentation.ResolveOrbitColor(selected),
-                    _presentation.ResolveOrbitWidth(selected));
-                _orbits.Add(orbit);
-            }
-        }
-
-        private void ApplyPlanetVisual(
-            SystemPlanetView visual,
-            PlanetPresentationState state,
-            float minScale,
-            float maxScale,
-            int hueCount)
+        private void ApplyPlanetVisual(SystemPlanetView visual, PlanetPresentationState state)
         {
             if (visual == null)
             {
                 return;
             }
 
-            // Hue variant reserved for future archetype tinting; scale uses id hash.
-            _ = SystemOrbitLayout.HueVariant(visual.PlanetId, hueCount);
-            var scale = SystemOrbitLayout.PlanetScale(visual.PlanetId, minScale, maxScale);
+            var scale = SystemOrbitLayout.PlanetScale(
+                visual.PlanetId,
+                _presentation.MinPlanetScale,
+                _presentation.MaxPlanetScale);
             visual.ApplyState(state, _presentation.ResolvePlanetColor(state), scale);
         }
 
-        private void ClearOrbits()
+        private void ApplyOrbitVisual(SystemOrbitRingView orbit, float radius, bool selected)
         {
-            for (var i = 0; i < _orbits.Count; i++)
+            if (orbit == null)
             {
-                ReleaseOrbit(_orbits[i]);
+                return;
             }
 
-            _orbits.Clear();
+            orbit.Apply(
+                kStarWorld,
+                radius,
+                _presentation.ResolveOrbitColor(selected),
+                _presentation.ResolveOrbitWidth(selected));
+        }
+
+        private void ReleaseEntry(PlacedPlanetEntry entry)
+        {
+            ReleasePlanet(entry.View);
+            ReleaseOrbit(entry.Orbit);
         }
 
         private SystemPlanetView RentPlanet()

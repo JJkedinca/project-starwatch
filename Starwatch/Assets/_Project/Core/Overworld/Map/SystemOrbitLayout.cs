@@ -64,19 +64,6 @@ namespace ProjectStarwatch.Overworld.Map
             return Mathf.Lerp(minScale, maxScale, Unit(planetId, 0x85ebca6bu));
         }
 
-        /// <summary>
-        /// Placeholder hue variant until planets carry an authored archetype.
-        /// </summary>
-        internal static int HueVariant(ContentId planetId, int variantCount)
-        {
-            if (variantCount <= 0)
-            {
-                return 0;
-            }
-
-            return (int)(Hash(planetId, 0xc2b2ae35u) % (uint)variantCount);
-        }
-
         private static float Unit(ContentId planetId, uint salt)
         {
             return (Hash(planetId, salt) & 0xffffu) / 65535f;

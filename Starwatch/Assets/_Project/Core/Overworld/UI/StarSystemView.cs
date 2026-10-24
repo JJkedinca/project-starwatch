@@ -23,6 +23,7 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly FleetListView _fleets = new();
         private VisualElement _chromeRoot;
         private VisualElement _mapSurface;
+        private VisualElement _rightPanel;
         private VisualElement _fleetDock;
         private Label _screenTitle;
         private Label _systemTitle;
@@ -40,6 +41,7 @@ namespace ProjectStarwatch.Overworld.UI
             VisualElement starSystemChrome,
             VisualElement mapSurface,
             Label screenTitle,
+            VisualElement rightPanel,
             StarSystemWorldView worldView,
             MapCameraController cameraController,
             SystemPointerInput pointerInput,
@@ -49,6 +51,7 @@ namespace ProjectStarwatch.Overworld.UI
             _chromeRoot = starSystemChrome;
             _mapSurface = mapSurface;
             _screenTitle = screenTitle;
+            _rightPanel = rightPanel;
             _worldView = worldView;
             _cameraController = cameraController;
             _pointerInput = pointerInput;
@@ -94,7 +97,7 @@ namespace ProjectStarwatch.Overworld.UI
 
             _spaceSwitcher?.ShowStarSystem();
             ShowSystemChrome(model.Title, model.Status);
-            _worldView?.Rebuild(model.Planets);
+            _worldView?.Rebuild(model.Planets, model.OrbitSlotCount);
             ApplyCameraForSystem();
             RebuildLabels(model);
             SetFleets(model.Fleets);
@@ -256,11 +259,12 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             var camera = _cameraController.MapCamera;
+            var inset = SystemViewportFraming.MeasureRightPanelInsetNormalized(_rightPanel);
             var focus = SystemViewportFraming.CameraFocusForUncoveredCenter(
                 camera,
                 _worldView.StarWorld,
                 _cameraController.FixedHeight,
-                _worldView.RightPanelInsetNormalized);
+                inset);
             _cameraController.CenterOn(focus, instant: true);
         }
 
