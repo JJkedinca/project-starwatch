@@ -12,7 +12,7 @@ Move the star map from absolutely positioned UI Toolkit elements to a 3D world-s
   - Pan only, by mouse drag, keyboard, or touch drag.
   - Perspective (not orthographic) so background layers below the map plane move slower than the nodes, which gives depth while panning.
 - **Depth comes from presentation only:** a starfield and nebula layers below the plane, star glow, and moving fleet markers.
-- **The star system view stays in UI Toolkit.** It moves to 3D when zoom exists and a smooth zoom into a system is worth building.
+- **The star system view is 3D** (hard-swap via `OverworldSpaceSwitcher`, shared map camera, no tilt). Smooth zoom from galaxy into a system stays deferred until after system space exists.
 - **Text stays in UI Toolkit.** Node labels and the hover tooltip are drawn in the UI layer, positioned over their world points.
 
 ## Pattern
@@ -21,7 +21,7 @@ The 3D map stays in MVP. It is a view of player knowledge that sends intents, th
 
 - **Presenter:** `StarMapPresenter` builds models, reacts to domain events, and sends intents to services. It never touches GameObjects, cameras, or transforms.
 - **Contract:** `IStarMapView` is unchanged. The 3D map is another implementation of it.
-- **View:** `StarMapScreen` passes each model to the world presenter, the label overlay, and the inspection card. It raises the same select, travel, and hover events.
+- **View:** `StarMapView` passes each model to the world view, the label overlay, and the inspection card. It raises the same select, travel, and hover events.
 - **View-local behavior:** camera panning, picking, and fleet-marker movement between updates stay inside the view. Shared pointer gestures live in `Core/WorldInput` so Battle can reuse them.
 - **Logic stays testable:** any rule about what to show, such as fog filtering or node state, belongs in `StarMapQuery` or the presenter, not in the renderer.
 
@@ -36,7 +36,7 @@ The 3D map stays in MVP. It is a view of player knowledge that sends intents, th
 
 **Changes:**
 
-- `StarMapScreen` still implements `IStarMapView`, but drives the 3D world presenter and label overlay instead of the old UITK map view.
+- `StarMapView` still implements `IStarMapView`, but drives the 3D world view and label overlay instead of the old UITK map view.
 - The `map-surface` element in `Overworld.uxml` is a transparent region that ignores picking, so the 3D map shows through it. It still hosts the label overlay. HUD panels block map input via `UiPointerBlocker` (picking mode), not a name list.
 
 ## Map Space
@@ -50,7 +50,7 @@ The 3D map stays in MVP. It is a view of player knowledge that sends intents, th
 Everything is authored in the Overworld scene and on prefabs, then wired with `[SerializeField]`:
 
 - **Map camera:** perspective, rotated straight down, at a fixed height. It has `MapCameraController` and `WorldPointerInput`.
-- **Map root:** holds `StarMapWorldPresenter` / `MapPointerInput` and the parent transforms for nodes, routes, and fleet markers.
+- **Map root:** holds `StarMapWorldView` / `MapPointerInput` and the parent transforms for nodes, routes, and fleet markers.
 - **Background:** a starfield quad far below the plane and one or two nebula layers between it and the plane. Shared materials only.
 - **Prefabs:**
   - Map node (`MapNode` layer): star glow, selection ring, fleet-here indicator, trigger sphere collider.
@@ -70,10 +70,13 @@ Everything is authored in the Overworld scene and on prefabs, then wired with `[
 | `MapCameraController` | MonoBehaviour | Consumes `WorldPointerInput` drags + `MapCamera/Pan`; clamps bounds; raises moved |
 | `MapCameraBounds` | Pure helper | Node bounds plus margin, clamp camera position |
 | `MapPointerInput` | MonoBehaviour | Consumes click/long-press/hover; picks `MapNode` via `WorldPicker` |
-| `StarMapWorldPresenter` | MonoBehaviour | Pools node/route/fleet views; binds node ids; places fleets |
-| `MapNodeView`, `MapRouteView`, `FleetMarkerView` | Prefab views | Apply tints from colors the presenter resolves |
-| `MapLabelOverlay` | UI Toolkit view | Node labels and hover tooltip over world points |
-| `StarwatchPresentationDatabaseSO` / `StarMapPresentationSO` | ScriptableObjects | Authored map colors and widths |
+| `StarMapWorldView` | MonoBehaviour | Pools node/route/fleet views; binds node ids; places fleets |
+| `StarSystemWorldView` | MonoBehaviour | Pools star/planet/orbit-ring views for the open system |
+| `OverworldSpaceSwitcher` | MonoBehaviour | Galaxy vs system roots, pointer consumer, camera save/restore |
+| `MapNodeView`, `MapRouteView`, `FleetMarkerView` | Prefab views | Apply tints from colors the world view resolves |
+| `SystemStarView`, `SystemPlanetView`, `SystemOrbitRingView` | Prefab views | System-space visuals |
+| `WorldLabelOverlay` / `MapLabelOverlay` | UI Toolkit | Shared world labels; galaxy hover tooltip adapter |
+| `StarwatchPresentationDatabaseSO` / `StarMapPresentationSO` / `StarSystemPresentationSO` | ScriptableObjects | Authored map and system colors/sizes |
 
 ### Camera Controller
 
@@ -132,9 +135,9 @@ All of these are `MaterialPropertyBlock` changes on shared materials. Nothing cr
 
 ## Deferred
 
-- Zoom, then tilt tied to zoom.
+- Zoom, then tilt tied to zoom (lands on existing 3D system space).
 - Camera rotation.
-- A 3D star system view and a smooth zoom from the galaxy into a system.
+- Smooth zoom from the galaxy into a system (requires system space — done as hard-swap first).
 - Edge-of-screen panning, a minimap, and centering on events.
 - Final node art, star types shown visually, and route effects.
 - Input mode service (Overworld / Battle / modal action maps).

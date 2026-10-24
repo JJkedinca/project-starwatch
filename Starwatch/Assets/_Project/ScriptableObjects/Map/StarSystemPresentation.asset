@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cca2cd0f23914468900899a8b141f948, type: 3}
+  m_Name: StarSystemPresentation
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Overworld.Map.StarSystemPresentationSO
+  <MinOrbitRadius>k__BackingField: 4
+  <MaxOrbitRadius>k__BackingField: 12
+  <CameraBoundsMargin>k__BackingField: 4
+  <RightPanelInsetNormalized>k__BackingField: 0.32
+  <MinPlanetScale>k__BackingField: 0.45
+  <MaxPlanetScale>k__BackingField: 0.85
+  <HueVariantCount>k__BackingField: 5
+  <OrbitRingWidth>k__BackingField: 0.08
+  <SelectedOrbitRingWidth>k__BackingField: 0.14
+  <OrbitRing>k__BackingField: {r: 0.47, g: 0.6, b: 0.78, a: 0.35}
+  <OrbitRingSelected>k__BackingField: {r: 0.94, g: 0.78, b: 0.35, a: 0.75}
+  <PlanetUnscanned>k__BackingField: {r: 0.35, g: 0.4, b: 0.5, a: 1}
+  <PlanetScanned>k__BackingField: {r: 0.55, g: 0.75, b: 0.95, a: 1}
+  <PlanetSelected>k__BackingField: {r: 0.95, g: 0.85, b: 0.4, a: 1}
+  <StarColor>k__BackingField: {r: 1, g: 0.92, b: 0.65, a: 1}

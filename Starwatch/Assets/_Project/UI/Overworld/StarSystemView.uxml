@@ -1,17 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="Overworld.uss" />
-    <ui:VisualElement name="star-system" class="star-system">
-        <ui:VisualElement name="system-scene" class="system-scene" picking-mode="Ignore">
-            <ui:VisualElement name="system-orbits" class="system-orbits" picking-mode="Ignore" />
-            <ui:VisualElement name="planet-strip" class="planet-strip" picking-mode="Ignore">
-                <ui:VisualElement name="system-star" class="system-star" picking-mode="Ignore">
-                    <ui:VisualElement class="system-star__halo" picking-mode="Ignore" />
-                    <ui:VisualElement class="system-star__corona" picking-mode="Ignore" />
-                    <ui:VisualElement class="system-star__glow" picking-mode="Ignore" />
-                    <ui:VisualElement class="system-star__core" picking-mode="Ignore" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-        </ui:VisualElement>
+    <ui:VisualElement name="star-system" class="star-system" picking-mode="Ignore">
+        <ui:VisualElement name="system-scene" class="system-scene" picking-mode="Ignore" style="display: none;" />
         <ui:VisualElement class="hud-corner hud-corner--tl" picking-mode="Ignore" />
         <ui:VisualElement class="hud-corner hud-corner--tr" picking-mode="Ignore" />
         <ui:VisualElement class="hud-corner hud-corner--bl" picking-mode="Ignore" />
@@ -25,7 +15,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="system-fleet-dock" class="system-fleet-dock">
-            <ui:Label text="FLEETS IN SYSTEM" class="system-fleet-dock__caption" />
+            <ui:Label text="FLEETS IN SYSTEM" class="system-fleet-dock__caption" picking-mode="Ignore" />
             <ui:VisualElement name="fleet-list" class="fleet-list" />
         </ui:VisualElement>
     </ui:VisualElement>

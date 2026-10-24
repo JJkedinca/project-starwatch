@@ -19,9 +19,12 @@ namespace ProjectStarwatch.Core.Bootstrap
         protected override void Configure(IContainerBuilder builder)
         {
             builder.RegisterComponentInHierarchy<OverworldScreenView>();
-            builder.RegisterComponentInHierarchy<StarMapWorldPresenter>();
+            builder.RegisterComponentInHierarchy<StarMapWorldView>();
+            builder.RegisterComponentInHierarchy<StarSystemWorldView>();
+            builder.RegisterComponentInHierarchy<OverworldSpaceSwitcher>();
             builder.RegisterComponentInHierarchy<MapCameraController>();
             builder.RegisterComponentInHierarchy<MapPointerInput>();
+            builder.RegisterComponentInHierarchy<SystemPointerInput>();
             builder.Register<OverworldSelection>(Lifetime.Scoped);
             builder.Register<OverworldStatus>(Lifetime.Scoped);
             builder.Register<StarMapQuery>(Lifetime.Scoped);

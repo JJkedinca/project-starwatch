@@ -1,7 +1,6 @@
 using System;
-using System.Collections.Generic;
 using ProjectStarwatch.Core.Identifiers;
-using ProjectStarwatch.Overworld;
+using ProjectStarwatch.Overworld.Map;
 using UnityEngine;
 using UnityEngine.UIElements;
 using EntityId = ProjectStarwatch.Core.Identifiers.EntityId;
@@ -9,128 +8,200 @@ using EntityId = ProjectStarwatch.Core.Identifiers.EntityId;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Orbital scene shown when the player opens a star system: star, tilted orbits, planets, and fleet dock.
+    /// Applies a <see cref="StarSystemModel"/> to the 3D system world view, labels, and UITK chrome.
+    /// Space ownership (roots / camera) lives on <see cref="OverworldSpaceSwitcher"/>.
     /// </summary>
-    internal sealed class StarSystemView
+    internal sealed class StarSystemView : IStarSystemView
     {
-        public event Action BackClicked;
+        public event Action BackRequested;
 
-        public event Action<ContentId> PlanetClicked;
+        public event Action<ContentId> PlanetSelected;
 
-        public event Action<EntityId> FleetClicked;
+        public event Action<EntityId> FleetSelected;
 
-        private const int kOrbitSegments = 96;
-
-        private VisualElement _root;
-        private Label _title;
-        private Label _summary;
-        private Button _backButton;
-        private VisualElement _planetStrip;
-        private VisualElement _orbitLayer;
-        private VisualElement _star;
-        private VisualElement _fleetDock;
+        private readonly WorldLabelOverlay _labels = new();
         private readonly FleetListView _fleets = new();
-        private readonly Dictionary<ContentId, PlanetIconView> _planetsById = new();
-        private readonly List<PlanetIconView> _planetOrder = new();
-        private readonly List<float> _orbitRadii = new();
-        private readonly List<PlanetIconView> _depthOrder = new();
-        private int _selectedOrbit = -1;
-        private bool _isVisible;
+        private VisualElement _chromeRoot;
+        private VisualElement _mapSurface;
+        private VisualElement _fleetDock;
+        private Label _screenTitle;
+        private Label _systemTitle;
+        private Label _systemSummary;
+        private Button _backButton;
+        private StarSystemWorldView _worldView;
+        private MapCameraController _cameraController;
+        private SystemPointerInput _pointerInput;
+        private OverworldSpaceSwitcher _spaceSwitcher;
+        private Camera _camera;
+        private bool _wired;
+        private bool _chromeBound;
 
-        /// <summary>
-        /// Binds the StarSystemView.uxml root.
-        /// </summary>
-        public void Bind(VisualElement root)
+        internal void Bind(
+            VisualElement starSystemChrome,
+            VisualElement mapSurface,
+            Label screenTitle,
+            StarSystemWorldView worldView,
+            MapCameraController cameraController,
+            SystemPointerInput pointerInput,
+            OverworldSpaceSwitcher spaceSwitcher,
+            Camera mapCamera)
         {
-            _root = root;
-            if (_root == null)
+            _chromeRoot = starSystemChrome;
+            _mapSurface = mapSurface;
+            _screenTitle = screenTitle;
+            _worldView = worldView;
+            _cameraController = cameraController;
+            _pointerInput = pointerInput;
+            _spaceSwitcher = spaceSwitcher;
+            _camera = mapCamera;
+
+            BindChrome(starSystemChrome);
+            _labels.Bind(mapSurface, mapCamera);
+
+            if (_wired)
             {
                 return;
             }
 
-            _title = _root.Q<Label>("star-system-title");
-            _summary = _root.Q<Label>("star-system-summary");
-            _backButton = _root.Q<Button>("star-system-back");
-            _planetStrip = _root.Q<VisualElement>("planet-strip");
-            _orbitLayer = _root.Q<VisualElement>("system-orbits");
-            _star = _root.Q<VisualElement>("system-star");
-            _fleetDock = _root.Q<VisualElement>("system-fleet-dock");
-            _fleets.Bind(_root.Q<VisualElement>("fleet-list"));
-            _fleets.FleetSelected += fleetId => FleetClicked?.Invoke(fleetId);
+            _wired = true;
+            if (_pointerInput != null)
+            {
+                _pointerInput.PlanetClicked += ClickPlanet;
+                _pointerInput.PlanetHovered += OnPlanetHovered;
+            }
+
+            if (_cameraController != null)
+            {
+                _cameraController.Moved += OnCameraMoved;
+            }
+
+            if (_worldView != null)
+            {
+                _worldView.PlanetsRebuilt += OnPlanetsRebuilt;
+            }
+        }
+
+        public void Apply(StarSystemModel model)
+        {
+            if (model == null || !model.IsOpen)
+            {
+                ShowGalaxyChrome();
+                _worldView?.Clear();
+                _labels.Clear();
+                _spaceSwitcher?.ShowGalaxy();
+                return;
+            }
+
+            _spaceSwitcher?.ShowStarSystem();
+            ShowSystemChrome(model.Title, model.Status);
+            _worldView?.Rebuild(model.Planets);
+            ApplyCameraForSystem();
+            RebuildLabels(model);
+            SetFleets(model.Fleets);
+        }
+
+        internal void ClickBack()
+        {
+            BackRequested?.Invoke();
+        }
+
+        internal void ClickPlanet(ContentId planetId)
+        {
+            PlanetSelected?.Invoke(planetId);
+        }
+
+        internal void ClickFleet(EntityId fleetId)
+        {
+            FleetSelected?.Invoke(fleetId);
+        }
+
+        private void BindChrome(VisualElement root)
+        {
+            if (root == null || _chromeBound)
+            {
+                return;
+            }
+
+            _chromeBound = true;
+            _systemTitle = root.Q<Label>("star-system-title");
+            _systemSummary = root.Q<Label>("star-system-summary");
+            _backButton = root.Q<Button>("star-system-back");
+            _fleetDock = root.Q<VisualElement>("system-fleet-dock");
+            _fleets.Bind(root.Q<VisualElement>("fleet-list"));
+            _fleets.FleetSelected += fleetId => FleetSelected?.Invoke(fleetId);
             if (_backButton != null)
             {
-                _backButton.clicked += () => BackClicked?.Invoke();
+                _backButton.clicked += () => BackRequested?.Invoke();
             }
 
-            _planetStrip?.RegisterCallback<GeometryChangedEvent>(_ => LayoutPlanets());
-            if (_orbitLayer != null)
+            // Hide UITK orbit/planet strip; world view owns those.
+            var planetStrip = root.Q<VisualElement>("planet-strip");
+            if (planetStrip != null)
             {
-                _orbitLayer.generateVisualContent += DrawOrbits;
+                planetStrip.style.display = DisplayStyle.None;
             }
 
-            Hide();
+            var orbitLayer = root.Q<VisualElement>("system-orbits");
+            if (orbitLayer != null)
+            {
+                orbitLayer.style.display = DisplayStyle.None;
+            }
+
+            var systemStar = root.Q<VisualElement>("system-star");
+            if (systemStar != null)
+            {
+                systemStar.style.display = DisplayStyle.None;
+            }
         }
 
-        /// <summary>
-        /// Whether the star system is currently shown.
-        /// </summary>
-        public bool IsVisible => _isVisible;
-
-        /// <summary>
-        /// Shows the star system. Planet icons are recreated only when the set of planets
-        /// changes, so a click can refresh without removing that icon.
-        /// </summary>
-        public void Show(string title, IReadOnlyList<StarSystemPlanetModel> planets)
+        private void ShowGalaxyChrome()
         {
-            if (_root == null)
+            if (_chromeRoot != null)
             {
-                return;
+                _chromeRoot.style.display = DisplayStyle.None;
             }
 
-            if (_title != null)
+            if (_mapSurface != null)
             {
-                _title.text = string.IsNullOrEmpty(title) ? "Star System" : title;
+                _mapSurface.style.display = DisplayStyle.Flex;
             }
 
-            if (!SamePlanets(planets))
+            if (_screenTitle != null)
             {
-                RebuildPlanets(planets);
+                _screenTitle.text = "Star Map";
             }
-
-            var count = planets?.Count ?? 0;
-            var scanned = 0;
-            _selectedOrbit = -1;
-            for (var i = 0; i < count; i++)
-            {
-                var state = planets[i].State;
-                SetPlanetState(planets[i].PlanetId, state);
-                if (state.Visibility == PlanetVisibility.Scanned)
-                {
-                    scanned++;
-                }
-
-                if (state.IsSelected && _planetsById.TryGetValue(planets[i].PlanetId, out var view))
-                {
-                    _selectedOrbit = _planetOrder.IndexOf(view);
-                }
-            }
-
-            if (_summary != null)
-            {
-                _summary.text = count == 0
-                    ? "NO PLANETS DETECTED"
-                    : count + (count == 1 ? " BODY" : " BODIES") + "  ·  " + scanned + " SCANNED";
-            }
-
-            _root.style.display = DisplayStyle.Flex;
-            _isVisible = true;
-            _orbitLayer?.MarkDirtyRepaint();
         }
 
-        /// <summary>
-        /// Shows the fleets at this system. Rebuilt on each refresh. The dock hides when empty.
-        /// </summary>
-        public void SetFleets(IReadOnlyList<FleetRowModel> fleets)
+        private void ShowSystemChrome(string title, string status)
+        {
+            if (_mapSurface != null)
+            {
+                // Keep map-surface visible as the transparent label host over the 3D view.
+                _mapSurface.style.display = DisplayStyle.Flex;
+            }
+
+            if (_chromeRoot != null)
+            {
+                _chromeRoot.style.display = DisplayStyle.Flex;
+            }
+
+            if (_screenTitle != null)
+            {
+                _screenTitle.text = "Star System";
+            }
+
+            if (_systemTitle != null)
+            {
+                _systemTitle.text = title ?? string.Empty;
+            }
+
+            if (_systemSummary != null)
+            {
+                _systemSummary.text = status ?? string.Empty;
+            }
+        }
+
+        private void SetFleets(System.Collections.Generic.IReadOnlyList<FleetRowModel> fleets)
         {
             _fleets.Apply(fleets);
             if (_fleetDock != null)
@@ -140,201 +211,84 @@ namespace ProjectStarwatch.Overworld.UI
             }
         }
 
-        /// <summary>
-        /// Hides the star system and clears planet icons.
-        /// </summary>
-        public void Hide()
+        private void RebuildLabels(StarSystemModel model)
         {
-            ClearPlanets();
-            SetFleets(Array.Empty<FleetRowModel>());
-            if (_root != null)
-            {
-                _root.style.display = DisplayStyle.None;
-            }
-
-            _isVisible = false;
-        }
-
-        /// <summary>
-        /// Applies presentation state to one planet icon.
-        /// </summary>
-        public void SetPlanetState(ContentId planetId, PlanetPresentationState state)
-        {
-            if (!_planetsById.TryGetValue(planetId, out var view))
+            if (_worldView == null)
             {
                 return;
             }
 
-            view.ApplyState(state);
-        }
-
-        /// <summary>
-        /// Number of planet icons currently shown.
-        /// </summary>
-        public int PlanetCount => _planetsById.Count;
-
-        /// <summary>
-        /// Returns whether a planet icon exists in the scene.
-        /// </summary>
-        public bool HasPlanet(ContentId planetId)
-        {
-            return _planetsById.ContainsKey(planetId);
-        }
-
-        private bool SamePlanets(IReadOnlyList<StarSystemPlanetModel> planets)
-        {
-            var count = planets?.Count ?? 0;
-            if (_planetsById.Count != count)
-            {
-                return false;
-            }
-
-            for (var i = 0; i < count; i++)
-            {
-                var planetId = planets[i].PlanetId;
-                if (planetId.IsEmpty || !_planetsById.ContainsKey(planetId))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private void RebuildPlanets(IReadOnlyList<StarSystemPlanetModel> planets)
-        {
-            ClearPlanets();
-            if (_planetStrip == null || planets == null)
-            {
-                return;
-            }
-
+            var keep = new System.Collections.Generic.HashSet<ContentId>();
+            var planets = model.Planets;
             for (var i = 0; i < planets.Count; i++)
             {
-                var planetId = planets[i].PlanetId;
-                if (planetId.IsEmpty || _planetsById.ContainsKey(planetId))
+                var planet = planets[i];
+                if (planet.PlanetId.IsEmpty || string.IsNullOrEmpty(planet.State.DisplayName))
                 {
                     continue;
                 }
 
-                var view = new PlanetIconView(planetId);
-                view.Clicked += id => PlanetClicked?.Invoke(id);
-                _planetsById[planetId] = view;
-                _planetOrder.Add(view);
-                _planetStrip.Add(view.Root);
-            }
-
-            LayoutPlanets();
-        }
-
-        /// <summary>
-        /// Places planets on their orbits and sorts them so nearer planets draw over the star.
-        /// Runs on rebuild and whenever the scene resizes.
-        /// </summary>
-        private void LayoutPlanets()
-        {
-            _orbitRadii.Clear();
-            if (_planetStrip == null)
-            {
-                return;
-            }
-
-            var rect = _planetStrip.contentRect;
-            if (float.IsNaN(rect.width) || rect.width <= 0f || rect.height <= 0f)
-            {
-                return;
-            }
-
-            var center = rect.size * 0.5f;
-            var maxRadius = SystemOrbitLayout.MaxOrbitRadius(rect.size);
-            var count = _planetOrder.Count;
-            for (var i = 0; i < count; i++)
-            {
-                var view = _planetOrder[i];
-                var radius = SystemOrbitLayout.OrbitRadius(i, count, maxRadius);
-                var angle = SystemOrbitLayout.OrbitAngle(i, view.PlanetId);
-                view.PlaceAt(
-                    SystemOrbitLayout.PlanetCenter(center, radius, angle),
-                    SystemOrbitLayout.AwayFromStar(angle));
-                _orbitRadii.Add(radius);
-            }
-
-            SortByDepth(center.y);
-            _orbitLayer?.MarkDirtyRepaint();
-        }
-
-        private void SortByDepth(float starDepth)
-        {
-            _depthOrder.Clear();
-            _depthOrder.AddRange(_planetOrder);
-            _depthOrder.Sort((a, b) => a.Depth.CompareTo(b.Depth));
-
-            var starPlaced = _star == null;
-            for (var i = 0; i < _depthOrder.Count; i++)
-            {
-                if (!starPlaced && _depthOrder[i].Depth >= starDepth)
+                if (!_worldView.TryGetPlanetWorld(planet.PlanetId, out var world))
                 {
-                    _star.BringToFront();
-                    starPlaced = true;
+                    continue;
                 }
 
-                _depthOrder[i].Root.BringToFront();
+                keep.Add(planet.PlanetId);
+                _labels.SetLabel(planet.PlanetId, planet.State.DisplayName, world);
             }
 
-            if (!starPlaced)
-            {
-                _star.BringToFront();
-            }
+            _labels.RetainOnly(keep);
+            _labels.RepositionAll();
         }
 
-        private void DrawOrbits(MeshGenerationContext context)
+        private void ApplyCameraForSystem()
         {
-            if (_orbitRadii.Count == 0)
+            if (_spaceSwitcher == null || !_spaceSwitcher.IsSystemActive || _worldView == null)
             {
                 return;
             }
 
-            var rect = context.visualElement.contentRect;
-            var center = rect.size * 0.5f;
-            var painter = context.painter2D;
-            painter.lineWidth = SystemOrbitLayout.kOrbitLineWidth;
-            for (var i = 0; i < _orbitRadii.Count; i++)
+            var bounds = _worldView.BuildBounds();
+            _cameraController?.SetBounds(bounds);
+            if (_cameraController == null)
             {
-                painter.strokeColor = i == _selectedOrbit
-                    ? SystemOrbitLayout.kSelectedOrbitColor
-                    : SystemOrbitLayout.kOrbitColor;
-                painter.BeginPath();
-                for (var s = 0; s <= kOrbitSegments; s++)
-                {
-                    var angle = s * (Mathf.PI * 2f / kOrbitSegments);
-                    var point = SystemOrbitLayout.PlanetCenter(center, _orbitRadii[i], angle);
-                    if (s == 0)
-                    {
-                        painter.MoveTo(point);
-                    }
-                    else
-                    {
-                        painter.LineTo(point);
-                    }
-                }
+                return;
+            }
 
-                painter.ClosePath();
-                painter.Stroke();
+            var camera = _cameraController.MapCamera;
+            var focus = SystemViewportFraming.CameraFocusForUncoveredCenter(
+                camera,
+                _worldView.StarWorld,
+                _cameraController.FixedHeight,
+                _worldView.RightPanelInsetNormalized);
+            _cameraController.CenterOn(focus, instant: true);
+        }
+
+        private void OnPlanetHovered(ContentId planetId)
+        {
+            if (!planetId.IsEmpty
+                && _worldView != null
+                && _worldView.TryGetPlanetWorld(planetId, out var world))
+            {
+                _labels.RememberWorld(planetId, world);
+                _labels.RepositionAll();
             }
         }
 
-        private void ClearPlanets()
+        private void OnCameraMoved()
         {
-            foreach (var pair in _planetsById)
+            if (_spaceSwitcher != null && _spaceSwitcher.IsSystemActive)
             {
-                pair.Value.Root.RemoveFromHierarchy();
+                _labels.RepositionAll();
             }
+        }
 
-            _planetsById.Clear();
-            _planetOrder.Clear();
-            _orbitRadii.Clear();
-            _selectedOrbit = -1;
-            _orbitLayer?.MarkDirtyRepaint();
+        private void OnPlanetsRebuilt()
+        {
+            if (_spaceSwitcher != null && _spaceSwitcher.IsSystemActive)
+            {
+                _labels.RepositionAll();
+            }
         }
     }
 }

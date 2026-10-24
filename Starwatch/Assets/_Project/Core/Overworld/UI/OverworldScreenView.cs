@@ -2,6 +2,7 @@ using ProjectStarwatch.Core.WorldInput;
 using ProjectStarwatch.Overworld.Map;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using VContainer;
 using VContainer.Unity;
@@ -13,9 +14,9 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     public sealed class OverworldScreenView : MonoBehaviour
     {
-        internal StarMapScreen StarMap { get; } = new();
+        internal StarMapView StarMap { get; } = new();
 
-        internal StarSystemScreen StarSystem { get; } = new();
+        internal StarSystemView StarSystem { get; } = new();
 
         internal SettlementPanelView Settlement { get; } = new();
 
@@ -35,13 +36,23 @@ namespace ProjectStarwatch.Overworld.UI
         private UIDocument _document;
 
         [SerializeField]
-        private StarMapWorldPresenter _starMapWorldPresenter;
+        [FormerlySerializedAs("_starMapWorldPresenter")]
+        private StarMapWorldView _starMapWorldView;
+
+        [SerializeField]
+        private StarSystemWorldView _starSystemWorldView;
 
         [SerializeField]
         private MapCameraController _mapCameraController;
 
         [SerializeField]
         private MapPointerInput _mapPointerInput;
+
+        [SerializeField]
+        private SystemPointerInput _systemPointerInput;
+
+        [SerializeField]
+        private OverworldSpaceSwitcher _spaceSwitcher;
 
         [SerializeField]
         private WorldPointerInput _worldPointerInput;
@@ -152,14 +163,28 @@ namespace ProjectStarwatch.Overworld.UI
                 _mapPointerInput.Configure(_mapCamera, _worldPointerInput);
             }
 
+            if (_systemPointerInput != null)
+            {
+                _systemPointerInput.Configure(_mapCamera, _worldPointerInput);
+            }
+
             StarMap.Bind(
                 mapSurface,
                 starSystemInspection,
-                _starMapWorldPresenter,
+                _starMapWorldView,
                 _mapCameraController,
                 _mapPointerInput,
+                _spaceSwitcher,
                 _mapCamera);
-            StarSystem.Bind(starSystem, mapSurface, title);
+            StarSystem.Bind(
+                starSystem,
+                mapSurface,
+                title,
+                _starSystemWorldView,
+                _mapCameraController,
+                _systemPointerInput,
+                _spaceSwitcher,
+                _mapCamera);
             Settlement.Bind(settlement);
             Stockpile.Bind(stockpile);
             Research.Bind(research, researchEntry);
@@ -220,8 +245,9 @@ namespace ProjectStarwatch.Overworld.UI
         {
             _screen.Bind();
             _toastPresenter.Start();
-            _starMapPresenter.Start();
+            // Star system before star map so space switch runs before map Apply on enter/leave.
             _starSystemPresenter.Start();
+            _starMapPresenter.Start();
             _settlementPresenter.Start();
             _stockpilePresenter.Start();
             _researchPresenter.Start();

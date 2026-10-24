@@ -67,6 +67,8 @@ namespace ProjectStarwatch.Core.Bootstrap
                 return;
             }
 
+            _presentationDatabase.ValidateRequired();
+
             builder.RegisterInstance(_updateManager);
             builder.RegisterInstance<IUpdateManager>(_updateManager);
             builder.RegisterInstance(_objectDatabase);

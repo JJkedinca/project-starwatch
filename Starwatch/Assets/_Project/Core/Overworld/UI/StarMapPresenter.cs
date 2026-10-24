@@ -27,6 +27,7 @@ namespace ProjectStarwatch.Overworld.UI
         private readonly List<StarMapNodeModel> _nodes = new();
         private ContentId _selectedNodeId;
         private ContentId _hoverNodeId;
+        private bool _inStarSystem;
 
         public StarMapPresenter(
             IStarMapView view,
@@ -70,6 +71,7 @@ namespace ProjectStarwatch.Overworld.UI
 
             Apply();
             _selectedNodeId = _selection.SelectedNodeId;
+            _inStarSystem = _selection.InStarSystem;
         }
 
         public void Dispose()
@@ -232,6 +234,15 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void OnSelectionChanged()
         {
+            var inSystem = _selection.InStarSystem;
+            if (inSystem != _inStarSystem)
+            {
+                _inStarSystem = inSystem;
+                Apply();
+                _selectedNodeId = _selection.SelectedNodeId;
+                return;
+            }
+
             var run = CurrentRun();
             var current = _selection.SelectedNodeId;
             if (run != null && current != _selectedNodeId)

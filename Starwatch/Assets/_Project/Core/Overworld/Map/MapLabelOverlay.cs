@@ -8,36 +8,31 @@ using UnityEngine.UIElements;
 namespace ProjectStarwatch.Overworld.Map
 {
     /// <summary>
-    /// UITK labels and hover tooltip positioned over world map points.
+    /// Galaxy-map adapter over <see cref="WorldLabelOverlay"/> plus hover tooltip.
     /// </summary>
     internal sealed class MapLabelOverlay
     {
+        private readonly WorldLabelOverlay _labels = new();
         private VisualElement _host;
         private Label _hoverTooltip;
         private Camera _camera;
-        private readonly Dictionary<ContentId, Label> _labels = new();
-        private readonly Dictionary<ContentId, Vector3> _worldById = new();
         private ContentId _hoveredNodeId;
 
         internal void Bind(VisualElement host, Camera camera)
         {
             _host = host;
             _camera = camera;
-            if (_host == null)
-            {
-                return;
-            }
-
-            _host.pickingMode = PickingMode.Ignore;
+            _labels.Bind(host, camera);
             EnsureHoverTooltip();
         }
 
         internal void SetCamera(Camera camera)
         {
             _camera = camera;
+            _labels.SetCamera(camera);
         }
 
-        internal void Rebuild(IReadOnlyList<StarMapNodeModel> nodes, StarMapWorldPresenter renderer)
+        internal void Rebuild(IReadOnlyList<StarMapNodeModel> nodes, StarMapWorldView renderer)
         {
             if (_host == null)
             {
@@ -62,80 +57,42 @@ namespace ProjectStarwatch.Overworld.Map
                 }
 
                 keep.Add(model.NodeId);
-                if (!_labels.TryGetValue(model.NodeId, out var label))
+                Vector3 world;
+                if (renderer != null && renderer.TryGetNodeWorld(model.NodeId, out world))
                 {
-                    label = CreateLabel(model.NodeId);
-                    _labels[model.NodeId] = label;
-                    _host.Add(label);
-                }
-
-                label.text = model.State.RevealedLabel;
-                if (renderer != null && renderer.TryGetNodeWorld(model.NodeId, out var world))
-                {
-                    _worldById[model.NodeId] = world;
+                    // use renderer world
                 }
                 else
                 {
-                    _worldById[model.NodeId] = MapSpace.ToWorld(model.MapPosition);
-                }
-            }
-
-            List<ContentId> remove = null;
-            foreach (var pair in _labels)
-            {
-                if (keep.Contains(pair.Key))
-                {
-                    continue;
+                    world = MapSpace.ToWorld(model.MapPosition);
                 }
 
-                remove ??= new List<ContentId>();
-                remove.Add(pair.Key);
+                _labels.SetLabel(model.NodeId, model.State.RevealedLabel, world);
             }
 
-            if (remove != null)
-            {
-                for (var i = 0; i < remove.Count; i++)
-                {
-                    var id = remove[i];
-                    _labels[id].RemoveFromHierarchy();
-                    _labels.Remove(id);
-                    _worldById.Remove(id);
-                }
-            }
-
-            RepositionAll();
+            _labels.RetainOnly(keep);
+            _labels.RepositionAll();
+            RepositionHover();
         }
 
-        internal void SetNodeState(ContentId nodeId, MapNodePresentationState state, StarMapWorldPresenter renderer)
+        internal void SetNodeState(ContentId nodeId, MapNodePresentationState state, StarMapWorldView renderer)
         {
             var showLabel = state.Visibility != MapNodeVisibility.Hidden
                 && !string.IsNullOrEmpty(state.RevealedLabel);
             if (!showLabel)
             {
-                if (_labels.TryGetValue(nodeId, out var existing))
-                {
-                    existing.RemoveFromHierarchy();
-                    _labels.Remove(nodeId);
-                    _worldById.Remove(nodeId);
-                }
-
+                _labels.RemoveLabel(nodeId);
                 return;
             }
 
-            if (!_labels.TryGetValue(nodeId, out var label))
+            Vector3 world = default;
+            var hasWorld = renderer != null && renderer.TryGetNodeWorld(nodeId, out world);
+            if (!hasWorld && !_labels.TryGetWorld(nodeId, out world))
             {
-                label = CreateLabel(nodeId);
-                _labels[nodeId] = label;
-                _host?.Add(label);
+                world = default;
             }
 
-            label.text = state.RevealedLabel;
-            if (renderer != null && renderer.TryGetNodeWorld(nodeId, out var world))
-            {
-                _worldById[nodeId] = world;
-            }
-
-            RepositionLabel(nodeId, label);
+            _labels.SetLabel(nodeId, state.RevealedLabel, world);
         }
 
         internal void SetHover(ContentId nodeId)
@@ -151,17 +108,7 @@ namespace ProjectStarwatch.Overworld.Map
                 return;
             }
 
-            if (!tooltip.IsShown || _hoveredNodeId.IsEmpty || !_worldById.ContainsKey(_hoveredNodeId))
-            {
-                // Hovered unknown/explorable nodes still need a world point from renderer pick set.
-                if (!tooltip.IsShown || _hoveredNodeId.IsEmpty)
-                {
-                    _hoverTooltip.style.display = DisplayStyle.None;
-                    return;
-                }
-            }
-
-            if (!tooltip.IsShown)
+            if (!tooltip.IsShown || _hoveredNodeId.IsEmpty)
             {
                 _hoverTooltip.style.display = DisplayStyle.None;
                 return;
@@ -177,13 +124,7 @@ namespace ProjectStarwatch.Overworld.Map
 
         internal void Clear()
         {
-            foreach (var pair in _labels)
-            {
-                pair.Value.RemoveFromHierarchy();
-            }
-
             _labels.Clear();
-            _worldById.Clear();
             _hoveredNodeId = default;
             if (_hoverTooltip != null)
             {
@@ -193,33 +134,13 @@ namespace ProjectStarwatch.Overworld.Map
 
         internal void RepositionAll()
         {
-            foreach (var pair in _labels)
-            {
-                RepositionLabel(pair.Key, pair.Value);
-            }
-
+            _labels.RepositionAll();
             RepositionHover();
         }
 
         internal void RememberWorld(ContentId nodeId, Vector3 world)
         {
-            _worldById[nodeId] = world;
-        }
-
-        private void RepositionLabel(ContentId nodeId, Label label)
-        {
-            if (_camera == null || _host == null || !_worldById.TryGetValue(nodeId, out var world))
-            {
-                return;
-            }
-
-            if (!TryWorldToHost(world, out var local))
-            {
-                return;
-            }
-
-            label.style.left = local.x + 10f;
-            label.style.top = local.y - 10f;
+            _labels.RememberWorld(nodeId, world);
         }
 
         private void RepositionHover()
@@ -228,31 +149,16 @@ namespace ProjectStarwatch.Overworld.Map
                 || _camera == null
                 || _host == null
                 || _hoveredNodeId.IsEmpty
-                || !_worldById.TryGetValue(_hoveredNodeId, out var world))
+                || !_labels.TryGetWorld(_hoveredNodeId, out var world)
+                || _host.panel == null)
             {
                 return;
-            }
-
-            if (!TryWorldToHost(world, out var local))
-            {
-                return;
-            }
-
-            _hoverTooltip.style.left = local.x + 18f;
-            _hoverTooltip.style.top = local.y - 8f;
-        }
-
-        private bool TryWorldToHost(Vector3 world, out Vector2 local)
-        {
-            local = default;
-            if (_host == null || _camera == null || _host.panel == null)
-            {
-                return false;
             }
 
             var panelPos = RuntimePanelUtils.CameraTransformWorldToPanel(_host.panel, world, _camera);
-            local = _host.WorldToLocal(panelPos);
-            return true;
+            var local = _host.WorldToLocal(panelPos);
+            _hoverTooltip.style.left = local.x + 18f;
+            _hoverTooltip.style.top = local.y - 8f;
         }
 
         private void EnsureHoverTooltip()
@@ -268,15 +174,6 @@ namespace ProjectStarwatch.Overworld.Map
             _hoverTooltip.style.position = Position.Absolute;
             _hoverTooltip.style.display = DisplayStyle.None;
             _host.Add(_hoverTooltip);
-        }
-
-        private static Label CreateLabel(ContentId nodeId)
-        {
-            var label = new Label { name = "map-label-" + nodeId.Value };
-            label.AddToClassList("map-world-label");
-            label.pickingMode = PickingMode.Ignore;
-            label.style.position = Position.Absolute;
-            return label;
         }
     }
 }

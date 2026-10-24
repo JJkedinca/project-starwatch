@@ -8,9 +8,9 @@ using UnityEngine.UIElements;
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Applies a <see cref="StarMapModel"/> to the 3D world presenter, label overlay, and card.
+    /// Applies a <see cref="StarMapModel"/> to the 3D world view, label overlay, and card.
     /// </summary>
-    internal sealed class StarMapScreen : IStarMapView
+    internal sealed class StarMapView : IStarMapView
     {
         public event Action<ContentId> NodeSelected;
 
@@ -20,23 +20,26 @@ namespace ProjectStarwatch.Overworld.UI
 
         private readonly StarSystemInspectionView _inspection = new();
         private readonly MapLabelOverlay _labels = new();
-        private StarMapWorldPresenter _worldPresenter;
+        private StarMapWorldView _worldView;
         private MapCameraController _cameraController;
         private MapPointerInput _pointerInput;
+        private OverworldSpaceSwitcher _spaceSwitcher;
         private ContentId _cardNodeId;
         private bool _wired;
 
         internal void Bind(
             VisualElement mapSurface,
             VisualElement inspection,
-            StarMapWorldPresenter worldPresenter,
+            StarMapWorldView worldView,
             MapCameraController cameraController,
             MapPointerInput pointerInput,
+            OverworldSpaceSwitcher spaceSwitcher,
             Camera mapCamera)
         {
-            _worldPresenter = worldPresenter;
+            _worldView = worldView;
             _cameraController = cameraController;
             _pointerInput = pointerInput;
+            _spaceSwitcher = spaceSwitcher;
             _inspection.Bind(inspection);
             _inspection.TravelClicked += OnInspectionTravel;
             _labels.Bind(mapSurface, mapCamera);
@@ -59,9 +62,9 @@ namespace ProjectStarwatch.Overworld.UI
                 _cameraController.Moved += OnCameraMoved;
             }
 
-            if (_worldPresenter != null)
+            if (_worldView != null)
             {
-                _worldPresenter.NodesRebuilt += OnNodesRebuilt;
+                _worldView.NodesRebuilt += OnNodesRebuilt;
             }
         }
 
@@ -69,31 +72,39 @@ namespace ProjectStarwatch.Overworld.UI
         {
             if (model == null || !model.HasRun)
             {
-                _worldPresenter?.Clear();
+                _worldView?.Clear();
                 _labels.Clear();
                 _inspection.ShowEmpty();
                 _cardNodeId = default;
                 return;
             }
 
-            _worldPresenter?.RebuildNodes(model.Nodes);
+            _worldView?.RebuildNodes(model.Nodes);
             ApplyCameraAfterRebuild(model.Nodes);
-            _worldPresenter?.SetRoutes(model.Routes);
+            _worldView?.SetRoutes(model.Routes);
             for (var i = 0; i < model.Nodes.Count; i++)
             {
                 var row = model.Nodes[i];
-                _worldPresenter?.SetNodeState(row.NodeId, row.State);
+                _worldView?.SetNodeState(row.NodeId, row.State);
             }
 
-            _labels.Rebuild(model.Nodes, _worldPresenter);
-            _worldPresenter?.SetFleetMarkers(model.FleetMarkers);
+            if (IsGalaxyActive)
+            {
+                _labels.Rebuild(model.Nodes, _worldView);
+            }
+            else
+            {
+                _labels.Clear();
+            }
+
+            _worldView?.SetFleetMarkers(model.FleetMarkers);
             _cardNodeId = model.Card.NodeId;
             _inspection.Show(model.Card);
         }
 
         public void ApplyNodes(IReadOnlyList<StarMapNodeModel> nodes)
         {
-            if (nodes == null || _worldPresenter == null)
+            if (nodes == null || _worldView == null)
             {
                 return;
             }
@@ -101,14 +112,17 @@ namespace ProjectStarwatch.Overworld.UI
             for (var i = 0; i < nodes.Count; i++)
             {
                 var row = nodes[i];
-                _worldPresenter.SetNodeState(row.NodeId, row.State);
-                _labels.SetNodeState(row.NodeId, row.State, _worldPresenter);
+                _worldView.SetNodeState(row.NodeId, row.State);
+                if (IsGalaxyActive)
+                {
+                    _labels.SetNodeState(row.NodeId, row.State, _worldView);
+                }
             }
         }
 
         public void ApplyRoutes(IReadOnlyList<MapRouteSegment> routes)
         {
-            _worldPresenter?.SetRoutes(routes);
+            _worldView?.SetRoutes(routes);
         }
 
         public void ApplyCard(StarMapCardModel card)
@@ -119,12 +133,17 @@ namespace ProjectStarwatch.Overworld.UI
 
         public void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip)
         {
+            if (!IsGalaxyActive)
+            {
+                return;
+            }
+
             _labels.SetHoverTooltip(tooltip);
         }
 
         public void ApplyFleetMarkers(IReadOnlyList<FleetMarkerModel> markers)
         {
-            _worldPresenter?.SetFleetMarkers(markers);
+            _worldView?.SetFleetMarkers(markers);
         }
 
         internal void ClickNode(ContentId nodeId)
@@ -150,7 +169,7 @@ namespace ProjectStarwatch.Overworld.UI
         private void OnPointerHover(ContentId nodeId)
         {
             _labels.SetHover(nodeId);
-            if (!nodeId.IsEmpty && _worldPresenter != null && _worldPresenter.TryGetNodeWorld(nodeId, out var world))
+            if (!nodeId.IsEmpty && _worldView != null && _worldView.TryGetNodeWorld(nodeId, out var world))
             {
                 _labels.RememberWorld(nodeId, world);
             }
@@ -160,29 +179,41 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void OnCameraMoved()
         {
+            if (!IsGalaxyActive)
+            {
+                return;
+            }
+
             _labels.RepositionAll();
         }
 
         private void OnNodesRebuilt()
         {
+            if (!IsGalaxyActive)
+            {
+                return;
+            }
+
             _labels.RepositionAll();
         }
 
+        private bool IsGalaxyActive => _spaceSwitcher == null || _spaceSwitcher.IsGalaxyActive;
+
         private void ApplyCameraAfterRebuild(IReadOnlyList<StarMapNodeModel> nodes)
         {
-            if (_worldPresenter == null)
+            if (_worldView == null || !IsGalaxyActive)
             {
                 return;
             }
 
-            var bounds = _worldPresenter.BuildBounds();
+            var bounds = _worldView.BuildBounds();
             _cameraController?.SetBounds(bounds);
-            if (_cameraController == null || !_worldPresenter.ConsumeNeedsCenter())
+            if (_cameraController == null || !_worldView.ConsumeNeedsCenter())
             {
                 return;
             }
 
-            var focus = _worldPresenter.FocusWorldFromModels(nodes);
+            var focus = _worldView.FocusWorldFromModels(nodes);
             if (focus.HasValue)
             {
                 _cameraController.CenterOn(focus.Value, instant: true);

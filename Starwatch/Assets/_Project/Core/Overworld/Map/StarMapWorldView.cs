@@ -6,14 +6,15 @@ using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Overworld;
 using ProjectStarwatch.Overworld.UI;
 using UnityEngine;
+using UnityEngine.Pool;
 using VContainer;
 
 namespace ProjectStarwatch.Overworld.Map
 {
     /// <summary>
-    /// World-map presenter: pools and places 3D node, route, and fleet-marker views from models.
+    /// Galaxy-map world view: pools and places 3D node, route, and fleet-marker views from models.
     /// </summary>
-    public sealed class StarMapWorldPresenter : MonoBehaviour
+    public sealed class StarMapWorldView : MonoBehaviour
     {
         private const float kParkedOffset = 1.2f;
 
@@ -26,6 +27,7 @@ namespace ProjectStarwatch.Overworld.Map
         [SerializeField]
         private Transform _fleetsRoot;
 
+        // TODO: Nodes will be a SO containing different kinds per system type
         [SerializeField]
         private MapNodeView _nodePrefab;
 
@@ -35,18 +37,17 @@ namespace ProjectStarwatch.Overworld.Map
         [SerializeField]
         private FleetMarkerView _fleetPrefab;
 
-        private StarwatchPresentationDatabaseSO _presentationDatabase;
+        private StarMapPresentationSO _presentation;
         private SimulationClock _clock;
         private readonly Dictionary<ContentId, MapNodeView> _nodes = new();
         private readonly Dictionary<ContentId, Vector3> _nodeWorld = new();
         private readonly List<MapRouteView> _routes = new();
         private readonly Dictionary<string, TransitMarker> _fleetMarkers = new();
-        private readonly Stack<MapNodeView> _nodePool = new();
-        private readonly Stack<MapRouteView> _routePool = new();
-        private readonly Stack<FleetMarkerView> _fleetPool = new();
+        private ObjectPool<MapNodeView> _nodePool;
+        private ObjectPool<MapRouteView> _routePool;
+        private ObjectPool<FleetMarkerView> _fleetPool;
         private bool _hasCentered;
         private bool _listeningToClock;
-        private bool _loggedMissingPresentation;
 
         internal int ActiveNodeCount
         {
@@ -72,8 +73,36 @@ namespace ProjectStarwatch.Overworld.Map
             SimulationClock clock,
             StarwatchPresentationDatabaseSO presentationDatabase)
         {
-            _clock = clock;
-            _presentationDatabase = presentationDatabase;
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            if (presentationDatabase == null)
+            {
+                throw new ArgumentNullException(nameof(presentationDatabase));
+            }
+
+            _presentation = presentationDatabase.StarMap
+                ?? throw new ArgumentException(
+                    "StarwatchPresentationDatabaseSO.StarMap is required.",
+                    nameof(presentationDatabase));
+        }
+
+        private void Awake()
+        {
+            _nodePool = new ObjectPool<MapNodeView>(
+                createFunc: () => Instantiate(_nodePrefab, _nodesRoot),
+                actionOnGet: visual => visual.gameObject.SetActive(true),
+                actionOnRelease: visual =>
+                {
+                    visual.Bind(default);
+                    visual.gameObject.SetActive(false);
+                });
+            _routePool = new ObjectPool<MapRouteView>(
+                createFunc: () => Instantiate(_routePrefab, _routesRoot),
+                actionOnGet: visual => visual.gameObject.SetActive(true),
+                actionOnRelease: visual => visual.gameObject.SetActive(false));
+            _fleetPool = new ObjectPool<FleetMarkerView>(
+                createFunc: () => Instantiate(_fleetPrefab, _fleetsRoot),
+                actionOnGet: visual => visual.gameObject.SetActive(true),
+                actionOnRelease: visual => visual.gameObject.SetActive(false));
         }
 
         private void OnDisable()
@@ -84,6 +113,9 @@ namespace ProjectStarwatch.Overworld.Map
         private void OnDestroy()
         {
             UnsubscribeClock();
+            _nodePool?.Dispose();
+            _routePool?.Dispose();
+            _fleetPool?.Dispose();
         }
 
         internal void Clear()
@@ -211,23 +243,14 @@ namespace ProjectStarwatch.Overworld.Map
         {
             ClearRoutes();
             var count = routes?.Count ?? 0;
-            var presentation = TryGetStarMapPresentation();
             for (var i = 0; i < count; i++)
             {
                 var visual = RentRoute();
                 var segment = routes[i];
-                if (presentation != null)
-                {
-                    visual.Apply(
-                        segment,
-                        presentation.RouteColor(segment.State),
-                        presentation.RouteWidth(segment.State));
-                }
-                else
-                {
-                    visual.Apply(segment, Color.white, 0.12f);
-                }
-
+                visual.Apply(
+                    segment,
+                    _presentation.RouteColor(segment.State),
+                    _presentation.RouteWidth(segment.State));
                 _routes.Add(visual);
             }
         }
@@ -237,7 +260,6 @@ namespace ProjectStarwatch.Overworld.Map
             HashSet<string> keep = new();
             var count = markers?.Count ?? 0;
             var hasTransit = false;
-            var presentation = TryGetStarMapPresentation();
             for (var i = 0; i < count; i++)
             {
                 var model = markers[i];
@@ -249,10 +271,7 @@ namespace ProjectStarwatch.Overworld.Map
                     _fleetMarkers[key] = entry;
                 }
 
-                var color = presentation != null
-                    ? presentation.ResolveFleetColor(model.IsSelected)
-                    : Color.white;
-                entry.ApplyModel(model, color);
+                entry.ApplyModel(model, _presentation.ResolveFleetColor(model.IsSelected));
                 hasTransit |= model.IsTransit;
             }
 
@@ -311,29 +330,7 @@ namespace ProjectStarwatch.Overworld.Map
                 return;
             }
 
-            var presentation = TryGetStarMapPresentation();
-            var color = presentation != null
-                ? presentation.ResolveNodeColor(state)
-                : Color.white;
-            visual.ApplyState(state, color);
-        }
-
-        private StarMapPresentationSO TryGetStarMapPresentation()
-        {
-            if (_presentationDatabase != null && _presentationDatabase.StarMap != null)
-            {
-                return _presentationDatabase.StarMap;
-            }
-
-            if (!_loggedMissingPresentation)
-            {
-                _loggedMissingPresentation = true;
-                Debug.LogWarning(
-                    "StarMapWorldPresenter missing StarwatchPresentationDatabaseSO.StarMap; using fallback tints.",
-                    this);
-            }
-
-            return null;
+            visual.ApplyState(state, _presentation.ResolveNodeColor(state));
         }
 
         private void OnTimeAdvanced(GameTime time, float deltaSeconds)
@@ -405,13 +402,11 @@ namespace ProjectStarwatch.Overworld.Map
         {
             if (_nodePrefab == null)
             {
-                Debug.LogError("StarMapWorldPresenter requires a node prefab.");
+                Debug.LogError("StarMapWorldView requires a node prefab.");
                 return null;
             }
 
-            var visual = _nodePool.Count > 0 ? _nodePool.Pop() : Instantiate(_nodePrefab, _nodesRoot);
-            visual.gameObject.SetActive(true);
-            return visual;
+            return _nodePool.Get();
         }
 
         private void ReleaseNode(MapNodeView visual)
@@ -421,22 +416,18 @@ namespace ProjectStarwatch.Overworld.Map
                 return;
             }
 
-            visual.Bind(default);
-            visual.gameObject.SetActive(false);
-            _nodePool.Push(visual);
+            _nodePool.Release(visual);
         }
 
         private MapRouteView RentRoute()
         {
             if (_routePrefab == null)
             {
-                Debug.LogError("StarMapWorldPresenter requires a route prefab.");
+                Debug.LogError("StarMapWorldView requires a route prefab.");
                 return null;
             }
 
-            var visual = _routePool.Count > 0 ? _routePool.Pop() : Instantiate(_routePrefab, _routesRoot);
-            visual.gameObject.SetActive(true);
-            return visual;
+            return _routePool.Get();
         }
 
         private void ReleaseRoute(MapRouteView visual)
@@ -446,21 +437,18 @@ namespace ProjectStarwatch.Overworld.Map
                 return;
             }
 
-            visual.gameObject.SetActive(false);
-            _routePool.Push(visual);
+            _routePool.Release(visual);
         }
 
         private FleetMarkerView RentFleet()
         {
             if (_fleetPrefab == null)
             {
-                Debug.LogError("StarMapWorldPresenter requires a fleet marker prefab.");
+                Debug.LogError("StarMapWorldView requires a fleet marker prefab.");
                 return null;
             }
 
-            var visual = _fleetPool.Count > 0 ? _fleetPool.Pop() : Instantiate(_fleetPrefab, _fleetsRoot);
-            visual.gameObject.SetActive(true);
-            return visual;
+            return _fleetPool.Get();
         }
 
         private void ReleaseFleet(FleetMarkerView visual)
@@ -470,8 +458,7 @@ namespace ProjectStarwatch.Overworld.Map
                 return;
             }
 
-            visual.gameObject.SetActive(false);
-            _fleetPool.Push(visual);
+            _fleetPool.Release(visual);
         }
 
         private sealed class TransitMarker

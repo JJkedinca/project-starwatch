@@ -352,7 +352,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         }
 
         [Test]
-        public void SelectionChange_UpdatesOnlyTheOldAndNewNode()
+        public void SelectionChange_FullApplyOnEnterAndLeaveSystem()
         {
             var stack = RunTestFixture.CreateOverworldStack();
             stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(54));
@@ -365,15 +365,14 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             view.ClickNode(home);
 
-            Assert.That(view.ApplyCount, Is.EqualTo(applies));
-            Assert.That(view.AppliedNodeIds, Is.EquivalentTo(new[] { home }));
-            Assert.That(view.CardApplyCount, Is.EqualTo(1));
+            // Enter/leave system repaints the full map so galaxy labels restore after Back.
+            Assert.That(view.ApplyCount, Is.EqualTo(applies + 1));
+            Assert.That(view.AppliedNodeIds, Does.Contain(home));
 
             view.ClickNode(forge);
 
-            Assert.That(view.ApplyCount, Is.EqualTo(applies));
-            Assert.That(view.CardApplyCount, Is.EqualTo(2));
-            Assert.That(view.AppliedNodeIds, Is.EquivalentTo(new[] { home, forge }));
+            Assert.That(view.ApplyCount, Is.EqualTo(applies + 2));
+            Assert.That(view.AppliedNodeIds, Does.Contain(forge));
             presenter.Dispose();
         }
 

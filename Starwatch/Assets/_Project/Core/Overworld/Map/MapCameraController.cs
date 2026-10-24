@@ -44,6 +44,10 @@ namespace ProjectStarwatch.Overworld.Map
 
         internal Camera MapCamera => _camera != null ? _camera : Camera.main;
 
+        internal MapCameraBounds Bounds => _bounds;
+
+        internal float FixedHeight => _fixedHeight;
+
         [Inject]
         public void Construct(IUpdateManager updateManager)
         {

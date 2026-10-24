@@ -454,9 +454,9 @@
     top: 0;
     right: 0;
     bottom: 0;
-    background-color: var(--bg-deep);
-    border-width: 1px;
-    border-color: var(--panel-border);
+    /* Transparent so the 3D system world shows through; chrome stays opaque. */
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
     overflow: hidden;
     display: none;
 }

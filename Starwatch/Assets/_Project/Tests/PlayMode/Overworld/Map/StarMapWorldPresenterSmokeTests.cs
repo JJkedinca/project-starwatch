@@ -1,7 +1,8 @@
 using System.Collections;
 using NUnit.Framework;
-using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Presentation;
+using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Overworld;
 using ProjectStarwatch.Overworld.Map;
 using ProjectStarwatch.Overworld.UI;
@@ -13,7 +14,7 @@ namespace ProjectStarwatch.Tests.PlayMode.Overworld.Map
     /// <summary>
     /// Thin smoke: world presenter places one active node per model node.
     /// </summary>
-    public sealed class StarMapWorldPresenterSmokeTests
+    public sealed class StarMapWorldViewSmokeTests
     {
         [UnityTest]
         public IEnumerator RebuildNodes_CreatesOneActiveVisualPerModelNode()
@@ -30,12 +31,19 @@ namespace ProjectStarwatch.Tests.PlayMode.Overworld.Map
             nodePrefabGo.AddComponent<MapNodeView>();
             nodePrefabGo.SetActive(false);
 
-            var presenter = root.AddComponent<StarMapWorldPresenter>();
-            var so = new SerializedObjectProxy(presenter);
+            var view = root.AddComponent<StarMapWorldView>();
+            var so = new SerializedObjectProxy(view);
             so.Set("_nodesRoot", nodesRoot);
             so.Set("_routesRoot", routesRoot);
             so.Set("_fleetsRoot", fleetsRoot);
             so.Set("_nodePrefab", nodePrefabGo.GetComponent<MapNodeView>());
+
+            var starMap = ScriptableObject.CreateInstance<StarMapPresentationSO>();
+            var presentation = ScriptableObject.CreateInstance<StarwatchPresentationDatabaseSO>();
+            typeof(StarwatchPresentationDatabaseSO)
+                .GetField("<StarMap>k__BackingField", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                !.SetValue(presentation, starMap);
+            view.Construct(new SimulationClock(), presentation);
 
             var nodes = new[]
             {
@@ -63,13 +71,15 @@ namespace ProjectStarwatch.Tests.PlayMode.Overworld.Map
                         "Beta")),
             };
 
-            presenter.RebuildNodes(nodes);
+            view.RebuildNodes(nodes);
             yield return null;
 
-            Assert.That(presenter.ActiveNodeCount, Is.EqualTo(2));
+            Assert.That(view.ActiveNodeCount, Is.EqualTo(2));
 
             Object.Destroy(root);
             Object.Destroy(nodePrefabGo);
+            Object.Destroy(presentation);
+            Object.Destroy(starMap);
         }
 
         /// <summary>

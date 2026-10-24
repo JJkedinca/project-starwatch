@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: StarwatchPresentationDatabase
   m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Presentation.StarwatchPresentationDatabaseSO
   <StarMap>k__BackingField: {fileID: 11400000, guid: 8e5f3b02d7c95a4f0b2d6e9f1a3c5b78, type: 2}
+  <StarSystem>k__BackingField: {fileID: 11400000, guid: b4c5d6e7f8091a2b3c4d5e6f708192a3, type: 2}
