@@ -13,15 +13,15 @@
     <ui:Template name="FleetRoster" src="FleetRoster.uxml" />
     <ui:Template name="FleetBar" src="FleetBar.uxml" />
     <ui:Template name="FleetPanel" src="FleetPanel.uxml" />
-    <ui:VisualElement name="root" class="root">
+    <ui:VisualElement name="root" class="root" picking-mode="Ignore">
         <ui:VisualElement name="top-bar-slot" class="top-bar-slot" picking-mode="Ignore" />
-        <ui:VisualElement name="content" class="content">
+        <ui:VisualElement name="content" class="content" picking-mode="Ignore">
             <ui:VisualElement name="fleet-roster-host" class="fleet-roster-host">
                 <ui:Instance template="FleetRoster" />
             </ui:VisualElement>
-            <ui:VisualElement name="center-column" class="center-column">
-                <ui:VisualElement name="map-panel" class="map-panel">
-                    <ui:VisualElement name="map-surface" class="map-surface" />
+            <ui:VisualElement name="center-column" class="center-column" picking-mode="Ignore">
+                <ui:VisualElement name="map-panel" class="map-panel" picking-mode="Ignore">
+                    <ui:VisualElement name="map-surface" class="map-surface" picking-mode="Ignore" />
                     <ui:Instance template="StarSystemView" class="star-system-host" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <ui:VisualElement name="fleet-bar-host" class="fleet-bar-host">

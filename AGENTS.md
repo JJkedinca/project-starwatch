@@ -19,7 +19,7 @@ ProjectStarwatch is a fantasy roguelike: FTL-style overworld adventure plus auto
 - Favor composition: interfaces, small components, injected services.
 - Prefer ScriptableObjects for content data; avoid hard-coding balance numbers in MonoBehaviours.
 - Static definitions and scene setup belong on assets, not in startup code. Author content as ScriptableObjects. Author known components on prefabs or scenes and assign them with `[SerializeField]`. Use `AddComponent`, `CreateInstance`, or factory construction only when the object must exist at runtime and cannot be authored ahead of time. Tests may still construct stand-ins.
-- Do not abuse `Update` / `FixedUpdate`. Prefer `UpdateManager` + `ITickable.ManagedUpdate`, MessagePipe events, or UniTask delays/timers.
+- Do not abuse `Update` / `FixedUpdate`. Prefer `UpdateManager` + `IFrameTickable.ManagedUpdate` (presentation / real time), `ISimulationSystem` via `ISimulationUpdateManager` (gameplay), MessagePipe events, or UniTask delays/timers.
 - Log unexpected edge cases and silent failures (`Debug.LogWarning` / `LogError`) that would break gameplay.
 - Comments explain purpose when non-obvious — not line-by-line narration.
 - Extract a small options/params struct when a method grows past ~5 parameters.
@@ -39,14 +39,14 @@ ProjectStarwatch is a fantasy roguelike: FTL-style overworld adventure plus auto
 ## DI and Patterns
 
 - **VContainer** LifetimeScopes: project scope (Bootstrap / DontDestroyOnLoad) for core managers; scene scopes for Overworld and Battle.
-- **MVP for UI only** — Presenters call services; Views stay thin. Do not wrap units/combat in Presenters.
+- **MVP** — Presenters call services; Views stay thin.
 - **UI:** UI Toolkit (UXML + USS + `UIDocument`). Do not build UGUI Canvas/Button hierarchies in code.
 - The screen UXML is the `UIDocument` source. It owns layout (where regions sit) and instances view templates. A view class that owns a fixed set of controls has its own UXML template; `Bind` takes that template root. Regions code fills at runtime (map nodes, planet icons) stay empty hosts on the screen UXML. Tests may build a stand-in tree with the same element names.
 - **Gameplay:** systems + MonoBehaviour views (`BattleSimulation`, `CombatService`, `Unit` as squad). Squads (per-member HP summed on the squad, shared energy, member placeholders), not one independent agent per sprite.
 - **DomainEventBus** is the domain event bus. After a service commits state (travel, fleets, exploration, buildings, enemy actions), it publishes a typed event from `DomainEvents`. The bus appends the journal and notifies subscribers on that call. Subscribers react. Do not poll the simulation tick to discover those changes.
 - **UniTask** for async (scene flow, saves, delays).
 - **No Unity DOTS/ECS** unless profiling later demands it. Optional plain C# buffers for hot sim state are fine.
-- **Prefer No Ticking**: Use events when possible instead of lazy refreshing/checks.
+- **Prefer No Ticking**: Use events when possible instead of lazy refreshing/checks. When a frame tick is required, register an `IFrameTickable` with `IUpdateManager` only while active; do not put presentation work on the simulation clock.
 
 ## Content / “Data Tables”
 

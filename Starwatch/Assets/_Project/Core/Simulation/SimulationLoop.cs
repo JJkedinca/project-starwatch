@@ -8,7 +8,7 @@ namespace ProjectStarwatch.Core.Simulation
     /// Fixed-rate simulation driver. Accumulates real time, advances the clock in
     /// discrete ticks, then runs registered systems in registration order.
     /// </summary>
-    internal sealed class SimulationLoop
+    internal sealed class SimulationLoop : ISimulationUpdateManager
     {
         public SimulationClock Clock { get; }
 

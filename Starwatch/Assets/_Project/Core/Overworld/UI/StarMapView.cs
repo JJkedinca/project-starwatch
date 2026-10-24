@@ -1,415 +1,243 @@
 using System;
 using System.Collections.Generic;
 using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Overworld.Map;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace ProjectStarwatch.Overworld.UI
 {
     /// <summary>
-    /// Owns the map surface, route layer, hover tooltip, and map-node element lifecycle.
+    /// Applies a <see cref="StarMapModel"/> to the 3D world view, label overlay, and card.
     /// </summary>
-    internal sealed class StarMapView
+    internal sealed class StarMapView : IStarMapView
     {
-        public event Action<ContentId> NodeClicked;
+        public event Action<ContentId> NodeSelected;
 
-        public event Action<ContentId> NodeRightClicked;
+        public event Action<ContentId> TravelRequested;
 
-        /// <summary>
-        /// Raised when the pointer enters a node, or with <see cref="ContentId"/> empty on leave.
-        /// </summary>
         public event Action<ContentId> NodeHovered;
 
-        private VisualElement _mapSurface;
-        private RouteView _routes;
-        private FleetMarkerView _fleetMarkers;
-        private Label _hoverTooltip;
-        private readonly Dictionary<ContentId, MapNodeView> _nodesById = new();
-        private readonly List<MapRouteSegment> _routeSegments = new();
-        private float _scale = MapLayout.kDefaultScale;
-        private Vector2 _originOffset = MapLayout.kDefaultPadding;
-        private ContentId _hoveredNodeId;
+        private readonly StarSystemInspectionView _inspection = new();
+        private readonly MapLabelOverlay _labels = new();
+        private StarMapWorldView _worldView;
+        private MapCameraController _cameraController;
+        private MapPointerInput _pointerInput;
+        private OverworldSpaceSwitcher _spaceSwitcher;
+        private ContentId _cardNodeId;
+        private bool _wired;
 
-        /// <summary>
-        /// Binds to the map-surface element from Overworld UXML.
-        /// </summary>
-        public void Bind(VisualElement mapSurface)
+        internal void Bind(
+            VisualElement mapSurface,
+            VisualElement inspection,
+            StarMapWorldView worldView,
+            MapCameraController cameraController,
+            MapPointerInput pointerInput,
+            OverworldSpaceSwitcher spaceSwitcher,
+            Camera mapCamera)
         {
-            _mapSurface = mapSurface;
-            EnsureRouteLayer();
-            EnsureFleetMarkerLayer();
-            EnsureHoverTooltip();
-        }
+            _worldView = worldView;
+            _cameraController = cameraController;
+            _pointerInput = pointerInput;
+            _spaceSwitcher = spaceSwitcher;
+            _inspection.Bind(inspection);
+            _inspection.TravelClicked += OnInspectionTravel;
+            _labels.Bind(mapSurface, mapCamera);
 
-        /// <summary>
-        /// Creates node elements when the set of nodes changes. An existing node stays in
-        /// place so a click can refresh without removing that button.
-        /// </summary>
-        public void Rebuild(IReadOnlyList<StarMapNodeModel> nodes)
-        {
-            if (_mapSurface == null)
+            if (_wired)
             {
                 return;
             }
 
-            List<StarMapNodeModel> validNodes = new();
-            List<Vector2> positions = new();
-            var count = nodes?.Count ?? 0;
-            for (var i = 0; i < count; i++)
+            _wired = true;
+            if (_pointerInput != null)
             {
-                var node = nodes[i];
-                if (node.NodeId.IsEmpty)
-                {
-                    continue;
-                }
-
-                validNodes.Add(node);
-                positions.Add(node.MapPosition);
+                _pointerInput.NodeClicked += ClickNode;
+                _pointerInput.NodeRightClicked += ClickTravel;
+                _pointerInput.NodeHovered += OnPointerHover;
             }
 
-            if (SameNodes(validNodes))
+            if (_cameraController != null)
             {
-                return;
+                _cameraController.Moved += OnCameraMoved;
             }
 
-            List<MapRouteSegment> preservedRoutes = null;
-            if (_routeSegments.Count > 0)
+            if (_worldView != null)
             {
-                preservedRoutes = new List<MapRouteSegment>(_routeSegments);
+                _worldView.NodesRebuilt += OnNodesRebuilt;
             }
 
-            ClearNodes();
-            EnsureRouteLayer();
-            EnsureFleetMarkerLayer();
-            EnsureHoverTooltip();
-            _originOffset = MapLayout.ComputeOriginOffset(positions, _scale, MapLayout.kDefaultPadding);
-            _routes.SetTransform(_scale, _originOffset);
-            _fleetMarkers.SetTransform(_scale, _originOffset);
-
-            for (var i = 0; i < validNodes.Count; i++)
+            if (_spaceSwitcher != null)
             {
-                var node = validNodes[i];
-                var view = new MapNodeView(node.NodeId, node.Kind);
-                view.Clicked += id => NodeClicked?.Invoke(id);
-                view.RightClicked += id => NodeRightClicked?.Invoke(id);
-                view.PointerEntered += OnNodePointerEntered;
-                view.PointerLeft += OnNodePointerLeft;
-                view.SetMapPosition(node.MapPosition, _scale, _originOffset);
-                _nodesById[node.NodeId] = view;
-                _mapSurface.Add(view.Root);
-            }
-
-            BringTooltipToFront();
-
-            if (preservedRoutes != null)
-            {
-                _routeSegments.Clear();
-                for (var i = 0; i < preservedRoutes.Count; i++)
-                {
-                    _routeSegments.Add(preservedRoutes[i]);
-                }
-
-                _routes.SetSegments(_routeSegments);
+                _spaceSwitcher.SpaceChanged += OnSpaceChanged;
             }
         }
 
-        /// <summary>
-        /// Replaces the drawn route set when it changes.
-        /// </summary>
-        public void SetRoutes(IReadOnlyList<MapRouteSegment> segments)
+        public void Apply(StarMapModel model)
         {
-            if (SameRoutes(segments))
+            if (model == null || !model.HasRun)
+            {
+                _worldView?.Clear();
+                _labels.Clear();
+                _inspection.ShowEmpty();
+                _cardNodeId = default;
+                return;
+            }
+
+            _worldView?.RebuildNodes(model.Nodes);
+            ApplyCameraAfterRebuild(model.Nodes);
+            _worldView?.SetRoutes(model.Routes);
+            for (var i = 0; i < model.Nodes.Count; i++)
+            {
+                var row = model.Nodes[i];
+                _worldView?.SetNodeState(row.NodeId, row.State);
+            }
+
+            if (IsGalaxyActive)
+            {
+                _labels.Rebuild(model.Nodes, _worldView);
+            }
+            else
+            {
+                _labels.Clear();
+            }
+
+            _worldView?.SetFleetMarkers(model.FleetMarkers);
+            _cardNodeId = model.Card.NodeId;
+            _inspection.Show(model.Card);
+        }
+
+        public void ApplyNodes(IReadOnlyList<StarMapNodeModel> nodes)
+        {
+            if (nodes == null || _worldView == null)
             {
                 return;
             }
 
-            _routeSegments.Clear();
-            if (segments != null)
+            for (var i = 0; i < nodes.Count; i++)
             {
-                for (var i = 0; i < segments.Count; i++)
+                var row = nodes[i];
+                _worldView.SetNodeState(row.NodeId, row.State);
+                if (IsGalaxyActive)
                 {
-                    _routeSegments.Add(segments[i]);
+                    _labels.SetNodeState(row.NodeId, row.State, _worldView);
                 }
             }
-
-            EnsureRouteLayer();
-            _routes.SetTransform(_scale, _originOffset);
-            _routes.SetSegments(_routeSegments);
         }
 
-        /// <summary>
-        /// Replaces parked and in-transit fleet arrows. Transit markers start a USS move.
-        /// </summary>
-        public void SetFleetMarkers(IReadOnlyList<FleetMarkerModel> markers)
+        public void ApplyRoutes(IReadOnlyList<MapRouteSegment> routes)
         {
-            EnsureFleetMarkerLayer();
-            _fleetMarkers.SetTransform(_scale, _originOffset);
-            _fleetMarkers.SetMarkers(markers);
-            BringMarkersAboveRoutes();
-            BringTooltipToFront();
+            _worldView?.SetRoutes(routes);
         }
 
-        public void SetHoverTooltip(StarMapHoverTooltipModel tooltip)
+        public void ApplyCard(StarMapCardModel card)
         {
-            EnsureHoverTooltip();
-            if (_hoverTooltip == null)
+            _cardNodeId = card.NodeId;
+            _inspection.Show(card);
+        }
+
+        public void ApplyHoverTooltip(StarMapHoverTooltipModel tooltip)
+        {
+            if (!IsGalaxyActive)
+            {
+                _labels.Clear();
+                return;
+            }
+
+            _labels.SetHoverTooltip(tooltip);
+        }
+
+        public void ApplyFleetMarkers(IReadOnlyList<FleetMarkerModel> markers)
+        {
+            _worldView?.SetFleetMarkers(markers);
+        }
+
+        internal void ClickNode(ContentId nodeId)
+        {
+            NodeSelected?.Invoke(nodeId);
+        }
+
+        internal void ClickTravel(ContentId destinationNodeId)
+        {
+            TravelRequested?.Invoke(destinationNodeId);
+        }
+
+        private void OnInspectionTravel()
+        {
+            if (_cardNodeId.IsEmpty)
             {
                 return;
             }
 
-            if (!tooltip.IsShown || _hoveredNodeId.IsEmpty || !_nodesById.TryGetValue(_hoveredNodeId, out var node))
-            {
-                _hoverTooltip.style.display = DisplayStyle.None;
-                return;
-            }
-
-            _hoverTooltip.text = tooltip.Reachable
-                ? tooltip.TargetName + " · " + tooltip.Seconds.ToString("0.#") + "s"
-                : tooltip.TargetName + " · unreachable";
-            var left = node.Root.style.left.value.value + MapLayout.kNodeSize + 8f;
-            var top = node.Root.style.top.value.value;
-            _hoverTooltip.style.left = left;
-            _hoverTooltip.style.top = top;
-            _hoverTooltip.style.display = DisplayStyle.Flex;
-            node.Root.BringToFront();
-            BringTooltipToFront();
+            TravelRequested?.Invoke(_cardNodeId);
         }
 
-        /// <summary>
-        /// Updates styling for one node.
-        /// </summary>
-        public void SetNodeState(ContentId nodeId, MapNodePresentationState state)
+        private void OnPointerHover(ContentId nodeId)
         {
-            if (!_nodesById.TryGetValue(nodeId, out var view))
+            if (!IsGalaxyActive)
             {
                 return;
             }
 
-            view.ApplyState(state);
-        }
-
-        /// <summary>
-        /// Removes all node and route elements from the map surface.
-        /// </summary>
-        public void Clear()
-        {
-            ClearNodes();
-            _routes?.Clear();
-            _routeSegments.Clear();
-            _fleetMarkers?.Clear();
-        }
-
-        private void ClearNodes()
-        {
-            // Rebuild removes nodes under the pointer without a leave event; clear hover
-            // so the presenter drops a stale dashed course preview.
-            if (!_hoveredNodeId.IsEmpty)
+            _labels.SetHover(nodeId);
+            if (!nodeId.IsEmpty && _worldView != null && _worldView.TryGetNodeWorld(nodeId, out var world))
             {
-                _hoveredNodeId = default;
-                NodeHovered?.Invoke(default);
-            }
-
-            if (_hoverTooltip != null)
-            {
-                _hoverTooltip.style.display = DisplayStyle.None;
-            }
-
-            foreach (var pair in _nodesById)
-            {
-                pair.Value.Root.RemoveFromHierarchy();
-            }
-
-            _nodesById.Clear();
-        }
-
-        /// <summary>
-        /// Returns whether a node element exists on the map.
-        /// </summary>
-        public bool HasNode(ContentId nodeId)
-        {
-            return _nodesById.ContainsKey(nodeId);
-        }
-
-        /// <summary>
-        /// Number of node elements currently on the map.
-        /// </summary>
-        public int NodeCount => _nodesById.Count;
-
-        /// <summary>
-        /// Number of route segments currently drawn.
-        /// </summary>
-        public int RouteCount => _routes != null ? _routes.SegmentCount : 0;
-
-        /// <summary>
-        /// Number of fleet marker elements currently on the map.
-        /// </summary>
-        public int FleetMarkerCount => _fleetMarkers != null ? _fleetMarkers.MarkerCount : 0;
-
-        private void OnNodePointerEntered(ContentId nodeId)
-        {
-            _hoveredNodeId = nodeId;
-            if (_nodesById.TryGetValue(nodeId, out var view))
-            {
-                view.Root.BringToFront();
-                BringTooltipToFront();
+                _labels.RememberWorld(nodeId, world);
             }
 
             NodeHovered?.Invoke(nodeId);
         }
 
-        private void OnNodePointerLeft(ContentId nodeId)
+        private void OnSpaceChanged(OverworldSpace space)
         {
-            if (_hoveredNodeId != nodeId)
+            if (space != OverworldSpace.Galaxy)
+            {
+                _labels.Clear();
+            }
+        }
+
+        private void OnCameraMoved()
+        {
+            if (!IsGalaxyActive)
+            {
+                _labels.Clear();
+                return;
+            }
+
+            _labels.RepositionAll();
+        }
+
+        private void OnNodesRebuilt()
+        {
+            if (!IsGalaxyActive)
+            {
+                _labels.Clear();
+                return;
+            }
+
+            _labels.RepositionAll();
+        }
+
+        private bool IsGalaxyActive => _spaceSwitcher == null || _spaceSwitcher.IsGalaxyActive;
+
+        private void ApplyCameraAfterRebuild(IReadOnlyList<StarMapNodeModel> nodes)
+        {
+            if (_worldView == null || !IsGalaxyActive)
             {
                 return;
             }
 
-            _hoveredNodeId = default;
-            NodeHovered?.Invoke(default);
-        }
-
-        private bool SameNodes(List<StarMapNodeModel> nodes)
-        {
-            if (_nodesById.Count != nodes.Count)
-            {
-                return false;
-            }
-
-            for (var i = 0; i < nodes.Count; i++)
-            {
-                if (!_nodesById.ContainsKey(nodes[i].NodeId))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private bool SameRoutes(IReadOnlyList<MapRouteSegment> segments)
-        {
-            var count = segments?.Count ?? 0;
-            if (_routeSegments.Count != count)
-            {
-                return false;
-            }
-
-            var matched = new bool[count];
-            for (var i = 0; i < count; i++)
-            {
-                var segment = segments[i];
-                var found = false;
-                for (var j = 0; j < count; j++)
-                {
-                    if (matched[j] || !SameSegment(_routeSegments[j], segment))
-                    {
-                        continue;
-                    }
-
-                    matched[j] = true;
-                    found = true;
-                    break;
-                }
-
-                if (!found)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private static bool SameSegment(MapRouteSegment left, MapRouteSegment right)
-        {
-            return left.State == right.State
-                && left.NodeAId == right.NodeAId
-                && left.NodeBId == right.NodeBId
-                && left.MapPositionA == right.MapPositionA
-                && left.MapPositionB == right.MapPositionB;
-        }
-
-        private void EnsureRouteLayer()
-        {
-            if (_mapSurface == null)
+            var bounds = _worldView.BuildBounds();
+            _cameraController?.SetBounds(bounds);
+            if (_cameraController == null || !_worldView.ConsumeNeedsCenter())
             {
                 return;
             }
 
-            if (_routes == null)
+            var focus = _worldView.FocusWorldFromModels(nodes);
+            if (focus.HasValue)
             {
-                _routes = new RouteView();
-            }
-
-            if (_routes.Root.parent == _mapSurface)
-            {
-                return;
-            }
-
-            _mapSurface.Insert(0, _routes.Root);
-        }
-
-        private void EnsureFleetMarkerLayer()
-        {
-            if (_mapSurface == null)
-            {
-                return;
-            }
-
-            if (_fleetMarkers == null)
-            {
-                _fleetMarkers = new FleetMarkerView();
-            }
-
-            if (_fleetMarkers.Root.parent == _mapSurface)
-            {
-                return;
-            }
-
-            // Above routes, below nodes and tooltip.
-            var insertAt = _routes != null && _routes.Root.parent == _mapSurface ? 1 : 0;
-            _mapSurface.Insert(insertAt, _fleetMarkers.Root);
-        }
-
-        private void EnsureHoverTooltip()
-        {
-            if (_mapSurface == null)
-            {
-                return;
-            }
-
-            if (_hoverTooltip != null && _hoverTooltip.parent == _mapSurface)
-            {
-                return;
-            }
-
-            _hoverTooltip = new Label();
-            _hoverTooltip.name = "map-hover-tooltip";
-            _hoverTooltip.AddToClassList("map-hover-tooltip");
-            _hoverTooltip.pickingMode = PickingMode.Ignore;
-            _hoverTooltip.style.display = DisplayStyle.None;
-            _mapSurface.Add(_hoverTooltip);
-        }
-
-        private void BringMarkersAboveRoutes()
-        {
-            // Routes stay at the back; markers sit above nodes so a transit arrow stays visible.
-            foreach (var pair in _nodesById)
-            {
-                pair.Value.Root.BringToFront();
-            }
-
-            if (_fleetMarkers != null && _fleetMarkers.Root.parent == _mapSurface)
-            {
-                _fleetMarkers.Root.BringToFront();
-            }
-        }
-
-        private void BringTooltipToFront()
-        {
-            if (_hoverTooltip != null && _hoverTooltip.parent == _mapSurface)
-            {
-                _hoverTooltip.BringToFront();
+                _cameraController.CenterOn(focus.Value, instant: true);
             }
         }
     }

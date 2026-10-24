@@ -1,3 +1,4 @@
+using System;
 using ProjectStarwatch.Core.Commands;
 using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Effects;
@@ -28,11 +29,11 @@ namespace ProjectStarwatch.Overworld.Services
             IEffectQuery effectQuery,
             ObjectDatabaseSO database)
         {
-            _routeService = routeService;
-            _clock = clock;
-            _events = events ?? throw new System.ArgumentNullException(nameof(events));
-            _effectQuery = effectQuery;
-            _database = database;
+            _routeService = routeService ?? throw new ArgumentNullException(nameof(routeService));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
+            _effectQuery = effectQuery ?? throw new ArgumentNullException(nameof(effectQuery));
+            _database = database ?? throw new ArgumentNullException(nameof(database));
         }
 
         /// <summary>

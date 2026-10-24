@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Effects;
@@ -24,9 +25,9 @@ namespace ProjectStarwatch.Overworld.UI
             IEffectQuery effectQuery,
             SimulationClock clock)
         {
-            _database = database;
-            _effectQuery = effectQuery;
-            _clock = clock;
+            _database = database ?? throw new ArgumentNullException(nameof(database));
+            _effectQuery = effectQuery ?? throw new ArgumentNullException(nameof(effectQuery));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         internal FleetPanelModel Describe(RunState run, OverworldSelection selection)

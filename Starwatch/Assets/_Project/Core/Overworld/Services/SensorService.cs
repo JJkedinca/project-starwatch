@@ -1,3 +1,4 @@
+using System;
 using ProjectStarwatch.Core.Commands;
 using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Events;
@@ -23,10 +24,10 @@ namespace ProjectStarwatch.Overworld.Services
             DomainEventBus events,
             SimulationClock clock)
         {
-            _archiveService = archiveService;
-            _objectDatabase = objectDatabase;
-            _events = events ?? throw new System.ArgumentNullException(nameof(events));
-            _clock = clock;
+            _archiveService = archiveService ?? throw new ArgumentNullException(nameof(archiveService));
+            _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         /// <summary>
@@ -49,7 +50,7 @@ namespace ProjectStarwatch.Overworld.Services
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Planet is not part of this universe.");
             }
 
-            if (_objectDatabase == null || !_objectDatabase.TryGetPlanet(planetId.Value, out var planet))
+            if (!_objectDatabase.TryGetPlanet(planetId.Value, out var planet))
             {
                 return CommandResult.Fail(CommandErrorCode.InvalidArgument, "Unknown planet.");
             }

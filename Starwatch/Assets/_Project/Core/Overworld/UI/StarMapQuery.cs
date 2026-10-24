@@ -338,6 +338,7 @@ namespace ProjectStarwatch.Overworld.UI
             var title = explored ? NodeLabel(node) : "Uncharted space";
             return new StarMapCardModel(
                 true,
+                node.Id,
                 title,
                 explored,
                 fleetPresent,
@@ -536,14 +537,31 @@ namespace ProjectStarwatch.Overworld.UI
             }
         }
 
+        /// <summary>
+        /// True when the node is still Hidden but the player has a known route into it
+        /// from an explored system. Persists after the fleet leaves that edge — discovery
+        /// lives on map knowledge, not current fleet position.
+        /// </summary>
         private bool IsKnownNeighbor(RunState run, ContentId nodeId)
         {
+            if (run == null
+                || nodeId.IsEmpty
+                || !run.Archive.TryGetMapKnowledge(ObserverId.Player, out var knowledge)
+                || knowledge.HasExploredNode(nodeId))
+            {
+                return false;
+            }
+
             var neighbors = run.Universe.MapGraph.GetNeighbors(nodeId);
             for (var i = 0; i < neighbors.Count; i++)
             {
                 var neighborId = neighbors[i];
-                if (run.Timeline.Fleets.HasFleetAt(neighborId)
-                    && _travelService.IsKnownAdjacentDestination(run, ObserverId.Player, neighborId, nodeId))
+                if (!knowledge.HasExploredNode(neighborId))
+                {
+                    continue;
+                }
+
+                if (knowledge.HasKnownRoute(RouteService.MakeRouteKey(neighborId, nodeId)))
                 {
                     return true;
                 }

@@ -52,6 +52,7 @@ namespace ProjectStarwatch.Overworld.UI
         public static StarMapCardModel Empty { get; } = new(
             isShown: true,
             hasSelection: false,
+            default,
             string.Empty,
             false,
             false,
@@ -68,6 +69,7 @@ namespace ProjectStarwatch.Overworld.UI
         public static StarMapCardModel Hidden { get; } = new(
             isShown: false,
             hasSelection: false,
+            default,
             string.Empty,
             false,
             false,
@@ -81,6 +83,8 @@ namespace ProjectStarwatch.Overworld.UI
         public bool IsShown { get; }
 
         public bool HasSelection { get; }
+
+        public ContentId NodeId { get; }
 
         public string Title { get; }
 
@@ -109,6 +113,7 @@ namespace ProjectStarwatch.Overworld.UI
 
         public StarMapCardModel(
             bool hasSelection,
+            ContentId nodeId,
             string title,
             bool isExplored,
             bool hasFleetPresent,
@@ -121,6 +126,7 @@ namespace ProjectStarwatch.Overworld.UI
             : this(
                 isShown: true,
                 hasSelection,
+                nodeId,
                 title,
                 isExplored,
                 hasFleetPresent,
@@ -136,6 +142,7 @@ namespace ProjectStarwatch.Overworld.UI
         private StarMapCardModel(
             bool isShown,
             bool hasSelection,
+            ContentId nodeId,
             string title,
             bool isExplored,
             bool hasFleetPresent,
@@ -148,6 +155,7 @@ namespace ProjectStarwatch.Overworld.UI
         {
             IsShown = isShown;
             HasSelection = hasSelection;
+            NodeId = nodeId;
             Title = title ?? string.Empty;
             IsExplored = isExplored;
             HasFleetPresent = hasFleetPresent;

@@ -35,10 +35,10 @@ namespace ProjectStarwatch.Research
             DomainEventBus events,
             SimulationClock clock)
         {
-            _database = database;
-            _effects = effects;
-            _events = events;
-            _clock = clock;
+            _database = database ?? throw new ArgumentNullException(nameof(database));
+            _effects = effects ?? throw new ArgumentNullException(nameof(effects));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         /// <summary>

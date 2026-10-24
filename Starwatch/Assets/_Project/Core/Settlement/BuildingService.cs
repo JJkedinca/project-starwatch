@@ -22,14 +22,11 @@ namespace ProjectStarwatch.Settlement
 
         public BuildingService(ObjectDatabaseSO objectDatabase, DomainEventBus events, SimulationClock clock)
         {
-            if (objectDatabase == null)
-            {
-                throw new ArgumentNullException(nameof(objectDatabase));
-            }
-
-            _objectDatabase = objectDatabase;
+            _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
             _catalog = objectDatabase.SettlementCatalog
-                ?? throw new ArgumentNullException(nameof(objectDatabase.SettlementCatalog));
+                ?? throw new ArgumentException(
+                    "ObjectDatabaseSO.SettlementCatalog is required.",
+                    nameof(objectDatabase));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }

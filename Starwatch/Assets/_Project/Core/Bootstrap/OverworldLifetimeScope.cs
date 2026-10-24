@@ -1,3 +1,4 @@
+using ProjectStarwatch.Overworld.Map;
 using ProjectStarwatch.Overworld.UI;
 using VContainer;
 using VContainer.Unity;
@@ -14,9 +15,16 @@ namespace ProjectStarwatch.Core.Bootstrap
         /// Wires the screen, the shared selection and status, and the group presenters.
         /// The binder is the only entry point, so it binds the screen before those presenters start.
         /// </summary>
+        /// TODO: Wrap grouped classes in an installer class for better organization
         protected override void Configure(IContainerBuilder builder)
         {
             builder.RegisterComponentInHierarchy<OverworldScreenView>();
+            builder.RegisterComponentInHierarchy<StarMapWorldView>();
+            builder.RegisterComponentInHierarchy<StarSystemWorldView>();
+            builder.RegisterComponentInHierarchy<OverworldSpaceSwitcher>();
+            builder.RegisterComponentInHierarchy<MapCameraController>();
+            builder.RegisterComponentInHierarchy<MapPointerInput>();
+            builder.RegisterComponentInHierarchy<SystemPointerInput>();
             builder.Register<OverworldSelection>(Lifetime.Scoped);
             builder.Register<OverworldStatus>(Lifetime.Scoped);
             builder.Register<StarMapQuery>(Lifetime.Scoped);

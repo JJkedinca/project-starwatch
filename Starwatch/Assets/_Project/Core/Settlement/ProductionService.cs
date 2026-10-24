@@ -23,7 +23,9 @@ namespace ProjectStarwatch.Settlement
             }
 
             _catalog = objectDatabase.SettlementCatalog
-                ?? throw new ArgumentNullException(nameof(objectDatabase.SettlementCatalog));
+                ?? throw new ArgumentException(
+                    "ObjectDatabaseSO.SettlementCatalog is required.",
+                    nameof(objectDatabase));
             _effectQuery = effectQuery;
         }
 

@@ -238,23 +238,132 @@ Every other stage is shared. Adding a shape means adding one new shape asset typ
 | Ring (later) | A hollow donut | One side of the ring | The two halves | Around the ring; rare links across the hollow | Two fronts that meet opposite home |
 | Clusters (later) | 4–6 islands of 4–7 nodes | Inside one cluster | One per cluster | Dense inside a cluster, single bridges between clusters | Strong, memorable chokepoints |
 
-Shape parameters live on each shape asset:
-
-- **Circle:** radius, position jitter, wedge count.
-- **Spiral:** arm count, arm twist (turns), arm width, core radius, bridges per arm pair.
-- **Linear:** length, lane count, side-pocket chance, lateral route chance.
-
 Shared parameters live on the generation-settings asset: target node count, minimum spacing between nodes, ring shares, route degree range, target seconds per jump, and the weighted list of shapes a run can roll.
 
-Every shape places points through the same minimum-spacing sampler (Poisson-disc sampling inside the shape's area), so nodes never overlap and spacing stays readable.
+### Implementing Shapes
+
+A shape describes geometry only. Placing nodes, building candidate routes, and connecting them are shared algorithms that call into the shape.
+
+#### Shape Contract
+
+Every shape derives from one abstract `GalaxyShapeSO`. It works in normalized space: the shape fits inside a unit box, and the generator scales the result to map coordinates at the end.
+
+| Member | Required | Purpose |
+| --- | --- | --- |
+| `Density(point)` | Yes | Returns 0 to 1. 0 means no node can sit there. Higher values attract more nodes |
+| `HomeAnchor` | Yes | The point where the home node is placed |
+| `FarAnchor` | Yes | The point the primary wormhole should be near. Rings still come from route distance |
+| `Describe(point)` | Yes | Returns the node's sector and shape tags: arm or lane index, and progress along it from 0 to 1 |
+| `RouteCost(a, b)` | No | Cost multiplier for a candidate route. Default 1. Infinity forbids the route |
+| `RouteGroup(a, b)` | No | Optional group key, such as an arm pair, with a cap on how many routes the group may keep |
+| `PlaceNodes(...)` | No | Override only when density sampling is not enough, such as Clusters |
+| `MinOutwardRoutes` | No | Minimum routes from each ring into the next. Default 3 |
+
+Each shape asset is configured in the Inspector. Adding a new shape means adding one subclass and one asset.
+
+#### Shared Node Placement
+
+Nodes are placed with best-candidate sampling, which spreads points evenly and always produces exactly the target count:
+
+1. Place the home node exactly at `HomeAnchor`.
+2. For each remaining node, draw about 12 candidate points. Draw each by picking a random point in the unit box and keeping it with probability `Density(point)`.
+3. Keep the candidate farthest from every existing node. A density bias lets denser areas win ties, so arms and lanes fill first.
+4. Reject the layout, and move to the next attempt, if any two nodes end up closer than the minimum spacing.
+5. Round positions to three decimal places, then call `Describe` on each node.
+
+#### Shared Route Candidates
+
+1. **Triangulate:** build a Delaunay triangulation of all nodes (Bowyer–Watson; about 35 points is trivial). Its edges are natural neighbor links and never cross, so later steps need no crossing checks.
+2. **Prune long edges:** drop any edge longer than 2.5 times the median edge length. This removes the long slivers along a band's edges and across a ring's hollow.
+3. **Apply shape rules:** multiply each edge's length by `RouteCost(a, b)` and drop forbidden edges.
+4. **Connect:** run Kruskal's algorithm (minimum spanning tree) on cost. If the tree cannot reach every node, reject the layout.
+5. **Fill:** add the cheapest remaining edges until each node has two to four routes, respecting each `RouteGroup` cap.
+
+#### Circle
+
+- **Density:** 1 inside a disc of radius 1, fading to 0.6 near the edge (`edgeFalloff`) so the rim is slightly sparser.
+- **Home anchor:** the center.
+- **Far anchor:** a point on the rim at a seeded random angle, so the wormhole's direction changes per run.
+- **Sectors:** the angle from the center, split into `wedgeCount` equal wedges. The whole wedge pattern is rotated by a seeded random offset.
+- **Routes:** every cost is 1.
+- **Parameters:** `wedgeCount`, `edgeFalloff`.
+
+#### Spiral
+
+- **Arm curves:** each arm `i` is a curve with progress `t` from 0 to 1:
+  - radius = `coreRadius + t × (1 − coreRadius)`
+  - angle = `armOffset(i) + twist × 2π × t`, where `armOffset(i) = 2π × i / armCount` plus a seeded rotation
+- **Density:** for each arm, find the distance `d` to the arm curve by sampling the curve at 64 points. Arm density is `exp(−(d / width(t))²)`, where the width grows slightly toward the tips. The core disc has density 0.6. A point takes the highest density of the core and all arms.
+- **Describe:** the sector is the nearest arm. Progress is that arm's `t` at the nearest curve sample. Core nodes are tagged as core and take the sector of their nearest arm.
+- **Home anchor:** arm 0 at `t = homeArmPosition` (default 0.45). Starting mid-arm gives the player two directions along their own arm, plus the core.
+- **Far anchor:** the tip (`t = 1`) of the arm most opposite arm 0.
+- **Routes:**
+  - Same arm: cost 1.
+  - Core to any arm: cost 1.5. This makes the core a natural junction.
+  - Between neighboring arms: cost 4, grouped by arm pair, and capped at `bridgesPerArmPair`.
+  - Between non-neighboring arms: forbidden.
+- **Parameters:** `armCount`, `twist`, `armWidth`, `coreRadius`, `homeArmPosition`, `bridgesPerArmPair`.
+
+#### Linear
+
+- **Centerline:** a gentle curve from left to right, `y = 0.5 + bend × sin(2π × waves × x + phase)`, with a seeded phase.
+- **Lanes:** `laneCount` parallel lanes offset from the centerline by `laneSpacing`.
+- **Density:** about 1 on each lane, 0.3 between lanes, and 0 beyond the band. Pockets are small seeded blobs just outside the band, each placed with `sidePocketChance` per tenth of the length.
+- **Describe:** the sector is the nearest lane. Progress is `x`. Pocket nodes take the sector of their nearest lane.
+- **Home anchor:** the left end on the middle lane. **Far anchor:** the right end on the middle lane.
+- **Routes:**
+  - Mostly along the band (more change in `x` than in `y`): cost 1.
+  - Mostly across lanes: cost `lateralCost` (default 3).
+  - Pocket to its own lane: cost 1. Pocket to any other lane: forbidden.
+- **Minimum outward routes:** 2.
+- **Parameters:** `laneCount`, `laneSpacing`, `bend`, `waves`, `sidePocketChance`, `lateralCost`.
+
+#### Ring (later)
+
+- **Density:** 1 between an inner radius (`hollowRadius`, default 0.5) and 1; 0 in the hollow.
+- **Home anchor:** angle 0 at the middle radius. **Far anchor:** the opposite side, at angle π.
+- **Sectors:** the two halves on either side of the line from home to the far anchor.
+- **Routes:** the long-edge prune removes most links across the hollow. Any that survive form one group capped at `hollowBridges` (default 1).
+
+#### Clusters (later)
+
+- **Overrides `PlaceNodes`:**
+  1. Place `clusterCount` centers with best-candidate sampling at a large spacing.
+  2. Split the node count across clusters, at least 4 per cluster.
+  3. Place each cluster's nodes inside a small disc around its center, using the shared sampler.
+- **Sectors:** the cluster index.
+- **Home anchor:** the center of a seeded cluster. **Far anchor:** the cluster center farthest from home.
+- **Routes:** within a cluster, cost 1. Between clusters, cost 5, grouped by cluster pair and capped at 1, so every link between clusters is a chokepoint.
+
+#### Determinism
+
+- Shapes draw randomness only from the layout stream passed in. Iteration order is fixed by node index, never by dictionary or hash-set order.
+- Rounding positions before triangulation keeps small floating-point differences from changing which edges exist. Cross-platform determinism for multiplayer may later need fixed-point math.
+
+#### Preview and Tests
+
+- **Preview window (editor only):** pick a shape asset and a seed, then step through seeds. It draws the density field, nodes colored by sector or ring, candidate routes versus kept routes, and the home and far anchors.
+- **Tests for each shape:**
+  - The exact node count is produced, and minimum spacing is respected.
+  - Home sits at the anchor, and every sector has at least three nodes.
+  - The graph is connected, and route-group caps are respected.
+  - The same seed gives the same layout.
+
+#### Code Layout
+
+All of this lives under `Core/Generation/`:
+
+- `GalaxyShapeSO`, with `CircleGalaxyShapeSO`, `SpiralGalaxyShapeSO`, and `LinearGalaxyShapeSO`.
+- `BestCandidateSampler`, `DelaunayTriangulator`, `CandidateRouteBuilder`, and `RouteConnector`.
+- `GalaxyLayout` (the shape stage's output): positions, sector and shape tags, home and far nodes, and the chosen routes.
 
 ### Routes
 
 The route connector is shared by every shape:
 
-1. **Candidates:** the shape proposes candidate routes, usually each node's nearest neighbors, filtered by its own rules. Each candidate has a cost: its length times the shape's preference multiplier.
+1. **Candidates:** Delaunay triangulation edges, with long edges pruned and the shape's cost and group rules applied (see [Shared Route Candidates](#shared-route-candidates)).
 2. **Connect:** a minimum spanning tree over the candidates guarantees a connected graph with the fewest long links.
-3. **Fill:** add the cheapest remaining candidates until each node has two to four routes. Skip any route that would cross an existing route or exceed the maximum length.
+3. **Fill:** add the cheapest remaining candidates until each node has two to four routes. Triangulation edges never cross, so no crossing check is needed.
 4. **Check outward routes:** after rings are assigned, each ring needs a minimum number of routes into the next ring, spread across sectors. This minimum is a shape parameter: 3 by default, 2 for Linear.
 
 Route rules:

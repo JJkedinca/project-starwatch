@@ -6,7 +6,7 @@ Work targets **Unity** (`Starwatch/`).
 
 ## Unity — Current
 
-- Replace the Phase 1 map placeholders with an authored icon set. Fog is a visibility class on each map node. The fleet, planets, and star systems are flat UI Toolkit markers. The plan's separate icon assets and `FogOfWarView` were not built.
+- Replace Phase 1 map placeholders with authored icon/art. The galaxy map is 3D world-space (`StarMapWorldView`); fog stays a visibility class on each node. Star-system planets are 3D world views with UITK chrome/labels. Deferred map polish (zoom, fleet pick, final art) lives in `Design/scratch/star-map-3d-impl.md`.
 
 ## Unity — Overworld UI (from overworld-ui-impl)
 
@@ -52,7 +52,9 @@ Different weapon capabilities wait until after that polish pass. Phase 4 does no
 ## Unity — Backlog
 
 - Split UI Toolkit presentation out of `ProjectStarwatch.Core` into its own assembly once Overworld/UI surface grows enough that domain/application vs presentation boundaries matter.
+- Consider renaming `Overworld.UI` (or splitting it) to something like `Overworld.Presentation` so the MVP cluster (`*Model` / `*Query` / `*Presenter` / `I*View`) is not read as UIToolkit-only. Keep 3D surfaces in `Overworld.Map`; UITK widgets can stay under UI or Presentation as a subfolder. Do this only when the boundary is worth a move — not piecemeal.
 - Determine what the best way to route UI input is
+- Moons should only orbit planets
 
 ## Unity — Deferred from Phase 3
 

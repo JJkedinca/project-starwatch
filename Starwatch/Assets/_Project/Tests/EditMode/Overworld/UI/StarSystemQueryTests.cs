@@ -57,8 +57,22 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(row.Visibility, Is.EqualTo(PlanetVisibility.SystemExplored));
             Assert.That(model.IsOpen, Is.True);
             Assert.That(model.Title, Is.EqualTo(home.Id.Value));
+            var expectedOrbit = -1;
+            for (var i = 0; i < home.PlanetIds.Count; i++)
+            {
+                if (home.PlanetIds[i] == prime)
+                {
+                    expectedOrbit = i;
+                    break;
+                }
+            }
+
+            Assert.That(expectedOrbit, Is.GreaterThanOrEqualTo(0));
+            Assert.That(model.OrbitSlotCount, Is.EqualTo(home.PlanetIds.Count));
             Assert.That(model.Planets, Has.Some.Matches<StarSystemPlanetModel>(
-                planetRow => planetRow.PlanetId == prime && planetRow.State.IsSelected));
+                planetRow => planetRow.PlanetId == prime
+                    && planetRow.State.IsSelected
+                    && planetRow.OrbitIndex == expectedOrbit));
 
             stack.SensorService.ScanPlanet(run, ObserverId.Player, prime);
 

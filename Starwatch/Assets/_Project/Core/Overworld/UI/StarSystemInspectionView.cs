@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.UIElements;
 
 namespace ProjectStarwatch.Overworld.UI
@@ -7,6 +8,8 @@ namespace ProjectStarwatch.Overworld.UI
     /// </summary>
     internal sealed class StarSystemInspectionView
     {
+        public event Action TravelClicked;
+
         private VisualElement _root;
         private Label _title;
         private VisualElement _chips;
@@ -14,6 +17,7 @@ namespace ProjectStarwatch.Overworld.UI
         private Label _fleets;
         private Label _relation;
         private Label _hint;
+        private Button _travelButton;
 
         /// <summary>
         /// Binds the StarSystemInspection.uxml root.
@@ -32,6 +36,12 @@ namespace ProjectStarwatch.Overworld.UI
             _fleets = root.Q<Label>("inspection-fleets");
             _relation = root.Q<Label>("inspection-relation");
             _hint = root.Q<Label>("inspection-hint");
+            _travelButton = root.Q<Button>("inspection-travel");
+            if (_travelButton != null)
+            {
+                _travelButton.clicked -= OnTravelClicked;
+                _travelButton.clicked += OnTravelClicked;
+            }
         }
 
         /// <summary>
@@ -54,6 +64,7 @@ namespace ProjectStarwatch.Overworld.UI
             SetLabel(_fleets, string.Empty);
             SetLabel(_relation, string.Empty);
             SetLabel(_hint, string.Empty);
+            SetTravelVisible(false);
         }
 
         /// <summary>
@@ -107,8 +118,25 @@ namespace ProjectStarwatch.Overworld.UI
             SetLabel(
                 _hint,
                 card.ShowTravelHint
-                    ? "Right-click to send " + (string.IsNullOrEmpty(card.FleetName) ? "fleet" : card.FleetName)
+                    ? "Right-click the map or Travel to send "
+                        + (string.IsNullOrEmpty(card.FleetName) ? "fleet" : card.FleetName)
                     : string.Empty);
+            SetTravelVisible(card.ShowTravelHint);
+        }
+
+        private void OnTravelClicked()
+        {
+            TravelClicked?.Invoke();
+        }
+
+        private void SetTravelVisible(bool visible)
+        {
+            if (_travelButton == null)
+            {
+                return;
+            }
+
+            _travelButton.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void ShowChips(StarMapCardModel card)
