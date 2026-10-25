@@ -1,6 +1,7 @@
 using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Effects;
 using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Generation;
 using ProjectStarwatch.Core.Persistence;
 using ProjectStarwatch.Core.Presentation;
 using ProjectStarwatch.Core.Run;
@@ -67,12 +68,14 @@ namespace ProjectStarwatch.Core.Bootstrap
                 return;
             }
 
+            _objectDatabase.ValidateRequired();
             _presentationDatabase.ValidateRequired();
 
             builder.RegisterInstance(_updateManager);
             builder.RegisterInstance<IUpdateManager>(_updateManager);
             builder.RegisterInstance(_objectDatabase);
             builder.RegisterInstance(_presentationDatabase);
+            builder.RegisterInstance(new GalaxyGenerator(_objectDatabase.GalaxyCatalog));
             builder.Register<SimulationClock>(Lifetime.Singleton);
             builder.Register<SimulationLoop>(Lifetime.Singleton);
             builder.Register<ISimulationUpdateManager>(resolver => resolver.Resolve<SimulationLoop>(), Lifetime.Singleton);

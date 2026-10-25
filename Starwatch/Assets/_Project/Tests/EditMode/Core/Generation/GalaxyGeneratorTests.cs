@@ -1,0 +1,217 @@
+using System.Collections.Generic;
+using NUnit.Framework;
+using ProjectStarwatch.Core.Data;
+using ProjectStarwatch.Core.Generation;
+using ProjectStarwatch.Core.Identifiers;
+using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Timeline;
+using ProjectStarwatch.Core.Run.Universe;
+using UnityEngine;
+
+namespace ProjectStarwatch.Tests.EditMode.Core.Generation
+{
+    /// <summary>
+    /// EditMode coverage for seed-driven galaxy scenario generation.
+    /// </summary>
+    public sealed class GalaxyGeneratorTests
+    {
+        [Test]
+        public void TryCreateScenario_SameSeed_ProducesSameScenario()
+        {
+            var catalogA = CreateCatalog(out var settingsA, out var shapeA);
+            var catalogB = CreateCatalog(out var settingsB, out var shapeB);
+            var generatorA = new GalaxyGenerator(catalogA);
+            var generatorB = new GalaxyGenerator(catalogB);
+            var seed = RunSeed.FromValue(12345);
+
+            Assert.That(
+                generatorA.TryCreateScenario(
+                    seed,
+                    GalaxyCatalogSO.DefaultSizeId,
+                    GalaxyCatalogSO.DefaultShapeId,
+                    settlementCatalog: null,
+                    out var first),
+                Is.True);
+            Assert.That(
+                generatorB.TryCreateScenario(
+                    seed,
+                    GalaxyCatalogSO.DefaultSizeId,
+                    GalaxyCatalogSO.DefaultShapeId,
+                    settlementCatalog: null,
+                    out var second),
+                Is.True);
+
+            Assert.That(first.ScenarioId, Is.EqualTo(GalaxyGenerator.ScenarioId));
+            Assert.That(first.Nodes.Count, Is.EqualTo(second.Nodes.Count));
+            Assert.That(first.Routes.Count, Is.EqualTo(second.Routes.Count));
+            Assert.That(first.Planets.Count, Is.EqualTo(second.Planets.Count));
+            Assert.That(first.StartingEmpire.HomeSystemId, Is.EqualTo(second.StartingEmpire.HomeSystemId));
+
+            for (var i = 0; i < first.Nodes.Count; i++)
+            {
+                Assert.That(first.Nodes[i].Id, Is.EqualTo(second.Nodes[i].Id));
+                Assert.That(first.Nodes[i].MapPosition, Is.EqualTo(second.Nodes[i].MapPosition));
+            }
+
+            for (var i = 0; i < first.Routes.Count; i++)
+            {
+                Assert.That(first.Routes[i].NodeAId, Is.EqualTo(second.Routes[i].NodeAId));
+                Assert.That(first.Routes[i].NodeBId, Is.EqualTo(second.Routes[i].NodeBId));
+                Assert.That(first.Routes[i].TravelDurationSeconds, Is.EqualTo(second.Routes[i].TravelDurationSeconds));
+            }
+
+            Object.DestroyImmediate(first);
+            Object.DestroyImmediate(second);
+            DestroyCatalog(catalogA, settingsA, shapeA);
+            DestroyCatalog(catalogB, settingsB, shapeB);
+        }
+
+        [Test]
+        public void TryCreateScenario_UniverseLoaderAcceptsGeneratedScenario()
+        {
+            var catalog = CreateCatalog(out var settings, out var shape);
+            var generator = new GalaxyGenerator(catalog);
+            Assert.That(
+                generator.TryCreateScenario(
+                    RunSeed.FromValue(77),
+                    GalaxyCatalogSO.DefaultSizeId,
+                    GalaxyCatalogSO.DefaultShapeId,
+                    settlementCatalog: null,
+                    out var scenario),
+                Is.True);
+
+            var loader = new UniverseLoader(new TimelineFactory());
+            Assert.That(
+                loader.TryLoad(scenario, new EntityIdFactory(), out var universe, out _, out _),
+                Is.True);
+            Assert.That(universe.MapGraph.IsFullyConnected(), Is.True);
+            Assert.That(universe.ScenarioId, Is.EqualTo(GalaxyGenerator.ScenarioId));
+
+            Object.DestroyImmediate(scenario);
+            DestroyCatalog(catalog, settings, shape);
+        }
+
+        [Test]
+        public void TryCreateScenario_ProducesConnectedRoutes_AndHomeColonyPlanet()
+        {
+            var catalog = CreateCatalog(out var settings, out var shape);
+            var generator = new GalaxyGenerator(catalog);
+
+            Assert.That(
+                generator.TryCreateScenario(
+                    RunSeed.FromValue(42),
+                    GalaxyCatalogSO.DefaultSizeId,
+                    GalaxyCatalogSO.DefaultShapeId,
+                    settlementCatalog: null,
+                    out var scenario),
+                Is.True);
+
+            Assert.That(scenario.Routes.Count, Is.GreaterThanOrEqualTo(scenario.Nodes.Count - 1));
+            Assert.That(IsConnected(scenario), Is.True);
+
+            var homeId = scenario.StartingEmpire.HomeSystemId;
+            MapNodeDefinition homeNode = null;
+            for (var i = 0; i < scenario.Nodes.Count; i++)
+            {
+                if (scenario.Nodes[i].Id == homeId)
+                {
+                    homeNode = scenario.Nodes[i];
+                    break;
+                }
+            }
+
+            Assert.That(homeNode, Is.Not.Null);
+            Assert.That(homeNode.Kind, Is.EqualTo(MapNodeKind.System));
+            Assert.That(homeNode.PlanetIds.Count, Is.GreaterThanOrEqualTo(2));
+
+            var homePlanetId = scenario.StartingEmpire.StartingSettlements[0].PlanetId;
+            Assert.That(homePlanetId, Is.EqualTo(homeNode.PlanetIds[0]));
+
+            var foundHomePlanet = false;
+            for (var i = 0; i < scenario.Planets.Count; i++)
+            {
+                if (scenario.Planets[i].Id == homePlanetId)
+                {
+                    foundHomePlanet = true;
+                    Assert.That(scenario.Planets[i].SystemId, Is.EqualTo(homeId));
+                    // Four starter producers at footprint 2 need 8; budget matches authored planets (10).
+                    Assert.That(scenario.Planets[i].FootprintBudget, Is.GreaterThanOrEqualTo(8));
+                    break;
+                }
+            }
+
+            Assert.That(foundHomePlanet, Is.True);
+
+            Object.DestroyImmediate(scenario);
+            DestroyCatalog(catalog, settings, shape);
+        }
+
+        private static GalaxyCatalogSO CreateCatalog(
+            out GenerationSettingsSO settings,
+            out CircleGalaxyShapeSO shape)
+        {
+            settings = ScriptableObject.CreateInstance<GenerationSettingsSO>();
+            shape = ScriptableObject.CreateInstance<CircleGalaxyShapeSO>();
+            var catalog = ScriptableObject.CreateInstance<GalaxyCatalogSO>();
+            catalog.SetContent(
+                new List<GalaxySizeOption> { new(GalaxySizeId.Medium, "Medium", settings) },
+                new List<GalaxyShapeOption> { new(GalaxyShapeId.Circle, "Circle", shape) });
+            return catalog;
+        }
+
+        private static void DestroyCatalog(
+            GalaxyCatalogSO catalog,
+            GenerationSettingsSO settings,
+            CircleGalaxyShapeSO shape)
+        {
+            Object.DestroyImmediate(catalog);
+            Object.DestroyImmediate(settings);
+            Object.DestroyImmediate(shape);
+        }
+
+        private static bool IsConnected(ScenarioDefinition scenario)
+        {
+            if (scenario.Nodes == null || scenario.Nodes.Count == 0)
+            {
+                return false;
+            }
+
+            var adjacency = new Dictionary<ContentId, List<ContentId>>();
+            for (var i = 0; i < scenario.Nodes.Count; i++)
+            {
+                adjacency[scenario.Nodes[i].Id] = new List<ContentId>();
+            }
+
+            for (var i = 0; i < scenario.Routes.Count; i++)
+            {
+                var route = scenario.Routes[i];
+                if (!adjacency.ContainsKey(route.NodeAId) || !adjacency.ContainsKey(route.NodeBId))
+                {
+                    return false;
+                }
+
+                adjacency[route.NodeAId].Add(route.NodeBId);
+                adjacency[route.NodeBId].Add(route.NodeAId);
+            }
+
+            var start = scenario.Nodes[0].Id;
+            var seen = new HashSet<ContentId> { start };
+            var queue = new Queue<ContentId>();
+            queue.Enqueue(start);
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                var neighbors = adjacency[current];
+                for (var i = 0; i < neighbors.Count; i++)
+                {
+                    if (seen.Add(neighbors[i]))
+                    {
+                        queue.Enqueue(neighbors[i]);
+                    }
+                }
+            }
+
+            return seen.Count == scenario.Nodes.Count;
+        }
+    }
+}

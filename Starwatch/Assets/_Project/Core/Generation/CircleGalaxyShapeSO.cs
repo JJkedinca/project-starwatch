@@ -7,7 +7,7 @@ namespace ProjectStarwatch.Core.Generation
     /// Open disc galaxy in the unit box: sectors as angular wedges around the disc center.
     /// Density is 1 at the center and falls to <see cref="EdgeFalloff"/> at the rim.
     /// </summary>
-    [CreateAssetMenu(fileName = "CircleGalaxyShape", menuName = "Starwatch/Galaxy Shapes/Circle")]
+    [CreateAssetMenu(fileName = "CircleGalaxyShape", menuName = "Starwatch/Map/Generation/Shapes/Circle")]
     public sealed class CircleGalaxyShapeSO : GalaxyShapeSO
     {
         /// <summary>Disc radius in unit-box space so the circle fits inside [0,1]×[0,1] around the center.</summary>

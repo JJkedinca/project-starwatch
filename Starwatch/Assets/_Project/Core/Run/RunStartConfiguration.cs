@@ -1,3 +1,5 @@
+using ProjectStarwatch.Core.Generation;
+
 namespace ProjectStarwatch.Core.Run
 {
     /// <summary>
@@ -5,16 +7,28 @@ namespace ProjectStarwatch.Core.Run
     /// </summary>
     public sealed class RunStartConfiguration
     {
-        public const string DefaultScenarioId = "authored-vertical-slice";
+        public const string DefaultScenarioId = GalaxyGenerator.ScenarioId;
 
         public string ScenarioId { get; }
 
         public int? Seed { get; }
 
-        public RunStartConfiguration(string scenarioId, int? seed)
+        /// <summary>Galaxy size. Used when generating.</summary>
+        public GalaxySizeId GalaxySizeId { get; }
+
+        /// <summary>Galaxy shape. Used when generating.</summary>
+        public GalaxyShapeId GalaxyShapeId { get; }
+
+        public RunStartConfiguration(
+            string scenarioId,
+            int? seed,
+            GalaxySizeId galaxySizeId = GalaxyCatalogSO.DefaultSizeId,
+            GalaxyShapeId galaxyShapeId = GalaxyCatalogSO.DefaultShapeId)
         {
             ScenarioId = string.IsNullOrWhiteSpace(scenarioId) ? DefaultScenarioId : scenarioId;
             Seed = seed;
+            GalaxySizeId = galaxySizeId;
+            GalaxyShapeId = galaxyShapeId;
         }
     }
 }

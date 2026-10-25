@@ -1,5 +1,6 @@
 using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Generation;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Simulation;
@@ -14,6 +15,24 @@ namespace ProjectStarwatch.Tests.EditMode.Core
     /// </summary>
     public sealed class RunManagerTests
     {
+        [Test]
+        public void CreateRun_GeneratedGalaxy_LoadsConnectedUniverse()
+        {
+            var manager = RunTestFixture.CreateRunManager();
+            var seed = RunSeed.FromValue(4242);
+
+            var run = manager.CreateRun(GalaxyGenerator.ScenarioId, seed);
+
+            Assert.That(run, Is.Not.Null);
+            Assert.That(run.Universe.ScenarioId, Is.EqualTo(GalaxyGenerator.ScenarioId));
+            Assert.That(run.Universe.MapGraph.IsFullyConnected(), Is.True);
+            Assert.That(run.Universe.MapGraph.NodeCount, Is.GreaterThanOrEqualTo(12));
+            Assert.That(run.Timeline.Fleets, Has.Count.EqualTo(1));
+            Assert.That(
+                run.Archive.PlayerMapKnowledge.HasExploredNode(run.Universe.StartingEmpire.HomeSystemId),
+                Is.True);
+        }
+
         [Test]
         public void CreateRun_CreatesUniverseTimelineArchiveSeedAndStarterFleet()
         {

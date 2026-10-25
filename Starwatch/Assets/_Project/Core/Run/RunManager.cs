@@ -2,6 +2,7 @@ using System;
 using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Generation;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Core.Run.Universe;
@@ -23,6 +24,7 @@ namespace ProjectStarwatch.Core.Run
         private readonly TimelineFactory _timelineFactory;
         private readonly UniverseLoader _universeLoader;
         private readonly ObjectDatabaseSO _objectDatabase;
+        private readonly GalaxyGenerator _galaxyGenerator;
         private readonly EventJournal _eventJournal;
         private readonly DomainEventBus _events;
         private readonly SimulationLoop _simulationLoop;
@@ -32,6 +34,7 @@ namespace ProjectStarwatch.Core.Run
             TimelineFactory timelineFactory,
             UniverseLoader universeLoader,
             ObjectDatabaseSO objectDatabase,
+            GalaxyGenerator galaxyGenerator,
             EventJournal eventJournal,
             DomainEventBus events,
             SimulationLoop simulationLoop)
@@ -39,29 +42,40 @@ namespace ProjectStarwatch.Core.Run
             _timelineFactory = timelineFactory ?? throw new ArgumentNullException(nameof(timelineFactory));
             _universeLoader = universeLoader ?? throw new ArgumentNullException(nameof(universeLoader));
             _objectDatabase = objectDatabase ?? throw new ArgumentNullException(nameof(objectDatabase));
+            _galaxyGenerator = galaxyGenerator ?? throw new ArgumentNullException(nameof(galaxyGenerator));
             _eventJournal = eventJournal ?? throw new ArgumentNullException(nameof(eventJournal));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _simulationLoop = simulationLoop ?? throw new ArgumentNullException(nameof(simulationLoop));
         }
 
         /// <summary>
-        /// Creates a new run from the object database scenario, clearing the project journal.
+        /// Creates a new run from configuration, clearing the project journal.
+        /// Resolves an omitted seed to <see cref="Environment.TickCount"/>.
         /// </summary>
         public RunState CreateRun(
-            string scenarioId,
-            RunSeed seed,
+            RunStartConfiguration configuration,
             StartingEmpireDefinition startingEmpireOverride = null)
         {
-            if (string.IsNullOrWhiteSpace(scenarioId))
+            if (configuration == null)
+            {
+                Debug.LogError("RunManager.CreateRun requires a configuration.");
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(configuration.ScenarioId))
             {
                 Debug.LogError("RunManager.CreateRun requires a scenario id.");
                 return null;
             }
 
-            if (!_objectDatabase.TryGetScenario(scenarioId, out var definition))
+            var seed = RunSeed.FromValue(configuration.Seed ?? Environment.TickCount);
+            if (!TryResolveScenario(
+                    configuration.ScenarioId,
+                    seed,
+                    configuration.GalaxySizeId,
+                    configuration.GalaxyShapeId,
+                    out var definition))
             {
-                Debug.LogError($"RunManager.CreateRun could not find scenario '{scenarioId}'.");
-                Debug.LogWarning($"Available scenarios: {string.Join(", ", _objectDatabase.Scenarios.Keys)}");
                 return null;
             }
 
@@ -82,6 +96,58 @@ namespace ProjectStarwatch.Core.Run
             _currentRun = new RunState(seed, universe, timeline, archive, rewindIndex: 0, random, entityIds);
             _simulationLoop.NotifyRunChanged(_currentRun);
             return _currentRun;
+        }
+
+        /// <summary>
+        /// Test/helper overload that builds a <see cref="RunStartConfiguration"/> from scenario and seed.
+        /// </summary>
+        public RunState CreateRun(
+            string scenarioId,
+            RunSeed seed,
+            StartingEmpireDefinition startingEmpireOverride = null)
+        {
+            if (string.IsNullOrWhiteSpace(scenarioId))
+            {
+                Debug.LogError("RunManager.CreateRun requires a scenario id.");
+                return null;
+            }
+
+            return CreateRun(new RunStartConfiguration(scenarioId, seed.Value), startingEmpireOverride);
+        }
+
+        private bool TryResolveScenario(
+            string scenarioId,
+            RunSeed seed,
+            GalaxySizeId galaxySizeId,
+            GalaxyShapeId galaxyShapeId,
+            out ScenarioDefinition definition)
+        {
+            definition = null;
+            if (scenarioId == GalaxyGenerator.ScenarioId)
+            {
+                if (!_galaxyGenerator.TryCreateScenario(
+                        seed,
+                        galaxySizeId,
+                        galaxyShapeId,
+                        _objectDatabase.SettlementCatalog,
+                        out definition))
+                {
+                    Debug.LogError("RunManager.CreateRun failed to generate a galaxy scenario.");
+                    return false;
+                }
+
+                _objectDatabase.RegisterScenario(definition);
+                return true;
+            }
+
+            if (!_objectDatabase.TryGetScenario(scenarioId, out definition))
+            {
+                Debug.LogError($"RunManager.CreateRun could not find scenario '{scenarioId}'.");
+                Debug.LogWarning($"Available scenarios: {string.Join(", ", _objectDatabase.Scenarios.Keys)}");
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>

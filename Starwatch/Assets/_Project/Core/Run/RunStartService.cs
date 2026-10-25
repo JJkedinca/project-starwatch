@@ -56,8 +56,7 @@ namespace ProjectStarwatch.Core.Run
             _isStarting = true;
             try
             {
-                var seedValue = configuration.Seed ?? Environment.TickCount;
-                var run = _runManager.CreateRun(configuration.ScenarioId, RunSeed.FromValue(seedValue));
+                var run = _runManager.CreateRun(configuration);
                 if (run == null)
                 {
                     return false;

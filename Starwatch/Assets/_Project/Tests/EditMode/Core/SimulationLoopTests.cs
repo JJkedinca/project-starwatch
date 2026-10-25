@@ -130,6 +130,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 timelineFactory,
                 new UniverseLoader(timelineFactory),
                 database,
+                RunTestFixture.CreateGalaxyGenerator(database),
                 journal,
                 new DomainEventBus(journal),
                 loop);
