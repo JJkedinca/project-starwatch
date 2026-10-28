@@ -36,26 +36,15 @@ namespace ProjectStarwatch.Core.Bootstrap
             _viewBridge.QuitRequested += OnQuitRequested;
             _viewBridge.Bind();
             _viewBridge.SetScenarios(ListScenarioIds());
+            var catalog = _database.GalaxyCatalog;
+            _viewBridge.SetGalaxyOptions(
+                catalog != null ? catalog.Sizes : null,
+                catalog != null ? catalog.Shapes : null);
         }
 
         private List<string> ListScenarioIds()
         {
-            List<string> ids = new();
-            if (_database.Scenarios == null)
-            {
-                return ids;
-            }
-
-            foreach (var pair in _database.Scenarios)
-            {
-                if (!string.IsNullOrWhiteSpace(pair.Key))
-                {
-                    ids.Add(pair.Key);
-                }
-            }
-
-            ids.Sort(StringComparer.Ordinal);
-            return ids;
+            return _database.ListScenarioIds();
         }
 
         private void OnStartRunRequested()
@@ -80,7 +69,9 @@ namespace ProjectStarwatch.Core.Bootstrap
             {
                 var configuration = new RunStartConfiguration(
                     _viewBridge.ScenarioId,
-                    _viewBridge.TryGetSeed(out var seed) ? seed : (int?)null);
+                    _viewBridge.TryGetSeed(out var seed) ? seed : (int?)null,
+                    _viewBridge.GalaxySizeId,
+                    _viewBridge.GalaxyShapeId);
 
                 var started = await _runStartService.StartRunAsync(configuration);
                 if (!started)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ProjectStarwatch.Core.Generation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -33,15 +34,25 @@ namespace ProjectStarwatch.Core.Bootstrap
             }
         }
 
+        public GalaxySizeId GalaxySizeId =>
+            SelectedEnum(_sizeDropdown, _sizeIds, GalaxyCatalogSO.DefaultSizeId);
+
+        public GalaxyShapeId GalaxyShapeId =>
+            SelectedEnum(_shapeDropdown, _shapeIds, GalaxyCatalogSO.DefaultShapeId);
+
         [SerializeField]
         private UIDocument _document;
 
         private VisualElement _titleScreen;
         private VisualElement _newRunPanel;
         private DropdownField _scenarioDropdown;
+        private DropdownField _sizeDropdown;
+        private DropdownField _shapeDropdown;
         private TextField _seedField;
         private Button _launchButton;
         private readonly List<string> _scenarioIds = new();
+        private readonly List<GalaxySizeId> _sizeIds = new();
+        private readonly List<GalaxyShapeId> _shapeIds = new();
 
         /// <summary>
         /// Queries the visual tree and hooks button callbacks to intent events.
@@ -63,6 +74,8 @@ namespace ProjectStarwatch.Core.Bootstrap
             _titleScreen = root.Q<VisualElement>("title-screen");
             _newRunPanel = root.Q<VisualElement>("new-run-panel");
             _scenarioDropdown = root.Q<DropdownField>("scenario-dropdown");
+            _sizeDropdown = root.Q<DropdownField>("galaxy-size-dropdown");
+            _shapeDropdown = root.Q<DropdownField>("galaxy-shape-dropdown");
             _seedField = root.Q<TextField>("seed-field");
 
             var newRun = root.Q<Button>("new-run-button");
@@ -97,6 +110,11 @@ namespace ProjectStarwatch.Core.Bootstrap
             if (quitButton != null)
             {
                 quitButton.clicked += () => QuitRequested?.Invoke();
+            }
+
+            if (_scenarioDropdown != null)
+            {
+                _scenarioDropdown.RegisterValueChangedCallback(_ => RefreshGenerationFieldVisibility());
             }
 
             ShowTitle();
@@ -144,6 +162,20 @@ namespace ProjectStarwatch.Core.Bootstrap
 
                 _scenarioDropdown.index = defaultIndex;
             }
+
+            RefreshGenerationFieldVisibility();
+        }
+
+        /// <summary>
+        /// Fills size and shape dropdowns from the galaxy catalog.
+        /// </summary>
+        public void SetGalaxyOptions(
+            IReadOnlyList<GalaxySizeOption> sizes,
+            IReadOnlyList<GalaxyShapeOption> shapes)
+        {
+            FillSizeDropdown(sizes);
+            FillShapeDropdown(shapes);
+            RefreshGenerationFieldVisibility();
         }
 
         /// <summary>
@@ -188,6 +220,114 @@ namespace ProjectStarwatch.Core.Bootstrap
         /// Exposes the current seed field text for tests.
         /// </summary>
         public string SeedFieldText => _seedField != null ? _seedField.value : string.Empty;
+
+        private void FillSizeDropdown(IReadOnlyList<GalaxySizeOption> sizes)
+        {
+            _sizeIds.Clear();
+            List<string> choices = new();
+            if (sizes != null)
+            {
+                for (var i = 0; i < sizes.Count; i++)
+                {
+                    var option = sizes[i];
+                    if (option == null || !option.IsValid)
+                    {
+                        continue;
+                    }
+
+                    _sizeIds.Add(option.Id);
+                    choices.Add(option.DisplayName);
+                }
+            }
+
+            ApplyDropdown(_sizeDropdown, choices, IndexOf(_sizeIds, GalaxyCatalogSO.DefaultSizeId));
+        }
+
+        private void FillShapeDropdown(IReadOnlyList<GalaxyShapeOption> shapes)
+        {
+            _shapeIds.Clear();
+            List<string> choices = new();
+            if (shapes != null)
+            {
+                for (var i = 0; i < shapes.Count; i++)
+                {
+                    var option = shapes[i];
+                    if (option == null || !option.IsValid)
+                    {
+                        continue;
+                    }
+
+                    _shapeIds.Add(option.Id);
+                    choices.Add(option.DisplayName);
+                }
+            }
+
+            ApplyDropdown(_shapeDropdown, choices, IndexOf(_shapeIds, GalaxyCatalogSO.DefaultShapeId));
+        }
+
+        private void RefreshGenerationFieldVisibility()
+        {
+            var showGeneration = ScenarioId == GalaxyGenerator.ScenarioId;
+            SetDropdownVisible(_sizeDropdown, showGeneration && _sizeIds.Count > 0);
+            SetDropdownVisible(_shapeDropdown, showGeneration && _shapeIds.Count > 0);
+        }
+
+        private static void SetDropdownVisible(DropdownField dropdown, bool visible)
+        {
+            if (dropdown == null)
+            {
+                return;
+            }
+
+            dropdown.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private static void ApplyDropdown(DropdownField dropdown, List<string> choices, int defaultIndex)
+        {
+            if (dropdown == null)
+            {
+                return;
+            }
+
+            dropdown.choices = choices;
+            if (choices.Count == 0)
+            {
+                return;
+            }
+
+            dropdown.index = Mathf.Clamp(defaultIndex, 0, choices.Count - 1);
+        }
+
+        private static int IndexOf<T>(List<T> ids, T defaultId)
+            where T : struct
+        {
+            for (var i = 0; i < ids.Count; i++)
+            {
+                if (EqualityComparer<T>.Default.Equals(ids[i], defaultId))
+                {
+                    return i;
+                }
+            }
+
+            return 0;
+        }
+
+        private static T SelectedEnum<T>(DropdownField dropdown, List<T> ids, T fallback)
+            where T : struct
+        {
+            if (dropdown == null || ids.Count == 0)
+            {
+                return fallback;
+            }
+
+            var index = dropdown.index;
+            if (index < 0 || index >= ids.Count)
+            {
+                return ids[0];
+            }
+
+            return ids[index];
+        }
 
         private void ShowNewRun()
         {

@@ -19,9 +19,7 @@ namespace ProjectStarwatch.Overworld.Services
             ObserverId observerId,
             ContentId nodeId)
         {
-            if (archive == null
-                || nodeId.IsEmpty
-                || !archive.TryGetMapKnowledge(observerId, out var knowledge))
+            if (nodeId.IsEmpty)
             {
                 return MapNodeVisibility.Hidden;
             }
@@ -31,9 +29,18 @@ namespace ProjectStarwatch.Overworld.Services
                 return MapNodeVisibility.Present;
             }
 
+#if STARWATCH_DEBUG
+            return MapNodeVisibility.Explored;
+#else
+            if (archive == null || !archive.TryGetMapKnowledge(observerId, out var knowledge))
+            {
+                return MapNodeVisibility.Hidden;
+            }
+
             return knowledge.HasExploredNode(nodeId)
                 ? MapNodeVisibility.Explored
                 : MapNodeVisibility.Hidden;
+#endif
         }
 
         /// <summary>
@@ -45,9 +52,15 @@ namespace ProjectStarwatch.Overworld.Services
             ContentId systemId,
             ContentId planetId)
         {
-            if (archive == null
-                || planetId.IsEmpty
-                || !archive.TryGetMapKnowledge(observerId, out var knowledge))
+            if (planetId.IsEmpty)
+            {
+                return PlanetVisibility.Hidden;
+            }
+
+#if STARWATCH_DEBUG
+            return PlanetVisibility.Scanned;
+#else
+            if (archive == null || !archive.TryGetMapKnowledge(observerId, out var knowledge))
             {
                 return PlanetVisibility.Hidden;
             }
@@ -63,6 +76,29 @@ namespace ProjectStarwatch.Overworld.Services
             }
 
             return PlanetVisibility.Hidden;
+#endif
+        }
+
+        /// <summary>
+        /// Whether a route should appear on the star map for the observer.
+        /// </summary>
+        public bool IsRouteVisibleOnMap(
+            RunArchive archive,
+            ObserverId observerId,
+            ContentId routeKey)
+        {
+            if (routeKey.IsEmpty)
+            {
+                return false;
+            }
+
+#if STARWATCH_DEBUG
+            return true;
+#else
+            return archive != null
+                && archive.TryGetMapKnowledge(observerId, out var knowledge)
+                && knowledge.HasKnownRoute(routeKey);
+#endif
         }
     }
 }

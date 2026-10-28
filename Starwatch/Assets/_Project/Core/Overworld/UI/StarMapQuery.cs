@@ -460,11 +460,6 @@ namespace ProjectStarwatch.Overworld.UI
 
         private void AddKnownRoutes(RunState run, Dictionary<ContentId, MapRouteSegment> byKey)
         {
-            if (!run.Archive.TryGetMapKnowledge(ObserverId.Player, out var knowledge))
-            {
-                return;
-            }
-
             var graph = run.Universe.MapGraph;
             for (var i = 0; i < graph.Routes.Count; i++)
             {
@@ -475,7 +470,7 @@ namespace ProjectStarwatch.Overworld.UI
                 }
 
                 var key = RouteService.MakeRouteKey(route.NodeAId, route.NodeBId);
-                if (!knowledge.HasKnownRoute(key))
+                if (!_visibilityService.IsRouteVisibleOnMap(run.Archive, ObserverId.Player, key))
                 {
                     continue;
                 }

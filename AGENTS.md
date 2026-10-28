@@ -52,6 +52,7 @@ ProjectStarwatch is a fantasy roguelike: FTL-style overworld adventure plus auto
 
 - No UE-style DataTables. Use ScriptableObject definitions for units (`UnitDefinition`) plus an `ObjectDatabaseSO` for id lookup. Embed small combat data (e.g. `AttackData`) on those definitions rather than separate attack assets.
 - Unit variety: MaterialPropertyBlock tints first; masked recolor shader later. Shared materials — do not create unique materials per unit (see Art / Presentation prefab rule).
+- **Authored config is the contract.** Required ScriptableObject / catalog wiring must be set by the developer on assets. Assert required references and default entries at bootstrap (`ValidateRequired` / `Assert`); do not add soft fallback chains, “resolve to first valid,” or extra lookup helpers that paper over missing static configuration. Look up by the requested id; if it is missing after validation, that is a bug — fail loudly.
 
 ## Architecture
 

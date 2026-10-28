@@ -3,6 +3,7 @@ using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Effects;
 using ProjectStarwatch.Core.Events;
+using ProjectStarwatch.Core.Generation;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Core.Run.Universe;
@@ -24,18 +25,26 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         public static ObjectDatabaseSO CreateObjectDatabase()
         {
             var starSystems = UnityEditor.AssetDatabase.LoadAssetAtPath<StarSystemDatabaseSO>(
-                "Assets/_Project/ScriptableObjects/StarSystemDatabase.asset");
+                "Assets/_Project/ScriptableObjects/Data/StarSystemDatabase.asset");
             var planets = UnityEditor.AssetDatabase.LoadAssetAtPath<PlanetDatabaseSO>(
-                "Assets/_Project/ScriptableObjects/PlanetDatabase.asset");
+                "Assets/_Project/ScriptableObjects/Data/PlanetDatabase.asset");
             var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<SettlementCatalogSO>(
-                "Assets/_Project/ScriptableObjects/SettlementCatalog.asset");
+                "Assets/_Project/ScriptableObjects/Data/SettlementCatalog.asset");
             var research = UnityEditor.AssetDatabase.LoadAssetAtPath<ResearchCatalogSO>(
-                "Assets/_Project/ScriptableObjects/ResearchCatalog.asset");
+                "Assets/_Project/ScriptableObjects/Data/ResearchCatalog.asset");
             var ships = UnityEditor.AssetDatabase.LoadAssetAtPath<ShipCatalogSO>(
-                "Assets/_Project/ScriptableObjects/ShipCatalog.asset");
+                "Assets/_Project/ScriptableObjects/Data/ShipCatalog.asset");
+            var galaxyCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<GalaxyCatalogSO>(
+                "Assets/_Project/ScriptableObjects/Map/Generation/GalaxyCatalog.asset");
             var database = ScriptableObject.CreateInstance<ObjectDatabaseSO>();
-            database.AssignDatabases(starSystems, planets, catalog, research, ships);
+            database.AssignDatabases(starSystems, planets, catalog, research, ships, galaxyCatalog);
             return database;
+        }
+
+        internal static GalaxyGenerator CreateGalaxyGenerator(ObjectDatabaseSO objectDatabase = null)
+        {
+            objectDatabase = objectDatabase ?? CreateObjectDatabase();
+            return new GalaxyGenerator(objectDatabase.GalaxyCatalog);
         }
 
         internal static RunManager CreateRunManager(ObjectDatabaseSO objectDatabase = null, EventJournal journal = null)
@@ -48,6 +57,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 timelineFactory,
                 loader,
                 objectDatabase,
+                CreateGalaxyGenerator(objectDatabase),
                 journal,
                 new DomainEventBus(journal),
                 new SimulationLoop(new SimulationClock()));
@@ -62,7 +72,14 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var loop = new SimulationLoop(clock);
             var timelineFactory = new TimelineFactory();
             var loader = new UniverseLoader(timelineFactory);
-            var manager = new RunManager(timelineFactory, loader, objectDatabase, journal, events, loop);
+            var manager = new RunManager(
+                timelineFactory,
+                loader,
+                objectDatabase,
+                CreateGalaxyGenerator(objectDatabase),
+                journal,
+                events,
+                loop);
             var routeService = new RouteService();
             var archiveService = new ArchiveService();
             var effects = new EffectRegistry();

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f6478890a1b2c3d4e5f601, type: 3}
+  m_Name: GalaxyCatalog
+  m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Generation.GalaxyCatalogSO
+  _sizes:
+  - _id: 0
+    _displayName: Small
+    _settings: {fileID: 11400000, guid: 33349f740deb44138373c7a30b85873b, type: 2}
+  - _id: 1
+    _displayName: Medium
+    _settings: {fileID: 11400000, guid: 3051373f2e0d4e299d7023691df83293, type: 2}
+  - _id: 2
+    _displayName: Large
+    _settings: {fileID: 11400000, guid: 242f30556c8941318de8342bf15f01f5, type: 2}
+  _shapes:
+  - _id: 0
+    _displayName: Circle
+    _shape: {fileID: 11400000, guid: f94882318f3a488691544584c88eaba0, type: 2}

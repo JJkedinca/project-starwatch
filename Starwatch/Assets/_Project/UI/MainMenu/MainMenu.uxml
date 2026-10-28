@@ -12,6 +12,8 @@
         <ui:VisualElement name="new-run-panel" class="new-run-panel hud-panel" style="display: none;">
             <ui:Label text="NEW RUN" class="hud-caption" />
             <ui:DropdownField name="scenario-dropdown" label="SCENARIO" class="field" />
+            <ui:DropdownField name="galaxy-size-dropdown" label="SIZE" class="field" />
+            <ui:DropdownField name="galaxy-shape-dropdown" label="SHAPE" class="field" />
             <ui:VisualElement class="seed-row">
                 <ui:TextField name="seed-field" label="SEED" value="" class="field seed-field" />
                 <ui:Button name="dice-button" text="⟳" class="dice-button" />
