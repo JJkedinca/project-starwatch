@@ -1,0 +1,28 @@
+VBCSCompilerPreWarmer: pre-warm launched (dotnet PID 27904)
+VBCSCompiler prewarm took 9.55 ms
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.6/respin/6000.6.0f1-fa21a270ab12' branch; Version is '6000.6.0f1 (f7f8ed4d1e24) revision 16251117'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-Loren" at "2026-10-28T05:43:16.6239209Z"
+OS: 'Windows 11  (10.0.26200) Professional' Language: 'en' Physical Memory: 32687 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-28T05:43:16Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Unity.exe
+-batchmode
+-nographics
+-projectPath
+C:/Users/Loren/Documents/Code/Starwatch/Starwatch
+-runTests
+-testPlatform
+EditMode
+-testResults
+C:/Users/Loren/Documents/Code/Starwatch/Starwatch/TestResults/EditModeResults.xml
+-logFile
+C:/Users/Loren/Documents/Code/Starwatch/Starwatch/TestResults/EditModeBatch.log
+-quit
+Successfully changed project path to: C:/Users/Loren/Documents/Code/Starwatch/Starwatch
+C:/Users/Loren/Documents/Code/Starwatch/Starwatch
+[ExitDontLaunchBugReporter] Exiting without the bug reporter. Application will exit with return code 1

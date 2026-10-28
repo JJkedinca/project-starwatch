@@ -9,7 +9,6 @@ using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Overworld.UI;
 using ProjectStarwatch.Settlement;
 using ProjectStarwatch.Tests.EditMode.Core;
-using ProjectStarwatch.Core.Generation;
 using NUnit.Framework;
 
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
@@ -23,10 +22,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FoundOutpost_UpdatesThePanelAndPostsSuccess()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun(
-                GalaxyGenerator.ScenarioId,
-                RunSeed.FromValue(34),
-                RunTestFixture.UnsettledGeneratedEmpire());
+            var run = RunTestFixture.CreateUnsettledRun(stack.Manager, 34);
             var prime = RunTestFixture.HomePlanet(run);
             var selection = new OverworldSelection();
             selection.EnterSystem(RunTestFixture.HomeSystem(run));
@@ -105,10 +101,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Scan_RevealsTheSelectedPlanetWithoutReselecting()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun(
-                GalaxyGenerator.ScenarioId,
-                RunSeed.FromValue(61),
-                RunTestFixture.UnsettledGeneratedEmpire());
+            var run = RunTestFixture.CreateUnsettledRun(stack.Manager, 61);
             var prime = RunTestFixture.HomePlanet(run);
             var selection = new OverworldSelection();
             selection.EnterSystem(RunTestFixture.HomeSystem(run));

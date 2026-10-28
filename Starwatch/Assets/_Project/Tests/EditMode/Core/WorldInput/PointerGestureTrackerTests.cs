@@ -32,9 +32,9 @@ namespace ProjectStarwatch.Tests.EditMode.Core.WorldInput
             var tracker = new PointerGestureTracker(listener, new PointerGestureSettings(6f, 0.5f));
 
             tracker.ButtonPressed(PointerButton.Primary, Vector2.zero, overUi: false, time: 0f);
-            tracker.PointerMoved(new Vector2(10f, 0f), overUi: false);
-            tracker.PointerMoved(new Vector2(15f, 0f), overUi: false);
-            tracker.ButtonReleased(PointerButton.Primary, new Vector2(15f, 0f));
+            tracker.PointerMoved(new Vector2(20f, 0f), overUi: false);
+            tracker.PointerMoved(new Vector2(25f, 0f), overUi: false);
+            tracker.ButtonReleased(PointerButton.Primary, new Vector2(25f, 0f));
 
             Assert.That(listener.DragStarts, Is.EqualTo(1));
             Assert.That(listener.DragDeltas.Count, Is.GreaterThanOrEqualTo(1));

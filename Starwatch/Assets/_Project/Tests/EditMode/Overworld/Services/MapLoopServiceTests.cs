@@ -107,7 +107,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
                 {
                     new PlanetDefinition(
                         foreignPlanet,
-                        RunTestFixture.HomeSystem(run),
+                        ContentId.From("foreign-system"),
                         "Foreign World",
                         "Registered elsewhere."),
                 });
@@ -139,30 +139,26 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
             var planet = RunTestFixture.FirstPlanetAt(run, RunTestFixture.FirstNeighbor(run));
 
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.False);
+            Assert.That(
+                stack.TravelService.TryGetTripSeconds(run, ObserverId.Player, fleetId, forge, out var tripSeconds),
+                Is.True);
             stack.Clock.SetPaused(false);
             var started = stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge);
             Assert.That(started.Success, Is.True);
             Assert.That(run.Timeline.Fleets.IsFleetTraveling(fleetId), Is.True);
             Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(RunTestFixture.HomeSystem(run)));
 
-            // 3s travel at 30Hz; pump past arrival so SimulationLoop resolves TravelSystem.
-            var ticks = 0;
-            while (run.Timeline.Fleets.IsFleetTraveling(fleetId) && ticks < 200)
-            {
-                stack.Loop.Pump(1f / 30f);
-                ticks++;
-            }
+            RunTestFixture.PumpUntilFleetIdle(stack, run, fleetId, tripSeconds + 5f);
 
             Assert.That(run.Timeline.Fleets.IsFleetTraveling(fleetId), Is.False);
             Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(forge));
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(forge), Is.True);
             Assert.That(run.Archive.PlayerMapKnowledge.HasScannedPlanet(planet), Is.False);
-            Assert.That(
-                stack.Journal.Records[stack.Journal.Records.Count - 2].EventType,
-                Is.EqualTo(GameEventType.FleetArrived));
-            Assert.That(
-                stack.Journal.Records[stack.Journal.Records.Count - 1].EventType,
-                Is.EqualTo(GameEventType.NodeExplored));
+            // Economy ResourceChanged rows also land in the journal during long hops.
+            var arrivedIndex = LastJournalIndex(stack.Journal, GameEventType.FleetArrived);
+            var exploredIndex = LastJournalIndex(stack.Journal, GameEventType.NodeExplored);
+            Assert.That(arrivedIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(exploredIndex, Is.GreaterThan(arrivedIndex));
             Assert.That(
                 stack.VisibilityService.GetNodeVisibility(run.Archive, run.Timeline, ObserverId.Player, forge),
                 Is.EqualTo(MapNodeVisibility.Present));
@@ -180,6 +176,20 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Services
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.Error.Code, Is.EqualTo(ProjectStarwatch.Core.Commands.CommandErrorCode.InvalidRoute));
+        }
+
+        private static int LastJournalIndex(EventJournal journal, GameEventType eventType)
+        {
+            var records = journal.Records;
+            for (var i = records.Count - 1; i >= 0; i--)
+            {
+                if (records[i].EventType == eventType)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
     }
 }

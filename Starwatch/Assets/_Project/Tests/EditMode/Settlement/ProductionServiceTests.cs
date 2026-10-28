@@ -23,16 +23,25 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var run = RunTestFixture.CreateStandardRun(manager, 42);
             var homePlanetId = RunTestFixture.HomePlanet(run);
             Assert.That(database.TryGetPlanet(homePlanetId.Value, out var planet), Is.True);
+            Assert.That(
+                database.SettlementCatalog.TryGetBuilding(ContentId.From("industry-works"), out var industryWorks),
+                Is.True);
             var colony = new ColonyState(homePlanetId, ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(ContentId.From("industry-works"), 1));
 
             var quote = productionService.Quote(colony, planet);
             var again = productionService.Quote(colony, planet);
 
-            Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(2f));
-            Assert.That(quote.Upkeep.Get(ResourceKind.Energy), Is.EqualTo(1f));
+            Assert.That(
+                quote.Output.Get(ResourceKind.Industry),
+                Is.EqualTo(LevelOne(planet, industryWorks, ResourceKind.Industry)));
+            Assert.That(
+                quote.Upkeep.Get(ResourceKind.Energy),
+                Is.EqualTo(ResourceAmount.Total(industryWorks.Upkeep, ResourceKind.Energy)));
             Assert.That(again.Output, Is.Not.SameAs(quote.Output));
-            Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(2f));
+            Assert.That(
+                quote.Output.Get(ResourceKind.Industry),
+                Is.EqualTo(LevelOne(planet, industryWorks, ResourceKind.Industry)));
         }
 
         [Test]

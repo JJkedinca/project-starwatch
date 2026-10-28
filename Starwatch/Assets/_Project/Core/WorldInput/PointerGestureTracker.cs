@@ -32,12 +32,12 @@ namespace ProjectStarwatch.Core.WorldInput
 
         public void PointerMoved(Vector2 screen, bool overUi)
         {
-            _lastScreen = screen;
             if (_isPressed)
             {
                 ClearHover();
                 if (_blockedByUi)
                 {
+                    _lastScreen = screen;
                     return;
                 }
 
@@ -58,12 +58,14 @@ namespace ProjectStarwatch.Core.WorldInput
                 // Long press already committed this press; do not morph it into a drag.
                 if (_longPressFired)
                 {
+                    _lastScreen = screen;
                     return;
                 }
 
                 var thresholdSq = _settings.DragThresholdPixels * _settings.DragThresholdPixels;
                 if ((screen - _pressScreen).sqrMagnitude < thresholdSq)
                 {
+                    _lastScreen = screen;
                     return;
                 }
 
@@ -77,11 +79,13 @@ namespace ProjectStarwatch.Core.WorldInput
                 {
                     // Secondary: past threshold cancels the would-be click.
                     _isDragging = true;
+                    _lastScreen = screen;
                 }
 
                 return;
             }
 
+            _lastScreen = screen;
             if (overUi)
             {
                 ClearHover();

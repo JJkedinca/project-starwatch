@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Events;
@@ -9,6 +10,7 @@ using ProjectStarwatch.Overworld.UI;
 using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 using UnityEngine;
+using EntityId = ProjectStarwatch.Core.Identifiers.EntityId;
 
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {

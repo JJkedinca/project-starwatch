@@ -1,4 +1,3 @@
-using System;
 using NUnit.Framework;
 using ProjectStarwatch.Core.Data;
 using UnityEngine;
@@ -16,7 +15,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 new StarSystemTemplate("Helios Reach"),
             });
 
-            var pick = database.Pick(new Random(1));
+            var pick = database.Pick(new System.Random(1));
 
             Assert.That(pick, Is.Not.Null);
             Assert.That(pick.DisplayName, Is.EqualTo("Helios Reach"));
@@ -51,7 +50,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
 
             for (var i = 0; i < 20; i++)
             {
-                var pick = database.Pick(new Random(i));
+                var pick = database.Pick(new System.Random(i));
                 Assert.That(pick, Is.Not.Null);
                 Assert.That(pick.DisplayName, Is.EqualTo("Helios Reach"));
             }

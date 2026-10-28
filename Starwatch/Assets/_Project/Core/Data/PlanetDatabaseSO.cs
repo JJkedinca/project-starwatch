@@ -159,6 +159,9 @@ namespace ProjectStarwatch.Core.Data
     /// </summary>
     internal static class GalaxyHomeFootprint
     {
-        internal const int Minimum = 8;
+        /// <summary>
+        /// Room for the four producing starter buildings plus a shipyard (2 footprint each).
+        /// </summary>
+        internal const int Minimum = 10;
     }
 }

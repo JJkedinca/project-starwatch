@@ -1,5 +1,6 @@
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Overworld.Map;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -77,7 +78,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Map
         [Test]
         public void PlanetScale_IsStableAndBounded()
         {
-            var planetId = ContentId.From("home-moon");
+            var run = RunTestFixture.CreateStandardRun(RunTestFixture.CreateRunManager(), 42);
+            var planetId = RunTestFixture.SecondPlanetAt(run, RunTestFixture.HomeSystem(run));
+            Assert.That(planetId.IsEmpty, Is.False);
             const float minScale = 0.45f;
             const float maxScale = 0.85f;
 

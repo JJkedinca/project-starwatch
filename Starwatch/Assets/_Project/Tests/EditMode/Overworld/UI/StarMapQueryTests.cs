@@ -21,10 +21,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var run = RunTestFixture.CreateStandardRun(stack.Manager, 41);
             var query = CreateQuery(stack);
 
+            var home = RunTestFixture.HomeSystem(run);
             var routes = query.KnownRoutes(run);
+            var homeNeighborCount = run.Universe.MapGraph.GetNeighbors(home).Count;
 
-            Assert.That(routes, Has.Count.EqualTo(2));
-            Assert.That(routes[0].State, Is.EqualTo(MapRouteState.Known));
+            Assert.That(homeNeighborCount, Is.GreaterThan(0));
+            Assert.That(routes, Has.Count.EqualTo(homeNeighborCount));
+            Assert.That(routes, Has.All.Matches<MapRouteSegment>(segment => segment.State == MapRouteState.Known));
         }
 
         [Test]
@@ -72,14 +75,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(query.NodeState(run, RequireNode(run, belt), default).IsExplorable, Is.True);
 
+            var tripSeconds = TripSecondsToNeighbor(stack, run, fleetId, forge);
             Assert.That(
                 stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge).Success,
                 Is.True);
-            stack.Clock.SetPaused(false);
-            for (var i = 0; i < 12; i++)
-            {
-                stack.Loop.Pump(1f);
-            }
+            RunTestFixture.PumpUntilFleetIdle(stack, run, fleetId, tripSeconds + 5f);
 
             Assert.That(run.Timeline.Fleets.TryGetFleet(fleetId, out var fleet), Is.True);
             Assert.That(fleet.LocationSystemId, Is.EqualTo(forge));
@@ -110,7 +110,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(card.HasSelection, Is.True);
             Assert.That(card.Card.FleetRelation, Is.EqualTo(StarMapFleetRelation.Reachable));
             Assert.That(card.HasArrival, Is.True);
-            Assert.That(card.ArrivalSeconds, Is.EqualTo(3f).Within(0.001f));
+            Assert.That(
+                card.ArrivalSeconds,
+                Is.EqualTo(TripSecondsToNeighbor(stack, run, fleetId, forge)).Within(0.001f));
             Assert.That(card.Card.ShowTravelHint, Is.True);
             Assert.That(card.Fleets, Has.Count.EqualTo(1));
             Assert.That(card.Fleets[0].FleetId, Is.EqualTo(fleetId));
@@ -198,8 +200,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(preview.Reachable, Is.True);
             Assert.That(preview.ToNodeId, Is.EqualTo(forge));
-            Assert.That(preview.Seconds, Is.EqualTo(3f).Within(0.001f));
-            Assert.That(query.TravelPreview(run, fleetId, ContentId.From("choke-system")).Reachable, Is.False);
+            Assert.That(
+                preview.Seconds,
+                Is.EqualTo(TripSecondsToNeighbor(stack, run, fleetId, forge)).Within(0.001f));
+            Assert.That(
+                query.TravelPreview(run, fleetId, ContentId.From("missing-system")).Reachable,
+                Is.False);
         }
 
         [Test]
@@ -269,6 +275,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(idle, Has.Count.EqualTo(1));
             Assert.That(idle[0].Kind, Is.EqualTo(FleetMarkerKind.Parked));
 
+            var tripSeconds = TripSecondsToNeighbor(stack, run, fleetId, forge);
             Assert.That(stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, forge).Success, Is.True);
             var traveling = query.DescribeFleetMarkers(run, selection);
 
@@ -278,8 +285,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(traveling[0].NodeId, Is.EqualTo(home));
             Assert.That(traveling[0].DestinationNodeId, Is.EqualTo(forge));
             Assert.That(traveling[0].IsSelected, Is.True);
-            Assert.That(traveling[0].RemainingSeconds, Is.EqualTo(3f).Within(0.001f));
-            Assert.That(traveling[0].TotalSeconds, Is.EqualTo(3f).Within(0.001f));
+            Assert.That(traveling[0].RemainingSeconds, Is.EqualTo(tripSeconds).Within(0.001f));
+            Assert.That(traveling[0].TotalSeconds, Is.EqualTo(tripSeconds).Within(0.001f));
         }
 
         [Test]
@@ -336,6 +343,18 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         {
             Assert.That(run.Universe.MapGraph.TryGetNode(nodeId, out var node), Is.True);
             return node;
+        }
+
+        private static float TripSecondsToNeighbor(
+            OverworldTestContext stack,
+            RunState run,
+            EntityId fleetId,
+            ContentId neighborId)
+        {
+            Assert.That(
+                stack.TravelService.TryGetTripSeconds(run, ObserverId.Player, fleetId, neighborId, out var seconds),
+                Is.True);
+            return seconds;
         }
     }
 }

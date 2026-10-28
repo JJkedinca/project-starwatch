@@ -35,7 +35,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void LockedClass_NamesTheResearchThatUnlocksIt()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = var run = RunTestFixture.CreateStandardRun(stack.Manager, 81);
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 81);
             var planet = RunTestFixture.HomePlanet(run);
             Assert.That(stack.BuildingService.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
             var selection = new OverworldSelection();
@@ -66,7 +66,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void QueueAndCancel_UpdateTheQueue()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = var run = RunTestFixture.CreateStandardRun(stack.Manager, 82);
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 82);
             var planet = RunTestFixture.HomePlanet(run);
             Unlock(stack, run);
             Assert.That(stack.BuildingService.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
@@ -96,7 +96,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void BuildProgress_AdvancesWithSimulationTime()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = var run = RunTestFixture.CreateStandardRun(stack.Manager, 83);
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 83);
             var planet = RunTestFixture.HomePlanet(run);
             Unlock(stack, run);
             Assert.That(stack.BuildingService.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);

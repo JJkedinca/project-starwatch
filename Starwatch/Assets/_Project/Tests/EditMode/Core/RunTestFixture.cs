@@ -170,11 +170,90 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             return node.PlanetIds[0];
         }
 
+        /// <summary>
+        /// Second planet in a system (home systems are generated with an extra body).
+        /// </summary>
+        internal static ContentId SecondPlanetAt(RunState run, ContentId systemId)
+        {
+            if (!run.Universe.MapGraph.TryGetNode(systemId, out var node) || node.PlanetIds.Count < 2)
+            {
+                return default;
+            }
+
+            return node.PlanetIds[1];
+        }
+
+        internal static float RouteTravelSeconds(RunState run, ContentId from, ContentId to)
+        {
+            if (run == null
+                || !run.Universe.MapGraph.TryGetRoute(from, to, out var route))
+            {
+                return 0f;
+            }
+
+            return route.TravelDurationSeconds;
+        }
+
+        /// <summary>
+        /// Empty home (no settlements) on a generated galaxy, ready to found/build in tests.
+        /// Regenerates on the same manager so planet ids stay registered for services.
+        /// </summary>
+        internal static RunState CreateUnsettledRun(RunManager manager, int seed = 42)
+        {
+            var probe = CreateStandardRun(manager, seed);
+            return manager.CreateRun(
+                GalaxyGenerator.ScenarioId,
+                RunSeed.FromValue(seed),
+                probe.Universe.StartingEmpire.WithoutSettlements());
+        }
+
+        /// <summary>
+        /// Starting empire for <paramref name="seed"/> with settlements stripped.
+        /// Must be paired with CreateRun using the same seed (and preferably the same manager via
+        /// <see cref="CreateUnsettledRun"/>).
+        /// </summary>
         internal static StartingEmpireDefinition UnsettledGeneratedEmpire(int seed = 42)
         {
             var manager = CreateRunManager();
             var run = CreateStandardRun(manager, seed);
             return run.Universe.StartingEmpire.WithoutSettlements();
+        }
+
+        /// <summary>
+        /// Advances the simulation until the fleet is idle or the timeout elapses.
+        /// </summary>
+        internal static void PumpUntilFleetIdle(
+            OverworldTestContext stack,
+            RunState run,
+            EntityId fleetId,
+            float timeoutSeconds)
+        {
+            stack.Clock.SetPaused(false);
+            var travels = run.Timeline.Fleets.ActiveTravels;
+            for (var i = 0; i < travels.Count; i++)
+            {
+                if (travels[i].FleetId != fleetId)
+                {
+                    continue;
+                }
+
+                var remaining = (float)(travels[i].ArriveTime.Seconds - stack.Clock.CurrentTime.Seconds);
+                if (remaining + 5f > timeoutSeconds)
+                {
+                    timeoutSeconds = remaining + 5f;
+                }
+
+                break;
+            }
+
+            var step = SimulationLoop.kTickIntervalSeconds;
+            var ticks = 0;
+            var maxTicks = Mathf.Max(1, Mathf.CeilToInt(timeoutSeconds / step) + 30);
+            while (run.Timeline.Fleets.IsFleetTraveling(fleetId) && ticks < maxTicks)
+            {
+                stack.Loop.Pump(step);
+                ticks++;
+            }
         }
     }
 }

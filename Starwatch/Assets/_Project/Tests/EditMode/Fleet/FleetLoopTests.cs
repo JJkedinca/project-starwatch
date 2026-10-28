@@ -147,7 +147,8 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
         public void UnplaceableShip_IsDroppedAndRefundedOnce()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = HomeRun(stack, 102);
+            // Unsettled: no home industry tick while the build finishes (would inflate the refund assert).
+            var run = RunTestFixture.CreateUnsettledRun(stack.Manager, 102);
             Unlock(stack, run, "basic-fleet");
             var planet = ContentId.From("missing-planet");
             var colony = new ColonyState(planet, ColonyPresence.Colony);
@@ -246,13 +247,25 @@ namespace ProjectStarwatch.Tests.EditMode.Fleet
         [Test]
         public void Travel_UsesTheSlowestClassAndTheResearchMultiplier()
         {
-            var slow = Duration(97, withTravelResearch: false, lineShip: true);
-            var fast = Duration(98, withTravelResearch: false, lineShip: false);
-            var boosted = Duration(99, withTravelResearch: true, lineShip: false);
+            const int seed = 97;
+            var stack = RunTestFixture.CreateOverworldStack();
+            var probe = HomeRun(stack, seed);
+            var home = RunTestFixture.HomeSystem(probe);
+            var dest = RunTestFixture.FirstNeighbor(probe);
+            var baseSeconds = RunTestFixture.RouteTravelSeconds(probe, home, dest);
+            Assert.That(stack.ObjectDatabase.ShipCatalog.TryGet(Line, out var line), Is.True);
+            Assert.That(stack.ObjectDatabase.ShipCatalog.TryGet(Screen, out var screen), Is.True);
+            var lineSpeed = line.SpeedFactor;
 
-            Assert.That(slow, Is.EqualTo(6f).Within(0.001f));
-            Assert.That(fast, Is.EqualTo(3f).Within(0.001f));
-            Assert.That(boosted, Is.EqualTo(3f / 1.25f).Within(0.001f));
+            var slow = Duration(seed, withTravelResearch: false, lineShip: true);
+            var fast = Duration(seed, withTravelResearch: false, lineShip: false);
+            var boosted = Duration(seed, withTravelResearch: true, lineShip: false);
+
+            Assert.That(slow, Is.EqualTo(baseSeconds / lineSpeed).Within(0.001f));
+            Assert.That(fast, Is.EqualTo(baseSeconds / screen.SpeedFactor).Within(0.001f));
+            Assert.That(
+                boosted,
+                Is.EqualTo(baseSeconds / (screen.SpeedFactor * 1.25f)).Within(0.001f));
         }
 
         [Test]

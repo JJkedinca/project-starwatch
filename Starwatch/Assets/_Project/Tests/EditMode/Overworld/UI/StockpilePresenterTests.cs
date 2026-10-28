@@ -6,7 +6,6 @@ using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Overworld.UI;
 using ProjectStarwatch.Settlement;
 using ProjectStarwatch.Tests.EditMode.Core;
-using ProjectStarwatch.Core.Generation;
 using NUnit.Framework;
 
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
@@ -20,7 +19,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Describe_ReadsTheEmpireStockpileWithoutARun()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = RunTestFixture.CreateStandardRun(stack.Manager, 63);
+            // Unsettled: starter lab would otherwise report science (e.g. 1.8 on industrial home).
+            var run = RunTestFixture.CreateUnsettledRun(stack.Manager, 63);
             var query = CreateQuery(stack);
 
             var stockpile = query.Describe(run);
@@ -31,6 +31,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(stockpile.Get(ResourceKind.Strategic).Amount, Is.EqualTo(0));
             Assert.That(stockpile.Research.SciencePerSecond, Is.EqualTo(0f));
             Assert.That(missing.Entries, Is.Empty);
+            Assert.That(missing.Research.SciencePerSecond, Is.EqualTo(0f));
         }
 
         [Test]
@@ -53,15 +54,14 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void SettlementFounded_UpdatesTheBar()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun(
-                GalaxyGenerator.ScenarioId,
-                RunSeed.FromValue(65),
-                RunTestFixture.UnsettledGeneratedEmpire());
+            var run = RunTestFixture.CreateUnsettledRun(stack.Manager, 65);
             var view = new FakeStockpileView();
             var presenter = CreatePresenter(view, stack);
             presenter.Start();
 
-            stack.SettlementService.FoundOutpost(run, ObserverId.Player, RunTestFixture.HomePlanet(run));
+            Assert.That(
+                stack.SettlementService.FoundOutpost(run, ObserverId.Player, RunTestFixture.HomePlanet(run)).Success,
+                Is.True);
 
             Assert.That(view.Model.Get(ResourceKind.Industry).Amount, Is.EqualTo(70));
             presenter.Dispose();
@@ -71,9 +71,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResearchCompleted_RefreshesRates()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = RunTestFixture.CreateStandardRun(stack.Manager, 107);
+            var run = RunTestFixture.CreateUnsettledRun(stack.Manager, 107);
+            var home = RunTestFixture.HomePlanet(run);
+            Assert.That(stack.SensorService.ScanPlanet(run, ObserverId.Player, home).Success, Is.True);
+            Assert.That(stack.SettlementService.FoundColony(run, ObserverId.Player, home).Success, Is.True);
             Assert.That(
-                stack.BuildingService.Place(run, RunTestFixture.HomePlanet(run), ContentId.From("industry-works")).Success,
+                stack.BuildingService.Place(run, home, ContentId.From("industry-works")).Success,
                 Is.True);
             var view = new FakeStockpileView();
             var presenter = CreatePresenter(view, stack, CreateQuery(stack));

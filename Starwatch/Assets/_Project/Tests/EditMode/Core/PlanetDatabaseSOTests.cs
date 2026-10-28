@@ -1,4 +1,3 @@
-using System;
 using NUnit.Framework;
 using ProjectStarwatch.Core.Data;
 using UnityEngine;
@@ -19,7 +18,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
 
             for (var i = 0; i < 20; i++)
             {
-                var pick = database.Pick(new Random(i), preferHomeSuitable: true);
+                var pick = database.Pick(new System.Random(i), preferHomeSuitable: true);
                 Assert.That(pick, Is.Not.Null);
                 Assert.That(pick.DisplayName, Is.EqualTo("Home"));
                 Assert.That(pick.FootprintBudget, Is.GreaterThanOrEqualTo(GalaxyHomeFootprint.Minimum));
@@ -68,7 +67,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
 
             for (var i = 0; i < 20; i++)
             {
-                var pick = database.Pick(new Random(i), preferHomeSuitable: false);
+                var pick = database.Pick(new System.Random(i), preferHomeSuitable: false);
                 Assert.That(pick, Is.Not.Null);
                 Assert.That(pick.DisplayName, Is.EqualTo("Home"));
             }

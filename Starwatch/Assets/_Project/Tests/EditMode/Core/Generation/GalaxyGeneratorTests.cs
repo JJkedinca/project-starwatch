@@ -145,8 +145,10 @@ namespace ProjectStarwatch.Tests.EditMode.Core.Generation
                 {
                     foundHomePlanet = true;
                     Assert.That(scenario.Planets[i].SystemId, Is.EqualTo(homeId));
-                    Assert.That(scenario.Planets[i].FootprintBudget, Is.GreaterThanOrEqualTo(8));
-                    // Home picks only from footprint ≥ 8 templates (Temperate World in this pool).
+                    Assert.That(
+                        scenario.Planets[i].FootprintBudget,
+                        Is.GreaterThanOrEqualTo(GalaxyHomeFootprint.Minimum));
+                    // Home picks only from footprint ≥ Minimum templates (Temperate World in this pool).
                     Assert.That(scenario.Planets[i].DisplayName, Is.EqualTo("Temperate World"));
                     break;
                 }
