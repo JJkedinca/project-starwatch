@@ -39,23 +39,23 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var manager = RunTestFixture.CreateRunManager();
             var seed = RunSeed.FromValue(42);
 
-            var run = manager.CreateRun("authored-vertical-slice", seed);
+            var run = manager.CreateRun(GalaxyGenerator.ScenarioId, seed);
 
             Assert.That(run, Is.Not.Null);
             Assert.That(manager.HasActiveRun, Is.True);
             Assert.That(run.Seed.Value, Is.EqualTo(42));
-            Assert.That(run.Universe.ScenarioId, Is.EqualTo("authored-vertical-slice"));
-            Assert.That(run.Universe.StartingEmpire.HomeSystemId, Is.EqualTo(ContentId.From("home-system")));
+            Assert.That(run.Universe.ScenarioId, Is.EqualTo(GalaxyGenerator.ScenarioId));
+            Assert.That(run.Universe.StartingEmpire.HomeSystemId, Is.EqualTo(RunTestFixture.HomeSystem(run)));
             Assert.That(run.Universe.MapGraph.IsFullyConnected(), Is.True);
-            Assert.That(run.Universe.MapGraph.NodeCount, Is.EqualTo(7));
+            Assert.That(run.Universe.MapGraph.NodeCount, Is.GreaterThanOrEqualTo(12));
             Assert.That(run.Timeline, Is.Not.Null);
             Assert.That(run.Archive, Is.Not.Null);
             Assert.That(run.Random, Is.Not.Null);
             Assert.That(run.RewindIndex, Is.EqualTo(0));
             Assert.That(run.Timeline.Fleets, Has.Count.EqualTo(1));
             Assert.That(run.Timeline.Fleets[0].ShipCount, Is.EqualTo(3));
-            Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(ContentId.From("home-system")));
-            Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(ContentId.From("home-system")), Is.True);
+            Assert.That(run.Timeline.Fleets[0].LocationSystemId, Is.EqualTo(RunTestFixture.HomeSystem(run)));
+            Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(RunTestFixture.HomeSystem(run)), Is.True);
         }
 
         [Test]
@@ -82,26 +82,64 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 LogType.Error,
                 "UniverseLoader.TryLoad starting home must be a MapNodeKind.System node on the map.");
 
-            var run = manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(7), empire);
+            var run = manager.CreateRun(GalaxyGenerator.ScenarioId, RunSeed.FromValue(7), empire);
 
             Assert.That(run, Is.Null);
         }
 
         [Test]
-        public void CreateRun_RejectsStartingHomeThatIsNonSystemNode()
+        public void CreateRun_FailedLoad_KeepsPriorRunContentRegistered()
         {
             var manager = RunTestFixture.CreateRunManager();
+            var active = manager.CreateRun(GalaxyGenerator.ScenarioId, RunSeed.FromValue(11));
+            Assert.That(active, Is.Not.Null);
+            var homePlanet = RunTestFixture.HomePlanet(active);
+            var homeSystem = RunTestFixture.HomeSystem(active);
+            Assert.That(manager.ObjectDatabase.TryGetPlanet(homePlanet.Value, out var planet), Is.True);
+            Assert.That(manager.ObjectDatabase.TryGetStarSystemDisplayName(homeSystem.Value, out _), Is.True);
+
             var empire = new StartingEmpireDefinition(
-                ContentId.From("asteroid-belt"),
+                ContentId.From("missing-home"),
                 ContentId.From("screen"),
                 starterShipCount: 2);
             LogAssert.Expect(
                 LogType.Error,
                 "UniverseLoader.TryLoad starting home must be a MapNodeKind.System node on the map.");
 
-            var run = manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(8), empire);
+            var failed = manager.CreateRun(GalaxyGenerator.ScenarioId, RunSeed.FromValue(99), empire);
+
+            Assert.That(failed, Is.Null);
+            Assert.That(manager.HasActiveRun, Is.True);
+            Assert.That(manager.CurrentRun, Is.SameAs(active));
+            Assert.That(manager.ObjectDatabase.TryGetPlanet(homePlanet.Value, out var stillThere), Is.True);
+            Assert.That(stillThere, Is.SameAs(planet));
+            Assert.That(
+                manager.ObjectDatabase.TryGetStarSystemDisplayName(homeSystem.Value, out _),
+                Is.True);
+        }
+
+        [Test]
+        public void CreateRun_RejectsStartingHomeThatIsNonSystemNode()
+        {
+            var objectDatabase = RunTestFixture.CreateObjectDatabase();
+            var nonSystemHome = ContentId.From("non-system-home");
+            var scenario = ScriptableObject.CreateInstance<ScenarioDefinition>();
+            scenario.Configure(
+                "non-system-home-scenario",
+                new StartingEmpireDefinition(nonSystemHome, ContentId.From("screen"), starterShipCount: 2),
+                new[] { new MapNodeDefinition(nonSystemHome, MapNodeKind.NonSystem, Vector2.zero) },
+                System.Array.Empty<MapRouteDefinition>(),
+                System.Array.Empty<PlanetDefinition>());
+            objectDatabase.RegisterScenario(scenario);
+            var manager = RunTestFixture.CreateRunManager(objectDatabase);
+            LogAssert.Expect(
+                LogType.Error,
+                "UniverseLoader.TryLoad starting home must be a MapNodeKind.System node on the map.");
+
+            var run = manager.CreateRun("non-system-home-scenario", RunSeed.FromValue(8));
 
             Assert.That(run, Is.Null);
+            Object.DestroyImmediate(scenario);
         }
 
         [Test]
@@ -139,7 +177,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var manager = RunTestFixture.CreateRunManager(journal: journal);
             journal.Record(Explored("old-node"));
 
-            manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(1));
+            RunTestFixture.CreateStandardRun(manager, 1);
 
             Assert.That(journal.Records, Is.Empty);
         }
@@ -149,7 +187,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         {
             var journal = new EventJournal();
             var manager = RunTestFixture.CreateRunManager(journal: journal);
-            manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(1));
+            RunTestFixture.CreateStandardRun(manager, 1);
             journal.Record(Explored("node-a"));
 
             manager.ClearRun();
@@ -176,7 +214,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         {
             var journal = new EventJournal();
             var manager = RunTestFixture.CreateRunManager(journal: journal);
-            manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(1));
+            RunTestFixture.CreateStandardRun(manager, 1);
             journal.Record(Explored("keep-me"));
 
             var empire = new StartingEmpireDefinition(
@@ -187,7 +225,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 LogType.Error,
                 "UniverseLoader.TryLoad starting home must be a MapNodeKind.System node on the map.");
 
-            var failed = manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(7), empire);
+            var failed = manager.CreateRun(GalaxyGenerator.ScenarioId, RunSeed.FromValue(7), empire);
 
             Assert.That(failed, Is.Null);
             Assert.That(manager.HasActiveRun, Is.True);

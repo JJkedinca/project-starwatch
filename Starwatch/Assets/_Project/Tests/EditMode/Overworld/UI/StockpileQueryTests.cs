@@ -5,6 +5,7 @@ using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Overworld.UI;
 using ProjectStarwatch.Settlement;
 using ProjectStarwatch.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Generation;
 using NUnit.Framework;
 
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
@@ -31,7 +32,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = PlaceIndustry(stack, 103);
-            var query = CreateQuery();
+            var query = CreateQuery(stack);
 
             var industry = query.Describe(run).Get(ResourceKind.Industry);
 
@@ -46,7 +47,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = PlaceIndustry(stack, 104);
-            var query = CreateQuery();
+            var query = CreateQuery(stack);
 
             var energy = query.Describe(run).Get(ResourceKind.Energy);
 
@@ -61,7 +62,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var stack = RunTestFixture.CreateOverworldStack();
             var run = PlaceIndustry(stack, 105);
             run.Timeline.Resources.Grant(new StartingResources(energy: 80));
-            var query = CreateQuery();
+            var query = CreateQuery(stack);
 
             var energy = query.Describe(run).Get(ResourceKind.Energy);
 
@@ -78,7 +79,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(
                 run.Timeline.Resources.TrySpend(new[] { new ResourceAmount(ResourceKind.Energy, 40) }),
                 Is.True);
-            var query = CreateQuery();
+            var query = CreateQuery(stack);
 
             var model = query.Describe(run);
             var energy = model.Get(ResourceKind.Energy);
@@ -97,16 +98,18 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
         private static RunState PlaceIndustry(OverworldTestContext stack, int seed)
         {
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(seed));
+            var run = stack.Manager.CreateRun(GalaxyGenerator.ScenarioId, RunSeed.FromValue(seed));
             Assert.That(
-                stack.BuildingService.Place(run, ContentId.From("home-prime"), ContentId.From("industry-works")).Success,
+                stack.BuildingService.Place(run, RunTestFixture.HomePlanet(run), ContentId.From("industry-works")).Success,
                 Is.True);
             return run;
         }
 
-        private static StockpileQuery CreateQuery()
+        private static StockpileQuery CreateQuery(OverworldTestContext stack = null)
         {
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack != null
+                ? stack.ObjectDatabase
+                : RunTestFixture.CreateObjectDatabase();
             return new StockpileQuery(database, new ProductionService(database));
         }
     }

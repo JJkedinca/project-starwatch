@@ -20,27 +20,27 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void NodeClick_EntersAnExploredSystemAndSelectsAHiddenNeighbor()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(46));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 46);
             var selection = new OverworldSelection();
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, selection, stack);
             presenter.Start();
 
-            view.ClickNode(ContentId.From("home-system"));
+            view.ClickNode(RunTestFixture.HomeSystem(run));
 
             Assert.That(selection.InStarSystem, Is.True);
             Assert.That(selection.SelectedPlanetId.IsEmpty, Is.True);
 
-            selection.SelectPlanet(ContentId.From("home-prime"));
-            view.ClickNode(ContentId.From("home-system"));
+            selection.SelectPlanet(RunTestFixture.HomePlanet(run));
+            view.ClickNode(RunTestFixture.HomeSystem(run));
 
             Assert.That(selection.InStarSystem, Is.True);
             Assert.That(selection.SelectedPlanetId.IsEmpty, Is.True);
 
-            view.ClickNode(ContentId.From("forge-system"));
+            view.ClickNode(RunTestFixture.FirstNeighbor(run));
 
             Assert.That(selection.InStarSystem, Is.False);
-            Assert.That(selection.SelectedNodeId, Is.EqualTo(ContentId.From("forge-system")));
+            Assert.That(selection.SelectedNodeId, Is.EqualTo(RunTestFixture.FirstNeighbor(run)));
             presenter.Dispose();
         }
 
@@ -48,17 +48,17 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Travel_PostsTravelingThenArrived()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(47));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 47);
             var selection = new OverworldSelection();
             var status = new OverworldStatus();
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, selection, status, stack);
             presenter.Start();
             selection.SelectFleet(run.Timeline.Fleets[0].Id);
-            view.ClickNode(ContentId.From("forge-system"));
+            view.ClickNode(RunTestFixture.FirstNeighbor(run));
             var beforeTravel = status.Text;
 
-            view.RightClickNode(ContentId.From("forge-system"));
+            view.RightClickNode(RunTestFixture.FirstNeighbor(run));
 
             var whileTraveling = status.Text;
             Assert.That(whileTraveling, Is.Not.EqualTo(beforeTravel));
@@ -74,7 +74,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(run.Timeline.Fleets.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.False);
             Assert.That(status.Text, Is.Not.EqualTo(whileTraveling));
-            Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(ContentId.From("forge-system")), Is.True);
+            Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(RunTestFixture.FirstNeighbor(run)), Is.True);
             presenter.Dispose();
         }
 
@@ -82,13 +82,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void PlanetScan_DoesNotRebuildTheMap()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(48));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 48);
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, new OverworldSelection(), stack);
             presenter.Start();
             var applies = view.ApplyCount;
 
-            stack.SensorService.ScanPlanet(run, ObserverId.Player, ContentId.From("home-prime"));
+            stack.SensorService.ScanPlanet(run, ObserverId.Player, RunTestFixture.HomePlanet(run));
 
             Assert.That(view.ApplyCount, Is.EqualTo(applies));
             Assert.That(view.NodeApplyCount, Is.EqualTo(0));
@@ -101,9 +101,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FleetTravel_UpdatesOnlyTheEndpoints()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(53));
-            var home = ContentId.From("home-system");
-            var forge = ContentId.From("forge-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 53);
+            var home = RunTestFixture.HomeSystem(run);
+            var forge = RunTestFixture.FirstNeighbor(run);
             var selection = new OverworldSelection();
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, selection, stack);
@@ -112,7 +112,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             view.ClickNode(forge);
             view.ClearPartial();
 
-            view.RightClickNode(ContentId.From("forge-system"));
+            view.RightClickNode(RunTestFixture.FirstNeighbor(run));
 
             Assert.That(view.ApplyCount, Is.EqualTo(1));
             Assert.That(view.RouteApplyCount, Is.GreaterThan(0));
@@ -133,8 +133,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FleetTravel_ArrivalSnapsMarkerToDestination()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(103));
-            var forge = ContentId.From("forge-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 103);
+            var forge = RunTestFixture.FirstNeighbor(run);
             var fleetId = run.Timeline.Fleets[0].Id;
             var selection = new OverworldSelection();
             var view = new FakeStarMapView();
@@ -161,10 +161,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ArrivalAtExploredNode_RefreshesBothNeighborhoods()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(57));
-            var home = ContentId.From("home-system");
-            var forge = ContentId.From("forge-system");
-            var belt = ContentId.From("asteroid-belt");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 57);
+            var home = RunTestFixture.HomeSystem(run);
+            var forge = RunTestFixture.FirstNeighbor(run);
+            var homeNeighbors = run.Universe.MapGraph.GetNeighbors(RunTestFixture.HomeSystem(run));
+            Assert.That(homeNeighbors.Count, Is.GreaterThan(1));
+            var belt = homeNeighbors[1];
             var choke = ContentId.From("choke-system");
             var fleetId = run.Timeline.Fleets[0].Id;
             var selection = new OverworldSelection();
@@ -211,8 +213,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Travel_UsesTheSelectedFleet()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(59));
-            var home = ContentId.From("home-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 59);
+            var home = RunTestFixture.HomeSystem(run);
             var first = run.Timeline.Fleets[0].Id;
             Assert.That(
                 run.Timeline.Fleets.TryAddFleet(ContentId.From("starter-screen"), 1, home, out var second),
@@ -223,8 +225,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             presenter.Start();
 
             selection.SelectFleet(second);
-            view.ClickNode(ContentId.From("forge-system"));
-            view.RightClickNode(ContentId.From("forge-system"));
+            view.ClickNode(RunTestFixture.FirstNeighbor(run));
+            view.RightClickNode(RunTestFixture.FirstNeighbor(run));
 
             Assert.That(selection.SelectedFleetId, Is.EqualTo(second));
             Assert.That(run.Timeline.Fleets.IsFleetTraveling(second), Is.True);
@@ -236,14 +238,14 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Travel_WithoutAFleet_DoesNotStart()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(60));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 60);
             var status = new OverworldStatus();
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, new OverworldSelection(), status, stack);
             presenter.Start();
-            view.ClickNode(ContentId.From("forge-system"));
+            view.ClickNode(RunTestFixture.FirstNeighbor(run));
 
-            view.RightClickNode(ContentId.From("forge-system"));
+            view.RightClickNode(RunTestFixture.FirstNeighbor(run));
 
             Assert.That(status.Toasts, Is.Empty);
             Assert.That(run.Timeline.Fleets.IsFleetTraveling(run.Timeline.Fleets[0].Id), Is.False);
@@ -254,8 +256,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Merge_ClearsASelectedFleetThatWasRemoved()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(61));
-            var home = ContentId.From("home-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 61);
+            var home = RunTestFixture.HomeSystem(run);
             var target = run.Timeline.Fleets[0].Id;
             Assert.That(
                 run.Timeline.Fleets.TryAddFleet(ContentId.From("starter-screen"), 1, home, out var source),
@@ -277,7 +279,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void TimelineReset_ClearsTheSelectedFleet()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(64));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 64);
             var selection = new OverworldSelection();
             selection.SelectFleet(run.Timeline.Fleets[0].Id);
             var status = new OverworldStatus();
@@ -288,8 +290,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(stack.Manager.RecreateTimeline(1), Is.Not.Null);
 
             Assert.That(selection.SelectedFleetId.IsNone, Is.True);
-            view.ClickNode(ContentId.From("forge-system"));
-            view.RightClickNode(ContentId.From("forge-system"));
+            view.ClickNode(RunTestFixture.FirstNeighbor(run));
+            view.RightClickNode(RunTestFixture.FirstNeighbor(run));
             Assert.That(run.Timeline.Fleets.ActiveTravels, Is.Empty);
             presenter.Dispose();
         }
@@ -298,9 +300,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Rewind_RefreshesNodesAndRoutesWhenNoFleetIsSelected()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(102));
-            var home = ContentId.From("home-system");
-            var forge = ContentId.From("forge-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 102);
+            var home = RunTestFixture.HomeSystem(run);
+            var forge = RunTestFixture.FirstNeighbor(run);
             var selection = new OverworldSelection();
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, selection, stack);
@@ -327,9 +329,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Rewind_ClearsSelectedFleetAndRefreshesNodesAndRoutes()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(103));
-            var home = ContentId.From("home-system");
-            var forge = ContentId.From("forge-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 103);
+            var home = RunTestFixture.HomeSystem(run);
+            var forge = RunTestFixture.FirstNeighbor(run);
             var fleetId = run.Timeline.Fleets[0].Id;
             var selection = new OverworldSelection();
             selection.SelectFleet(fleetId);
@@ -355,9 +357,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void SelectionChange_FullApplyOnEnterAndLeaveSystem()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(54));
-            var home = ContentId.From("home-system");
-            var forge = ContentId.From("forge-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 54);
+            var home = RunTestFixture.HomeSystem(run);
+            var forge = RunTestFixture.FirstNeighbor(run);
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, new OverworldSelection(), stack);
             presenter.Start();
@@ -380,8 +382,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Explore_UpdatesRoutesAndTheNeighborhood()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(55));
-            var forge = ContentId.From("forge-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 55);
+            var forge = RunTestFixture.FirstNeighbor(run);
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, new OverworldSelection(), stack);
             presenter.Start();
@@ -409,7 +411,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ForeignMapKnowledge_DoesNotUpdateTheMap()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(56));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 56);
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, new OverworldSelection(), stack);
             presenter.Start();
@@ -418,7 +420,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             stack.Events.Publish(new MapKnowledgeChangedEvent(
                 GameTime.Zero,
                 ObserverId.From("rival"),
-                ContentId.From("forge-system"),
+                RunTestFixture.FirstNeighbor(run),
                 MapKnowledgeKind.NodeExplored));
 
             Assert.That(view.ApplyCount, Is.EqualTo(applies));
@@ -445,10 +447,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FleetCreated_RepaintsTheEmptySystemAndItsNeighbors()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(90));
-            var home = ContentId.From("home-system");
-            var belt = ContentId.From("asteroid-belt");
-            Assert.That(run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, ContentId.From("forge-system")), Is.True);
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 90);
+            var home = RunTestFixture.HomeSystem(run);
+            var homeNeighbors = run.Universe.MapGraph.GetNeighbors(RunTestFixture.HomeSystem(run));
+            Assert.That(homeNeighbors.Count, Is.GreaterThan(1));
+            var belt = homeNeighbors[1];
+            Assert.That(run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, RunTestFixture.FirstNeighbor(run)), Is.True);
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, new OverworldSelection(), stack);
             presenter.Start();
@@ -470,19 +474,19 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResearchCompleted_RefreshesArrival()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(86));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 86);
             var selection = new OverworldSelection();
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, selection, stack);
             presenter.Start();
-            selection.SelectNode(ContentId.From("forge-system"));
+            selection.SelectNode(RunTestFixture.FirstNeighbor(run));
             selection.SelectFleet(run.Timeline.Fleets[0].Id);
 
             Assert.That(view.LastCard.HasArrival, Is.True);
             Assert.That(view.LastCard.ArrivalSeconds, Is.EqualTo(3f).Within(0.001f));
 
             Assert.That(run.Archive.Research.TryAdd(ContentId.From("basic-travel")), Is.True);
-            stack.Effects.Rebuild(run, RunTestFixture.CreateObjectDatabase().ResearchCatalog);
+            stack.Effects.Rebuild(run, stack.ObjectDatabase.ResearchCatalog);
             stack.Events.Publish(new ResearchCompletedEvent(GameTime.Zero, ContentId.From("basic-travel")));
 
             Assert.That(view.LastCard.ArrivalSeconds, Is.EqualTo(3f / 1.25f).Within(0.001f));
@@ -493,8 +497,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Hover_ShowsPlannedRouteWithoutChangingSelection()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(101));
-            var forge = ContentId.From("forge-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 101);
+            var forge = RunTestFixture.FirstNeighbor(run);
             var selection = new OverworldSelection();
             selection.SelectFleet(run.Timeline.Fleets[0].Id);
             var view = new FakeStarMapView();
@@ -524,9 +528,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void EnterSystem_ClearsStaleHoverPreview()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(102));
-            var home = ContentId.From("home-system");
-            var forge = ContentId.From("forge-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 102);
+            var home = RunTestFixture.HomeSystem(run);
+            var forge = RunTestFixture.FirstNeighbor(run);
             var selection = new OverworldSelection();
             selection.SelectFleet(run.Timeline.Fleets[0].Id);
             var view = new FakeStarMapView();
@@ -559,7 +563,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             OverworldStatus status,
             OverworldTestContext stack)
         {
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack.ObjectDatabase;
             var fleetListQuery = new FleetListQuery(database, stack.Effects, stack.Clock);
             return new StarMapPresenter(
                 view,

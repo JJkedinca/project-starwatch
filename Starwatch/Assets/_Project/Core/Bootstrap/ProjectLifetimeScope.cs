@@ -75,7 +75,10 @@ namespace ProjectStarwatch.Core.Bootstrap
             builder.RegisterInstance<IUpdateManager>(_updateManager);
             builder.RegisterInstance(_objectDatabase);
             builder.RegisterInstance(_presentationDatabase);
-            builder.RegisterInstance(new GalaxyGenerator(_objectDatabase.GalaxyCatalog));
+            builder.RegisterInstance(new GalaxyGenerator(
+                _objectDatabase.GalaxyCatalog,
+                _objectDatabase.PlanetDatabase,
+                _objectDatabase.StarSystemDatabase));
             builder.Register<SimulationClock>(Lifetime.Singleton);
             builder.Register<SimulationLoop>(Lifetime.Singleton);
             builder.Register<ISimulationUpdateManager>(resolver => resolver.Resolve<SimulationLoop>(), Lifetime.Singleton);

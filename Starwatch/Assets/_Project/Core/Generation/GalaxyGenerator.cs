@@ -15,19 +15,22 @@ namespace ProjectStarwatch.Core.Generation
 
         private const int kPlanetsPerSystem = 2;
         private const int kHomeExtraPlanet = 1;
-        /// <summary>
-        /// Matches authored planet budgets so the starter colony (4× footprint-2 producers) fits.
-        /// </summary>
-        private const int kPlanetFootprint = 10;
         private const int kStarterShipCount = 3;
         private const int kStartingIndustry = 80;
         private const int kStartingEnergy = 40;
 
         private readonly GalaxyCatalogSO _catalog;
+        private readonly PlanetDatabaseSO _planetDatabase;
+        private readonly StarSystemDatabaseSO _starSystemDatabase;
 
-        public GalaxyGenerator(GalaxyCatalogSO catalog)
+        public GalaxyGenerator(
+            GalaxyCatalogSO catalog,
+            PlanetDatabaseSO planetDatabase,
+            StarSystemDatabaseSO starSystemDatabase)
         {
             _catalog = catalog;
+            _planetDatabase = planetDatabase;
+            _starSystemDatabase = starSystemDatabase;
         }
 
         /// <summary>
@@ -45,6 +48,18 @@ namespace ProjectStarwatch.Core.Generation
             if (_catalog == null)
             {
                 Debug.LogError("GalaxyGenerator.TryCreateScenario requires a galaxy catalog.");
+                return false;
+            }
+
+            if (_planetDatabase == null)
+            {
+                Debug.LogError("GalaxyGenerator.TryCreateScenario requires a planet database.");
+                return false;
+            }
+
+            if (_starSystemDatabase == null)
+            {
+                Debug.LogError("GalaxyGenerator.TryCreateScenario requires a star-system database.");
                 return false;
             }
 
@@ -97,13 +112,20 @@ namespace ProjectStarwatch.Core.Generation
                 return false;
             }
 
-            BuildPlanetsAndNodes(
-                nodeIds,
-                mapPositions,
-                homeIndex,
-                out var nodes,
-                out var planets,
-                out var homePlanetId);
+            // Content picks share the same seed stream as placement attempt 0 would — offset so layout and
+            // content stay correlated but do not reuse placement's Random sequence.
+            var contentRandom = new System.Random(unchecked(seed.Value ^ 0x5F3759DF));
+            if (!TryBuildPlanetsAndNodes(
+                    nodeIds,
+                    mapPositions,
+                    homeIndex,
+                    contentRandom,
+                    out var nodes,
+                    out var planets,
+                    out var homePlanetId))
+            {
+                return false;
+            }
 
             var startingEmpire = new StartingEmpireDefinition(
                 nodeIds[homeIndex],
@@ -137,10 +159,11 @@ namespace ProjectStarwatch.Core.Generation
             return false;
         }
 
-        private static void BuildPlanetsAndNodes(
+        private bool TryBuildPlanetsAndNodes(
             IReadOnlyList<ContentId> nodeIds,
             IReadOnlyList<Vector2> mapPositions,
             int homeIndex,
+            System.Random random,
             out List<MapNodeDefinition> nodes,
             out List<PlanetDefinition> planets,
             out ContentId homePlanetId)
@@ -148,28 +171,47 @@ namespace ProjectStarwatch.Core.Generation
             nodes = new List<MapNodeDefinition>(nodeIds.Count);
             planets = new List<PlanetDefinition>(nodeIds.Count * (kPlanetsPerSystem + 1));
             homePlanetId = default;
-            var neutral = new PlanetModifiers(1f, 1f, 1f, 1f);
 
             for (var i = 0; i < nodeIds.Count; i++)
             {
                 var systemId = nodeIds[i];
+                var systemTemplate = _starSystemDatabase.Pick(random);
+                if (systemTemplate == null)
+                {
+                    Debug.LogError("GalaxyGenerator could not pick a star-system template.");
+                    return false;
+                }
+
                 var planetCount = kPlanetsPerSystem + (i == homeIndex ? kHomeExtraPlanet : 0);
                 var planetIds = new ContentId[planetCount];
                 for (var planetIndex = 0; planetIndex < planetCount; planetIndex++)
                 {
+                    var isHomeworld = i == homeIndex && planetIndex == 0;
+                    var planetTemplate = _planetDatabase.Pick(random, preferHomeSuitable: isHomeworld);
+                    if (planetTemplate == null)
+                    {
+                        Debug.LogError("GalaxyGenerator could not pick a planet template.");
+                        return false;
+                    }
+
                     var planetId = PlanetId(i, planetIndex);
                     planetIds[planetIndex] = planetId;
-                    var displayName = i == homeIndex && planetIndex == 0
-                        ? "Homeworld"
-                        : $"Planet {planetIndex + 1}";
+                    var footprint = planetTemplate.FootprintBudget;
+                    if (isHomeworld && footprint < GalaxyHomeFootprint.Minimum)
+                    {
+                        footprint = GalaxyHomeFootprint.Minimum;
+                    }
+
                     planets.Add(new PlanetDefinition(
                         planetId,
                         systemId,
-                        displayName,
-                        summary: string.Empty,
-                        kPlanetFootprint,
-                        deposits: null,
-                        neutral));
+                        string.IsNullOrEmpty(planetTemplate.DisplayName)
+                            ? $"Planet {planetIndex + 1}"
+                            : planetTemplate.DisplayName,
+                        planetTemplate.Summary,
+                        footprint,
+                        planetTemplate.Deposits,
+                        planetTemplate.Modifiers));
                 }
 
                 if (i == homeIndex)
@@ -177,8 +219,16 @@ namespace ProjectStarwatch.Core.Generation
                     homePlanetId = planetIds[0];
                 }
 
-                nodes.Add(new MapNodeDefinition(systemId, MapNodeKind.System, mapPositions[i], planetIds));
+                // Placed map nodes are star systems for travel/settlement; template Kind is reserved for later node types.
+                nodes.Add(new MapNodeDefinition(
+                    systemId,
+                    MapNodeKind.System,
+                    mapPositions[i],
+                    planetIds,
+                    systemTemplate.DisplayName));
             }
+
+            return true;
         }
 
         private static List<StartingSettlement> HomeColony(

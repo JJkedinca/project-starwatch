@@ -16,10 +16,10 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         public void Build_SumsColonyOutputAndUpkeep()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(101));
-            var database = RunTestFixture.CreateObjectDatabase();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 101);
+            var database = stack.ObjectDatabase;
             var productionService = new ProductionService(database);
-            var home = ContentId.From("home-prime");
+            var home = RunTestFixture.HomePlanet(run);
             Assert.That(stack.BuildingService.Place(run, home, ContentId.From("industry-works")).Success, Is.True);
 
             var quote = EmpireProductionQuote.Build(run, database, productionService, includeLines: true);
@@ -35,10 +35,10 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         public void Build_WithoutLines_LeavesTheListEmpty()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(102));
-            var database = RunTestFixture.CreateObjectDatabase();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 102);
+            var database = stack.ObjectDatabase;
             Assert.That(
-                stack.BuildingService.Place(run, ContentId.From("home-prime"), ContentId.From("industry-works")).Success,
+                stack.BuildingService.Place(run, RunTestFixture.HomePlanet(run), ContentId.From("industry-works")).Success,
                 Is.True);
 
             var quote = EmpireProductionQuote.Build(run, database, new ProductionService(database));

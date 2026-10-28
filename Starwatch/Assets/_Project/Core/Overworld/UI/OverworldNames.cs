@@ -76,10 +76,10 @@ namespace ProjectStarwatch.Overworld.UI
             }
 
             if (database != null
-                && database.TryGetStarSystem(locationId.Value, out var system)
-                && !string.IsNullOrEmpty(system.DisplayName))
+                && database.TryGetStarSystemDisplayName(locationId.Value, out var displayName)
+                && !string.IsNullOrEmpty(displayName))
             {
-                return system.DisplayName;
+                return displayName;
             }
 
             return locationId.Value;

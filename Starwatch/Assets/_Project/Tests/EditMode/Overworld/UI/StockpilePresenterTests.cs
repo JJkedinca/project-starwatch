@@ -6,6 +6,7 @@ using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Overworld.UI;
 using ProjectStarwatch.Settlement;
 using ProjectStarwatch.Tests.EditMode.Core;
+using ProjectStarwatch.Core.Generation;
 using NUnit.Framework;
 
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
@@ -19,8 +20,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Describe_ReadsTheEmpireStockpileWithoutARun()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(63));
-            var query = CreateQuery();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 63);
+            var query = CreateQuery(stack);
 
             var stockpile = query.Describe(run);
             var missing = query.Describe(null);
@@ -36,7 +37,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResourceChanged_UpdatesTheBarOnTheStarMap()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(64));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 64);
             var view = new FakeStockpileView();
             var presenter = CreatePresenter(view, stack);
             presenter.Start();
@@ -53,14 +54,14 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         {
             var stack = RunTestFixture.CreateOverworldStack();
             var run = stack.Manager.CreateRun(
-                "authored-vertical-slice",
+                GalaxyGenerator.ScenarioId,
                 RunSeed.FromValue(65),
-                RunTestFixture.UnsettledVerticalSlice());
+                RunTestFixture.UnsettledGeneratedEmpire());
             var view = new FakeStockpileView();
             var presenter = CreatePresenter(view, stack);
             presenter.Start();
 
-            stack.SettlementService.FoundOutpost(run, ObserverId.Player, ContentId.From("home-prime"));
+            stack.SettlementService.FoundOutpost(run, ObserverId.Player, RunTestFixture.HomePlanet(run));
 
             Assert.That(view.Model.Get(ResourceKind.Industry).Amount, Is.EqualTo(70));
             presenter.Dispose();
@@ -70,9 +71,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResearchCompleted_RefreshesRates()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(107));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 107);
             Assert.That(
-                stack.BuildingService.Place(run, ContentId.From("home-prime"), ContentId.From("industry-works")).Success,
+                stack.BuildingService.Place(run, RunTestFixture.HomePlanet(run), ContentId.From("industry-works")).Success,
                 Is.True);
             var view = new FakeStockpileView();
             var presenter = CreatePresenter(view, stack, CreateQuery(stack));
@@ -80,7 +81,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var before = view.Model.Get(ResourceKind.Industry).GrossPerSecond;
 
             Assert.That(run.Archive.Research.TryAdd(ContentId.From("basic-construction")), Is.True);
-            stack.Effects.Rebuild(run, RunTestFixture.CreateObjectDatabase().ResearchCatalog);
+            stack.Effects.Rebuild(run, stack.ObjectDatabase.ResearchCatalog);
             stack.Events.Publish(new ResearchCompletedEvent(GameTime.Zero, ContentId.From("basic-construction")));
 
             Assert.That(view.Model.Get(ResourceKind.Industry).GrossPerSecond, Is.GreaterThan(before));
@@ -91,7 +92,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ScienceApplied_RefreshesActiveResearchProgress()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(108));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 108);
             Assert.That(run.Timeline.Research.Offers, Is.Not.Empty);
             Assert.That(stack.ResearchService.Start(run, run.Timeline.Research.Offers[0]).Success, Is.True);
             var view = new FakeStockpileView();
@@ -111,7 +112,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ScienceApplied_DoesNotRefreshStockAmounts()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(109));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 109);
             Assert.That(run.Timeline.Research.Offers, Is.Not.Empty);
             Assert.That(stack.ResearchService.Start(run, run.Timeline.Research.Offers[0]).Success, Is.True);
             var view = new FakeStockpileView();
@@ -135,14 +136,16 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             return new StockpilePresenter(
                 view,
                 stack.Manager,
-                query ?? CreateQuery(),
+                query ?? CreateQuery(stack),
                 stack.ResearchService,
                 stack.Events);
         }
 
         private static StockpileQuery CreateQuery(OverworldTestContext stack = null)
         {
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack != null
+                ? stack.ObjectDatabase
+                : RunTestFixture.CreateObjectDatabase();
             var productionService = stack != null
                 ? new ProductionService(database, stack.Effects)
                 : new ProductionService(database);

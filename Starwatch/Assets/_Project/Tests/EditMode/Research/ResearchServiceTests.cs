@@ -24,7 +24,7 @@ namespace ProjectStarwatch.Tests.EditMode.Research
         public void CoreTechnologies_AreOfferedAndSpecializationsWaitOnPrerequisites()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(70));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 70);
 
             Assert.That(stack.ResearchService.IsEligible(run, ContentId.From("basic-construction")), Is.True);
             Assert.That(stack.ResearchService.IsEligible(run, ContentId.From("basic-energy")), Is.True);
@@ -302,7 +302,7 @@ namespace ProjectStarwatch.Tests.EditMode.Research
 
             Assert.That(harness.Run.Archive.Research.Contains(Id("basic-construction")), Is.True);
             Assert.That(harness.Effects.OutputMultiplier(ResourceKind.Industry), Is.EqualTo(1.1f).Within(0.001f));
-            var colony = new ColonyState(Id("home-prime"), ColonyPresence.Colony);
+            var colony = new ColonyState(ContentId.From("quote-colony"), ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(Id("industry-works"), 1));
             var quote = harness.ProductionService.Quote(colony, Planet(1f));
             Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(2.2f).Within(0.001f));
@@ -318,7 +318,7 @@ namespace ProjectStarwatch.Tests.EditMode.Research
             harness.Run.Archive.Research.TryAdd(Id("industrial-focus"));
             harness.Effects.Rebuild(harness.Run, harness.Database.ResearchCatalog);
 
-            var colony = new ColonyState(Id("home-prime"), ColonyPresence.Colony);
+            var colony = new ColonyState(ContentId.From("quote-colony"), ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(Id("industry-works"), 1));
             var quote = harness.ProductionService.Quote(colony, Planet(2f));
 
@@ -329,7 +329,7 @@ namespace ProjectStarwatch.Tests.EditMode.Research
         public void TimelineReset_DropsProgressAndKeepsCompletedResearch()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(75));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 75);
             var offered = run.Timeline.Research.Offers[0];
             Assert.That(stack.ResearchService.Start(run, offered).Success, Is.True);
             run.Archive.Research.TryAdd(ContentId.From("basic-construction"));
@@ -395,14 +395,14 @@ namespace ProjectStarwatch.Tests.EditMode.Research
                 Array.Empty<ResourceAmount>());
             var settlement = ScriptableObject.CreateInstance<SettlementCatalogSO>();
             settlement.SetContent(new[] { lab, works });
-            database.AssignDatabases(null, null, settlement, database.ResearchCatalog);
+            database.AssignDatabases(settlement, database.ResearchCatalog);
             if (projects == null || projects.Length == 0)
             {
                 projects = new[] { Project("basic-construction", 20f, TechnologyEffect.Capability("construction")) };
             }
 
             var harness = Harness(database, seed, projects);
-            var colony = new ColonyState(Id("home-prime"), ColonyPresence.Colony);
+            var colony = new ColonyState(ContentId.From("quote-colony"), ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(Id("laboratory"), 1));
             harness.Run.Timeline.TryAddColony(colony);
             return harness;
@@ -464,8 +464,8 @@ namespace ProjectStarwatch.Tests.EditMode.Research
         private static PlanetDefinition Planet(float industry)
         {
             return new PlanetDefinition(
-                Id("home-prime"),
-                Id("home-system"),
+                ContentId.From("quote-colony"),
+                ContentId.From("quote-system"),
                 "Home",
                 "Test",
                 footprintBudget: 4,

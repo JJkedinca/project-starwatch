@@ -7,18 +7,12 @@ using UnityEngine.Assertions;
 namespace ProjectStarwatch.Core.Content
 {
     /// <summary>
-    /// Lookup from stable content IDs to authored definitions.
-    /// Assign source databases on the asset. Indexes are built on first use.
+    /// Lookup from stable content IDs to authored definitions and runtime-registered scenarios.
+    /// Generated galaxies register via <see cref="RegisterScenario"/> on CreateRun.
     /// </summary>
     [CreateAssetMenu(fileName = "ObjectDatabaseSO", menuName = "Starwatch/Object Database")]
     public sealed class ObjectDatabaseSO : ScriptableObject
     {
-        [SerializeField]
-        private StarSystemDatabaseSO _starSystemDatabase;
-
-        [SerializeField]
-        private PlanetDatabaseSO _planetDatabase;
-
         [field: SerializeField]
         public SettlementCatalogSO SettlementCatalog { get; private set; }
 
@@ -31,16 +25,23 @@ namespace ProjectStarwatch.Core.Content
         [field: SerializeField]
         public GalaxyCatalogSO GalaxyCatalog { get; private set; }
 
+        [field: SerializeField]
+        public PlanetDatabaseSO PlanetDatabase { get; private set; }
+
+        [field: SerializeField]
+        public StarSystemDatabaseSO StarSystemDatabase { get; private set; }
+
         private Dictionary<string, ScenarioDefinition> _scenarios = new();
         public IReadOnlyDictionary<string, ScenarioDefinition> Scenarios => _scenarios;
 
         private Dictionary<string, PlanetDefinition> _planets = new();
+        private Dictionary<string, string> _systemDisplayNames = new();
 
         private bool _indexed;
 
         private void OnEnable()
         {
-            // Domain reload keeps this asset and drops the runtime scenario. The next lookup must rebuild.
+            // Domain reload keeps this asset and drops runtime scenarios. The next lookup must rebuild.
             _indexed = false;
         }
 
@@ -52,7 +53,24 @@ namespace ProjectStarwatch.Core.Content
             Assert.IsNotNull(
                 GalaxyCatalog,
                 "ObjectDatabaseSO requires an assigned GalaxyCatalogSO.");
+            Assert.IsNotNull(
+                SettlementCatalog,
+                "ObjectDatabaseSO requires an assigned SettlementCatalogSO.");
+            Assert.IsNotNull(
+                ResearchCatalog,
+                "ObjectDatabaseSO requires an assigned ResearchCatalogSO.");
+            Assert.IsNotNull(
+                ShipCatalog,
+                "ObjectDatabaseSO requires an assigned ShipCatalogSO.");
+            Assert.IsNotNull(
+                PlanetDatabase,
+                "ObjectDatabaseSO requires an assigned PlanetDatabaseSO.");
+            Assert.IsNotNull(
+                StarSystemDatabase,
+                "ObjectDatabaseSO requires an assigned StarSystemDatabaseSO.");
             GalaxyCatalog.ValidateRequired();
+            PlanetDatabase.ValidateRequired();
+            StarSystemDatabase.ValidateRequired();
         }
 
         /// <summary>
@@ -86,47 +104,38 @@ namespace ProjectStarwatch.Core.Content
         }
 
         /// <summary>
-        /// Resolves an authored star system or non-system node by content id value.
+        /// Resolves a generated or registered star-system display name by content id value.
         /// </summary>
-        public bool TryGetStarSystem(string systemId, out StarSystemDefinition definition)
+        public bool TryGetStarSystemDisplayName(string systemId, out string displayName)
         {
-            definition = null;
-            var systems = _starSystemDatabase != null ? _starSystemDatabase.StarSystems : null;
-            if (string.IsNullOrWhiteSpace(systemId) || systems == null)
+            EnsureIndexed();
+            if (string.IsNullOrWhiteSpace(systemId))
             {
+                displayName = null;
                 return false;
             }
 
-            for (var i = 0; i < systems.Count; i++)
-            {
-                var system = systems[i];
-                if (system != null && system.Id.Value == systemId)
-                {
-                    definition = system;
-                    return true;
-                }
-            }
-
-            return false;
+            return _systemDisplayNames.TryGetValue(systemId, out displayName)
+                && !string.IsNullOrEmpty(displayName);
         }
 
         /// <summary>
-        /// Points a runtime instance at the authored databases. Used by EditMode tests.
+        /// Points a runtime instance at catalogs. Used by EditMode tests.
         /// </summary>
         internal void AssignDatabases(
-            StarSystemDatabaseSO starSystemDatabase,
-            PlanetDatabaseSO planetDatabase,
             SettlementCatalogSO settlementCatalog = null,
             ResearchCatalogSO researchCatalog = null,
             ShipCatalogSO shipCatalog = null,
-            GalaxyCatalogSO galaxyCatalog = null)
+            GalaxyCatalogSO galaxyCatalog = null,
+            PlanetDatabaseSO planetDatabase = null,
+            StarSystemDatabaseSO starSystemDatabase = null)
         {
-            _starSystemDatabase = starSystemDatabase;
-            _planetDatabase = planetDatabase;
             SettlementCatalog = settlementCatalog;
             ResearchCatalog = researchCatalog;
             ShipCatalog = shipCatalog;
             GalaxyCatalog = galaxyCatalog;
+            PlanetDatabase = planetDatabase;
+            StarSystemDatabase = starSystemDatabase;
             _indexed = false;
         }
 
@@ -139,7 +148,7 @@ namespace ProjectStarwatch.Core.Content
         }
 
         /// <summary>
-        /// Scenario ids available to start a run: authored index plus generated-galaxy.
+        /// Scenario ids available to start a run.
         /// </summary>
         public List<string> ListScenarioIds()
         {
@@ -179,7 +188,7 @@ namespace ProjectStarwatch.Core.Content
         }
 
         /// <summary>
-        /// Registers or replaces a scenario definition by its scenario id. Used by EditMode tests.
+        /// Registers or replaces a scenario definition by its scenario id.
         /// </summary>
         internal void RegisterScenario(ScenarioDefinition definition)
         {
@@ -195,6 +204,7 @@ namespace ProjectStarwatch.Core.Content
         {
             _scenarios ??= new Dictionary<string, ScenarioDefinition>();
             _planets ??= new Dictionary<string, PlanetDefinition>();
+            _systemDisplayNames ??= new Dictionary<string, string>();
             ClearIndex();
             _indexed = true;
         }
@@ -203,30 +213,19 @@ namespace ProjectStarwatch.Core.Content
         {
             _scenarios ??= new Dictionary<string, ScenarioDefinition>();
             _planets ??= new Dictionary<string, PlanetDefinition>();
+            _systemDisplayNames ??= new Dictionary<string, string>();
             if (_indexed && !IndexNeedsRebuild())
             {
                 return;
             }
 
-            // Play-mode exit and script recompile destroy the runtime scenario while this asset stays.
             ClearIndex();
-            if (_starSystemDatabase == null || _planetDatabase == null)
-            {
-                _indexed = false;
-                Debug.LogError("ObjectDatabaseSO requires an assigned StarSystemDatabaseSO and PlanetDatabaseSO.");
-                return;
-            }
-
-            AddScenario(VerticalSliceScenarioFactory.Create(
-                _starSystemDatabase,
-                _planetDatabase,
-                SettlementCatalog));
-            _indexed = _scenarios.Count > 0;
+            _indexed = true;
         }
 
         private bool IndexNeedsRebuild()
         {
-            if (_scenarios == null || _scenarios.Count == 0)
+            if (_scenarios == null)
             {
                 return true;
             }
@@ -263,6 +262,7 @@ namespace ProjectStarwatch.Core.Content
 
             _scenarios.Clear();
             _planets.Clear();
+            _systemDisplayNames.Clear();
         }
 
         private void AddScenario(ScenarioDefinition definition)
@@ -290,6 +290,7 @@ namespace ProjectStarwatch.Core.Content
             definition.hideFlags = HideFlags.HideAndDontSave;
             _scenarios[definition.ScenarioId] = definition;
             IndexScenarioPlanets(definition);
+            IndexScenarioSystems(definition);
         }
 
         private void RemoveScenarioPlanets(ScenarioDefinition scenario)
@@ -309,6 +310,22 @@ namespace ProjectStarwatch.Core.Content
 
                 _planets.Remove(planet.Id.Value);
             }
+
+            if (scenario.Nodes == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < scenario.Nodes.Count; i++)
+            {
+                var node = scenario.Nodes[i];
+                if (node == null || node.Id.IsEmpty)
+                {
+                    continue;
+                }
+
+                _systemDisplayNames.Remove(node.Id.Value);
+            }
         }
 
         private void IndexScenarioPlanets(ScenarioDefinition scenario)
@@ -327,6 +344,25 @@ namespace ProjectStarwatch.Core.Content
                 }
 
                 _planets[planet.Id.Value] = planet;
+            }
+        }
+
+        private void IndexScenarioSystems(ScenarioDefinition scenario)
+        {
+            if (scenario.Nodes == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < scenario.Nodes.Count; i++)
+            {
+                var node = scenario.Nodes[i];
+                if (node == null || node.Id.IsEmpty || string.IsNullOrEmpty(node.DisplayName))
+                {
+                    continue;
+                }
+
+                _systemDisplayNames[node.Id.Value] = node.DisplayName;
             }
         }
     }

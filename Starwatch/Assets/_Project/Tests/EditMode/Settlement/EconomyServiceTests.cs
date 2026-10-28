@@ -88,7 +88,7 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
                 {
                     new PlanetDefinition(
                         ContentId.From("fraction-world"),
-                        ContentId.From("home-system"),
+                        ContentId.From("fraction-system"),
                         "Fraction World",
                         "Half industry.",
                         footprintBudget: 4,

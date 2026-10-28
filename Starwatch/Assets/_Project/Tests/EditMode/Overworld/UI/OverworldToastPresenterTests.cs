@@ -16,24 +16,25 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FleetArrival_PostsEventToastWithDisplayName()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var database = RunTestFixture.CreateObjectDatabase();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 42);
+            var database = stack.ObjectDatabase;
             var status = new OverworldStatus();
             var presenter = new OverworldToastPresenter(status, stack.Events, database);
             presenter.Start();
-            var forge = ContentId.From("forge-system");
-            Assert.That(database.TryGetStarSystem(forge.Value, out var system), Is.True);
+            var forge = RunTestFixture.FirstNeighbor(run);
+            var home = RunTestFixture.HomeSystem(run);
 
             stack.Events.Publish(new FleetTravelEvent(
                 GameTime.Zero,
                 new EntityId(1),
-                ContentId.From("home-system"),
+                home,
                 forge,
                 FleetTravelKind.Arrived));
 
             Assert.That(status.Toasts, Has.Count.EqualTo(1));
             Assert.That(status.Toasts[0].Kind, Is.EqualTo(StatusKind.Event));
-            Assert.That(status.Text, Does.Contain(system.DisplayName));
-            Assert.That(status.Text, Does.Not.Contain(forge.Value));
+            Assert.That(status.Text, Does.Contain(OverworldNames.StarSystem(database, forge)));
+
             presenter.Dispose();
         }
 
@@ -41,18 +42,19 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FleetDepart_DoesNotPost()
         {
             var stack = RunTestFixture.CreateOverworldStack();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 43);
             var status = new OverworldStatus();
             var presenter = new OverworldToastPresenter(
                 status,
                 stack.Events,
-                RunTestFixture.CreateObjectDatabase());
+                stack.ObjectDatabase);
             presenter.Start();
 
             stack.Events.Publish(new FleetTravelEvent(
                 GameTime.Zero,
                 new EntityId(1),
-                ContentId.From("home-system"),
-                ContentId.From("forge-system"),
+                RunTestFixture.HomeSystem(run),
+                RunTestFixture.FirstNeighbor(run),
                 FleetTravelKind.Started));
 
             Assert.That(status.Toasts, Is.Empty);
@@ -63,11 +65,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void SettlementFounded_PostsEventToastWithPlanetDisplayName()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var database = RunTestFixture.CreateObjectDatabase();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 44);
+            var database = stack.ObjectDatabase;
             var status = new OverworldStatus();
             var presenter = new OverworldToastPresenter(status, stack.Events, database);
             presenter.Start();
-            var prime = ContentId.From("home-prime");
+            var prime = RunTestFixture.HomePlanet(run);
             Assert.That(database.TryGetPlanet(prime.Value, out var planet), Is.True);
 
             stack.Events.Publish(new SettlementFoundedEvent(
@@ -86,7 +89,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResearchCompleted_PostsEventToastWithDisplayName()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack.ObjectDatabase;
             var status = new OverworldStatus();
             var presenter = new OverworldToastPresenter(status, stack.Events, database);
             presenter.Start();

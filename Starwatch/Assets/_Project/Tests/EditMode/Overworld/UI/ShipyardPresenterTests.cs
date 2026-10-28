@@ -19,10 +19,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void WithoutAShipyard_TheSectionStaysHidden()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(80));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 80);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
-            selection.SelectPlanet(ContentId.From("home-prime"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
+            selection.SelectPlanet(RunTestFixture.HomePlanet(run));
             var view = new FakeShipyardView();
             var presenter = CreatePresenter(view, selection, stack);
             presenter.Start();
@@ -35,11 +35,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void LockedClass_NamesTheResearchThatUnlocksIt()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(81));
-            var planet = ContentId.From("home-prime");
+            var run = var run = RunTestFixture.CreateStandardRun(stack.Manager, 81);
+            var planet = RunTestFixture.HomePlanet(run);
             Assert.That(stack.BuildingService.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             selection.SelectPlanet(planet);
             var view = new FakeShipyardView();
             var presenter = CreatePresenter(view, selection, stack);
@@ -66,12 +66,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void QueueAndCancel_UpdateTheQueue()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(82));
-            var planet = ContentId.From("home-prime");
+            var run = var run = RunTestFixture.CreateStandardRun(stack.Manager, 82);
+            var planet = RunTestFixture.HomePlanet(run);
             Unlock(stack, run);
             Assert.That(stack.BuildingService.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             selection.SelectPlanet(planet);
             var view = new FakeShipyardView();
             var presenter = CreatePresenter(view, selection, stack);
@@ -96,12 +96,12 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void BuildProgress_AdvancesWithSimulationTime()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(83));
-            var planet = ContentId.From("home-prime");
+            var run = var run = RunTestFixture.CreateStandardRun(stack.Manager, 83);
+            var planet = RunTestFixture.HomePlanet(run);
             Unlock(stack, run);
             Assert.That(stack.BuildingService.Place(run, planet, ContentId.From("shipyard")).Success, Is.True);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             selection.SelectPlanet(planet);
             var view = new FakeShipyardView();
             var presenter = CreatePresenter(view, selection, stack);
@@ -137,7 +137,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         private static void Unlock(OverworldTestContext stack, RunState run)
         {
             Assert.That(run.Archive.Research.TryAdd(ContentId.From("basic-fleet")), Is.True);
-            stack.Effects.Rebuild(run, RunTestFixture.CreateObjectDatabase().ResearchCatalog);
+            stack.Effects.Rebuild(run, stack.ObjectDatabase.ResearchCatalog);
         }
 
         private static ShipyardPresenter CreatePresenter(
@@ -151,7 +151,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 new OverworldStatus(),
                 stack.Manager,
                 stack.ShipProductionService,
-                new ShipyardQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects, stack.ShipProductionService),
+                new ShipyardQuery(stack.ObjectDatabase, stack.Effects, stack.ShipProductionService),
                 stack.Clock,
                 stack.Events);
         }

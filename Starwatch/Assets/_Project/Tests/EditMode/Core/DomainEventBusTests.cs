@@ -20,8 +20,8 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             bus.Subscribe<FleetTravelEvent>(received.Add);
 
             var fleetId = new EntityId(4);
-            var fromNodeId = ContentId.From("home-system");
-            var toNodeId = ContentId.From("forge-system");
+            var fromNodeId = ContentId.From("from-node");
+            var toNodeId = ContentId.From("to-node");
             bus.Publish(new FleetTravelEvent(
                 GameTime.Zero,
                 fleetId,
@@ -50,13 +50,13 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             bus.Publish(new MapKnowledgeChangedEvent(
                 GameTime.Zero,
                 ObserverId.Player,
-                ContentId.From("home-system"),
+                ContentId.From("first-node"),
                 MapKnowledgeKind.NodeExplored));
             subscription.Dispose();
             bus.Publish(new MapKnowledgeChangedEvent(
                 GameTime.Zero,
                 ObserverId.Player,
-                ContentId.From("forge-system"),
+                ContentId.From("second-node"),
                 MapKnowledgeKind.NodeExplored));
 
             Assert.That(calls, Is.EqualTo(1));
@@ -72,7 +72,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             bus.Publish(new MapKnowledgeChangedEvent(
                 GameTime.Zero,
                 ObserverId.Player,
-                ContentId.From("forge-world"),
+                ContentId.From("scanned-planet"),
                 MapKnowledgeKind.PlanetScanned));
 
             Assert.That(travels, Is.EqualTo(0));

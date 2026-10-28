@@ -58,9 +58,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         public void RecreateTimeline_DoesNotAliasCollectionsWithPreviousTimelineOrUniverse()
         {
             var manager = RunTestFixture.CreateRunManager();
-            var run = manager.CreateRun(
-                "authored-vertical-slice",
-                RunSeed.FromValue(9));
+            var run = RunTestFixture.CreateStandardRun(manager, 9);
 
             var oldTimeline = run.Timeline;
             var oldFleets = oldTimeline.Fleets;
@@ -91,9 +89,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         public void RecreateTimeline_RejectsNegativeRewindIndex()
         {
             var manager = RunTestFixture.CreateRunManager();
-            var run = manager.CreateRun(
-                "authored-vertical-slice",
-                RunSeed.FromValue(3));
+            var run = RunTestFixture.CreateStandardRun(manager, 3);
             var timelineBefore = run.Timeline;
 
             LogAssert.Expect(
@@ -148,7 +144,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         public void TryAddExploredNode_ReturnsFalseForDuplicates()
         {
             var archive = new RunArchive();
-            var node = ContentId.From("home-system");
+            var node = ContentId.From("explored-node");
 
             Assert.That(archive.TryAddExploredNode(node), Is.True);
             Assert.That(archive.TryAddExploredNode(node), Is.False);
@@ -177,9 +173,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
 
         private static RunState CreateRun()
         {
-            return RunTestFixture.CreateRunManager().CreateRun(
-                "authored-vertical-slice",
-                RunSeed.FromValue(1));
+            return RunTestFixture.CreateStandardRun(RunTestFixture.CreateRunManager(), 1);
         }
     }
 }

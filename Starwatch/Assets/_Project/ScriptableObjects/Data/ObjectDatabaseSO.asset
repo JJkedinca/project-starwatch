@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84d817c5b31ddf34b8fa679240f2c166, type: 3}
   m_Name: ObjectDatabaseSO
   m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Content.ObjectDatabaseSO
-  _starSystemDatabase: {fileID: 11400000, guid: d5f8b02c3e9a4f7b0c1d2e3f40518462, type: 2}
-  _planetDatabase: {fileID: 11400000, guid: b8d4f2c05e304b7f9c1d2e3f40516273, type: 2}
   <SettlementCatalog>k__BackingField: {fileID: 11400000, guid: b82d5f8c3e4a4f7b9c1d2e3f4051c3d4, type: 2}
   <ResearchCatalog>k__BackingField: {fileID: 11400000, guid: 11aa0001bbcc4dde8ff0011223344508, type: 2}
   <ShipCatalog>k__BackingField: {fileID: 11400000, guid: f2b8d6a49c7e4f1d3041628e0f254637, type: 2}
   <GalaxyCatalog>k__BackingField: {fileID: 11400000, guid: d050424083724e3fb0834672209d1dbd, type: 2}
+  <PlanetDatabase>k__BackingField: {fileID: 11400000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50617, type: 2}
+  <StarSystemDatabase>k__BackingField: {fileID: 11400000, guid: b2c3d4e5f6474890a1b2c3d4e5f61728, type: 2}

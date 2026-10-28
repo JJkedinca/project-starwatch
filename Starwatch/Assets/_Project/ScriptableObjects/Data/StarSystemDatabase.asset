@@ -9,35 +9,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c4e7a91b2d8f4e6a9b0c1d2e3f405173, type: 3}
+  m_Script: {fileID: 11500000, guid: 1630e49860c54d8ea4ada2150576d68b, type: 3}
   m_Name: StarSystemDatabase
   m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Data.StarSystemDatabaseSO
   _starSystems:
-  - _id: home-system
-    _displayName: Home
+  - _displayName: Helios Reach
     <Kind>k__BackingField: 0
-    <MapPosition>k__BackingField: {x: 0, y: 0}
-  - _id: forge-system
-    _displayName: Forge
+  - _displayName: Ember Expanse
     <Kind>k__BackingField: 0
-    <MapPosition>k__BackingField: {x: 2, y: 1}
-  - _id: choke-system
-    _displayName: Choke
+  - _displayName: Azure Marches
     <Kind>k__BackingField: 0
-    <MapPosition>k__BackingField: {x: 4, y: 0}
-  - _id: frontier-system
-    _displayName: Frontier
+  - _displayName: Verdant Gate
     <Kind>k__BackingField: 0
-    <MapPosition>k__BackingField: {x: 6, y: 0}
-  - _id: relic-system
-    _displayName: Relic
+  - _displayName: Obsidian Drift
     <Kind>k__BackingField: 0
-    <MapPosition>k__BackingField: {x: 4, y: 2}
-  - _id: asteroid-belt
-    _displayName: Asteroid Belt
-    <Kind>k__BackingField: 1
-    <MapPosition>k__BackingField: {x: 2, y: -1}
-  - _id: anomaly-rift
-    _displayName: Anomaly Rift
-    <Kind>k__BackingField: 1
-    <MapPosition>k__BackingField: {x: 5, y: 1}
+  - _displayName: Silver Anchor
+    <Kind>k__BackingField: 0
+  - _displayName: Crimson Wake
+    <Kind>k__BackingField: 0
+  - _displayName: Pale Horizon
+    <Kind>k__BackingField: 0
