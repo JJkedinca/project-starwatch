@@ -7,16 +7,29 @@ using UnityEngine;
 namespace ProjectStarwatch.Core.Generation
 {
     /// <summary>
-    /// Builds an undirected route set from map positions: MST for connectivity, then cheapest
-    /// fill until every node has degree at least 2 (capped at 6). Shape
-    /// <see cref="GalaxyShapeSO.RouteCost"/> and route groups are enforced.
-    /// <see cref="GalaxyShapeSO.MinOutwardRoutes"/> waits for ring assignment — not applied here.
-    /// Travel times scale so the median kept edge hits a target duration.
+    /// Builds routes from Delaunay neighbor candidates: MST for connectivity, then fill toward
+    /// degree 2 until only a leaf budget remains. Shape <see cref="GalaxyShapeSO.RouteCost"/>
+    /// and route groups are enforced. Long Delaunay edges are pruned before fill.
     /// </summary>
     internal static class GalaxyRouteConnector
     {
-        private const int kMinDegree = 2;
+        /// <summary>Connectivity floor after MST. Leaves are allowed.</summary>
+        private const int kMinDegree = 1;
+
+        /// <summary>Soft fill target for non-budgeted nodes.</summary>
+        private const int kFillTargetDegree = 2;
+
+        /// <summary>Do not fill a node past this during the fill pass.</summary>
+        private const int kFillCapDegree = 4;
+
+        /// <summary>
+        /// Fraction of nodes that may remain degree-1 after fill. Fill stops once leaf count
+        /// is at or below this budget (leaves are intentional dead-ends, not failures).
+        /// </summary>
+        private const float kLeafBudgetFraction = 0.15f;
+
         private const int kMaxDegree = 6;
+        private const float kLongEdgeMedianMultiple = 2.5f;
         private const float kMinTravelSeconds = 1f;
 
         /// <summary>
@@ -45,14 +58,21 @@ namespace ProjectStarwatch.Core.Generation
                 return false;
             }
 
-            var candidates = BuildCandidates(mapPositions, layoutNodes, shape);
-            if (candidates.Count == 0)
+            var unitPositions = new Vector2[layoutNodes.Count];
+            for (var i = 0; i < layoutNodes.Count; i++)
             {
-                Debug.LogError("GalaxyRouteConnector.TryConnect has no legal candidate edges after shape costs.");
+                unitPositions[i] = layoutNodes[i].Position;
+            }
+
+            var delaunay = DelaunayTriangulator.BuildEdges(unitPositions);
+            var mstCandidates = BuildCostedCandidates(delaunay, mapPositions, layoutNodes, shape, pruneLongEdges: false);
+            if (mstCandidates.Count == 0)
+            {
+                Debug.LogError("GalaxyRouteConnector.TryConnect has no legal Delaunay candidates after shape costs.");
                 return false;
             }
 
-            candidates.Sort(static (a, b) => a.Cost.CompareTo(b.Cost));
+            mstCandidates.Sort(static (a, b) => a.Cost.CompareTo(b.Cost));
 
             var parent = new int[nodeIds.Count];
             for (var i = 0; i < parent.Length; i++)
@@ -65,9 +85,9 @@ namespace ProjectStarwatch.Core.Generation
             var keptKeys = new HashSet<long>();
             var groupCounts = new Dictionary<int, int>();
 
-            for (var i = 0; i < candidates.Count; i++)
+            for (var i = 0; i < mstCandidates.Count; i++)
             {
-                var edge = candidates[i];
+                var edge = mstCandidates[i];
                 var rootA = Find(parent, edge.IndexA);
                 var rootB = Find(parent, edge.IndexB);
                 if (rootA == rootB)
@@ -94,7 +114,17 @@ namespace ProjectStarwatch.Core.Generation
                 return false;
             }
 
-            FillMinDegree(candidates, kept, keptKeys, degree, shape, layoutNodes, groupCounts);
+            var fillCandidates = BuildCostedCandidates(delaunay, mapPositions, layoutNodes, shape, pruneLongEdges: true);
+            fillCandidates.Sort(static (a, b) => a.Cost.CompareTo(b.Cost));
+            FillTowardTarget(
+                fillCandidates,
+                kept,
+                keptKeys,
+                degree,
+                shape,
+                layoutNodes,
+                groupCounts,
+                MaxLeafBudget(nodeIds.Count));
 
             if (!AllMeetMinDegree(degree))
             {
@@ -106,42 +136,76 @@ namespace ProjectStarwatch.Core.Generation
             return true;
         }
 
-        private static List<CandidateEdge> BuildCandidates(
+        private static List<CandidateEdge> BuildCostedCandidates(
+            IReadOnlyList<DelaunayTriangulator.Edge> delaunayEdges,
             IReadOnlyList<Vector2> mapPositions,
             IReadOnlyList<GeneratedGalaxyNode> layoutNodes,
-            GalaxyShapeSO shape)
+            GalaxyShapeSO shape,
+            bool pruneLongEdges)
         {
-            var candidates = new List<CandidateEdge>(layoutNodes.Count * (layoutNodes.Count - 1) / 2);
-            for (var i = 0; i < layoutNodes.Count; i++)
+            var raw = new List<CandidateEdge>(delaunayEdges.Count);
+            for (var i = 0; i < delaunayEdges.Count; i++)
             {
-                for (var j = i + 1; j < layoutNodes.Count; j++)
+                var pair = delaunayEdges[i];
+                var multiplier = shape.RouteCost(layoutNodes[pair.IndexA].Position, layoutNodes[pair.IndexB].Position);
+                if (float.IsInfinity(multiplier) || float.IsNaN(multiplier) || multiplier <= 0f)
                 {
-                    var multiplier = shape.RouteCost(layoutNodes[i].Position, layoutNodes[j].Position);
-                    if (float.IsInfinity(multiplier) || float.IsNaN(multiplier) || multiplier <= 0f)
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    var length = Vector2.Distance(mapPositions[i], mapPositions[j]);
-                    candidates.Add(new CandidateEdge(i, j, length, length * multiplier));
+                var length = Vector2.Distance(mapPositions[pair.IndexA], mapPositions[pair.IndexB]);
+                raw.Add(new CandidateEdge(pair.IndexA, pair.IndexB, length, length * multiplier));
+            }
+
+            if (!pruneLongEdges || raw.Count == 0)
+            {
+                return raw;
+            }
+
+            var lengths = new float[raw.Count];
+            for (var i = 0; i < raw.Count; i++)
+            {
+                lengths[i] = raw[i].Length;
+            }
+
+            Array.Sort(lengths);
+            var median = lengths[lengths.Length / 2];
+            if (median <= 0f)
+            {
+                return raw;
+            }
+
+            var maxLength = median * kLongEdgeMedianMultiple;
+            var pruned = new List<CandidateEdge>(raw.Count);
+            for (var i = 0; i < raw.Count; i++)
+            {
+                if (raw[i].Length <= maxLength)
+                {
+                    pruned.Add(raw[i]);
                 }
             }
 
-            return candidates;
+            return pruned;
         }
 
-        private static void FillMinDegree(
+        private static void FillTowardTarget(
             IReadOnlyList<CandidateEdge> candidates,
             List<CandidateEdge> kept,
             HashSet<long> keptKeys,
             int[] degree,
             GalaxyShapeSO shape,
             IReadOnlyList<GeneratedGalaxyNode> layoutNodes,
-            Dictionary<int, int> groupCounts)
+            Dictionary<int, int> groupCounts,
+            int maxLeaves)
         {
             for (var i = 0; i < candidates.Count; i++)
             {
-                if (AllMeetMinDegree(degree))
+                if (CountLeaves(degree) <= maxLeaves)
+                {
+                    return;
+                }
+
+                if (AllMeetFillTarget(degree))
                 {
                     return;
                 }
@@ -152,12 +216,20 @@ namespace ProjectStarwatch.Core.Generation
                     continue;
                 }
 
+                if (degree[edge.IndexA] >= kFillCapDegree || degree[edge.IndexB] >= kFillCapDegree)
+                {
+                    continue;
+                }
+
                 if (degree[edge.IndexA] >= kMaxDegree || degree[edge.IndexB] >= kMaxDegree)
                 {
                     continue;
                 }
 
-                if (degree[edge.IndexA] >= kMinDegree && degree[edge.IndexB] >= kMinDegree)
+                // Only add edges that raise an under-target (leaf) endpoint.
+                var helpsA = degree[edge.IndexA] < kFillTargetDegree;
+                var helpsB = degree[edge.IndexB] < kFillTargetDegree;
+                if (!helpsA && !helpsB)
                 {
                     continue;
                 }
@@ -169,6 +241,30 @@ namespace ProjectStarwatch.Core.Generation
 
                 AddKept(edge, kept, keptKeys, degree, shape, layoutNodes, groupCounts);
             }
+        }
+
+        private static int MaxLeafBudget(int nodeCount)
+        {
+            if (nodeCount <= 0)
+            {
+                return 0;
+            }
+
+            return Mathf.Max(0, Mathf.FloorToInt(nodeCount * kLeafBudgetFraction));
+        }
+
+        private static int CountLeaves(IReadOnlyList<int> degree)
+        {
+            var leaves = 0;
+            for (var i = 0; i < degree.Count; i++)
+            {
+                if (degree[i] < kFillTargetDegree)
+                {
+                    leaves++;
+                }
+            }
+
+            return leaves;
         }
 
         private static List<MapRouteDefinition> BuildTravelRoutes(
@@ -256,6 +352,19 @@ namespace ProjectStarwatch.Core.Generation
             for (var i = 0; i < degree.Count; i++)
             {
                 if (degree[i] < kMinDegree)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool AllMeetFillTarget(IReadOnlyList<int> degree)
+        {
+            for (var i = 0; i < degree.Count; i++)
+            {
+                if (degree[i] < kFillTargetDegree)
                 {
                     return false;
                 }

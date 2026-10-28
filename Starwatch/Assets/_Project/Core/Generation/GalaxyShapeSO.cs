@@ -1,10 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ProjectStarwatch.Core.Generation
 {
     /// <summary>
     /// Geometry-only galaxy shape in unit-box space [0,1]×[0,1]. Shared placement calls into this;
-    /// subclasses configure density and sector labels. Home is chosen randomly after nodes are placed.
+    /// subclasses configure density, sector labels, and home selection after nodes are placed.
     /// </summary>
     public abstract class GalaxyShapeSO : ScriptableObject
     {
@@ -37,6 +38,24 @@ namespace ProjectStarwatch.Core.Generation
         /// Sector and path tags for a placed point. Call only after <see cref="Prepare"/>.
         /// </summary>
         public abstract NodeShapeTags Describe(Vector2 point);
+
+        /// <summary>
+        /// Picks the home node index after placement. Default is uniform among all nodes.
+        /// </summary>
+        public virtual int PickHomeIndex(IReadOnlyList<GeneratedGalaxyNode> nodes, System.Random random)
+        {
+            if (nodes == null || nodes.Count == 0)
+            {
+                return 0;
+            }
+
+            if (random == null)
+            {
+                return 0;
+            }
+
+            return random.Next(0, nodes.Count);
+        }
 
         /// <summary>
         /// Cost multiplier for a candidate route. <see cref="float.PositiveInfinity"/> forbids the edge.

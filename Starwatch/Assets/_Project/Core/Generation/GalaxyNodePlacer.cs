@@ -99,15 +99,21 @@ namespace ProjectStarwatch.Core.Generation
                         shape,
                         positions,
                         settings.CandidatesPerNode,
+                        settings.MinSpacing,
                         random,
                         out var sample))
                 {
-                    Debug.LogWarning(
-                        "GalaxyNodePlacer.TryPlace failed to draw density-accepted candidates.");
                     return false;
                 }
 
-                positions.Add(Round(sample));
+                // Round after spacing checks; re-check so quantization cannot pack nodes too close.
+                var rounded = Round(sample);
+                if (!ClearsExisting(rounded, positions, settings.MinSpacing))
+                {
+                    return false;
+                }
+
+                positions.Add(rounded);
             }
 
             var nodes = new GeneratedGalaxyNode[positions.Count];
@@ -116,7 +122,14 @@ namespace ProjectStarwatch.Core.Generation
                 nodes[i] = new GeneratedGalaxyNode(positions[i], shape.Describe(positions[i]));
             }
 
-            var homeIndex = random.Next(0, nodes.Length);
+            var homeIndex = shape.PickHomeIndex(nodes, random);
+            if (homeIndex < 0 || homeIndex >= nodes.Length)
+            {
+                Debug.LogWarning(
+                    $"GalaxyNodePlacer.TryPlace got invalid home index {homeIndex}; falling back to 0.");
+                homeIndex = 0;
+            }
+
             layout = new GeneratedGalaxyLayout(nodes, homeIndex);
             return true;
         }
@@ -224,6 +237,23 @@ namespace ProjectStarwatch.Core.Generation
                     {
                         return false;
                     }
+                }
+            }
+
+            return true;
+        }
+
+        private static bool ClearsExisting(
+            Vector2 point,
+            IReadOnlyList<Vector2> existing,
+            float minSpacing)
+        {
+            var spacing = Mathf.Max(0f, minSpacing);
+            for (var i = 0; i < existing.Count; i++)
+            {
+                if (Vector2.Distance(point, existing[i]) < spacing)
+                {
+                    return false;
                 }
             }
 

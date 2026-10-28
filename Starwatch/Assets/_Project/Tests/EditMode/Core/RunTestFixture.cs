@@ -25,15 +25,15 @@ namespace ProjectStarwatch.Tests.EditMode.Core
         public static ObjectDatabaseSO CreateObjectDatabase()
         {
             var starSystems = UnityEditor.AssetDatabase.LoadAssetAtPath<StarSystemDatabaseSO>(
-                "Assets/_Project/ScriptableObjects/StarSystemDatabase.asset");
+                "Assets/_Project/ScriptableObjects/Data/StarSystemDatabase.asset");
             var planets = UnityEditor.AssetDatabase.LoadAssetAtPath<PlanetDatabaseSO>(
-                "Assets/_Project/ScriptableObjects/PlanetDatabase.asset");
+                "Assets/_Project/ScriptableObjects/Data/PlanetDatabase.asset");
             var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<SettlementCatalogSO>(
-                "Assets/_Project/ScriptableObjects/SettlementCatalog.asset");
+                "Assets/_Project/ScriptableObjects/Data/SettlementCatalog.asset");
             var research = UnityEditor.AssetDatabase.LoadAssetAtPath<ResearchCatalogSO>(
-                "Assets/_Project/ScriptableObjects/ResearchCatalog.asset");
+                "Assets/_Project/ScriptableObjects/Data/ResearchCatalog.asset");
             var ships = UnityEditor.AssetDatabase.LoadAssetAtPath<ShipCatalogSO>(
-                "Assets/_Project/ScriptableObjects/ShipCatalog.asset");
+                "Assets/_Project/ScriptableObjects/Data/ShipCatalog.asset");
             var galaxyCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<GalaxyCatalogSO>(
                 "Assets/_Project/ScriptableObjects/Map/Generation/GalaxyCatalog.asset");
             var database = ScriptableObject.CreateInstance<ObjectDatabaseSO>();

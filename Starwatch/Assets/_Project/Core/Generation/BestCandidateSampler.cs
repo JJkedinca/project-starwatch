@@ -13,14 +13,15 @@ namespace ProjectStarwatch.Core.Generation
         private const float kTieEpsilon = 1e-6f;
 
         /// <summary>
-        /// Draws <paramref name="candidateCount"/> density-accepted samples and keeps the one with
-        /// the largest clearance from <paramref name="existing"/> nodes. Near-ties break toward
-        /// higher density so sparse wedges lose to arms/lanes when distances match.
+        /// Draws <paramref name="candidateCount"/> density-accepted samples that clear
+        /// <paramref name="minSpacing"/> from existing nodes, then keeps the one with the largest
+        /// clearance. Near-ties break toward higher density.
         /// </summary>
         public static bool TrySample(
             GalaxyShapeSO shape,
             IReadOnlyList<Vector2> existing,
             int candidateCount,
+            float minSpacing,
             System.Random random,
             out Vector2 bestPoint)
         {
@@ -30,6 +31,7 @@ namespace ProjectStarwatch.Core.Generation
                 return false;
             }
 
+            var spacing = Mathf.Max(0f, minSpacing);
             var found = false;
             var bestMinDistance = float.NegativeInfinity;
             var bestDensity = float.NegativeInfinity;
@@ -42,6 +44,11 @@ namespace ProjectStarwatch.Core.Generation
                 }
 
                 var minDistance = MinDistanceToExisting(point, existing);
+                if (existing.Count > 0 && minDistance < spacing)
+                {
+                    continue;
+                }
+
                 var density = shape.Density(point);
                 if (!found
                     || minDistance > bestMinDistance + kTieEpsilon

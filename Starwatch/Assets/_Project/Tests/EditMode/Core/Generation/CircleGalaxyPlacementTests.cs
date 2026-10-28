@@ -30,6 +30,39 @@ namespace ProjectStarwatch.Tests.EditMode.Core.Generation
         }
 
         [Test]
+        public void TryPlace_HomeIsInInnerProgressBand()
+        {
+            var shape = ScriptableObject.CreateInstance<CircleGalaxyShapeSO>();
+            var settings = ScriptableObject.CreateInstance<GenerationSettingsSO>();
+            Assert.That(TryPlaceWithRetry(shape, settings, seed: 42, out var layout), Is.True);
+
+            var homeProgress = layout.Nodes[layout.HomeIndex].Tags.Progress;
+            var hasBandCandidate = false;
+            for (var i = 0; i < layout.Nodes.Count; i++)
+            {
+                var progress = layout.Nodes[i].Tags.Progress;
+                if (progress >= shape.HomeMinProgress && progress <= shape.HomeMaxProgress)
+                {
+                    hasBandCandidate = true;
+                    break;
+                }
+            }
+
+            if (hasBandCandidate)
+            {
+                Assert.That(homeProgress, Is.GreaterThanOrEqualTo(shape.HomeMinProgress));
+                Assert.That(homeProgress, Is.LessThanOrEqualTo(shape.HomeMaxProgress));
+            }
+            else
+            {
+                Assert.That(homeProgress, Is.LessThan(0.5f));
+            }
+
+            Object.DestroyImmediate(shape);
+            Object.DestroyImmediate(settings);
+        }
+
+        [Test]
         public void TryPlace_SameRandomSeed_ProducesSameLayout()
         {
             var shapeA = ScriptableObject.CreateInstance<CircleGalaxyShapeSO>();

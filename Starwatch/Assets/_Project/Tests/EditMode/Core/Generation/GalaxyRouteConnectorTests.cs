@@ -73,7 +73,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core.Generation
         }
 
         [Test]
-        public void TryConnect_FailsWhenMinDegreeCannotBeMet()
+        public void TryConnect_TwoNodes_ConnectsWithSingleRoute()
         {
             var shape = ScriptableObject.CreateInstance<StubShape>();
             var layout = Nodes(new Vector2(0f, 0f), new Vector2(1f, 0f));
@@ -81,8 +81,35 @@ namespace ProjectStarwatch.Tests.EditMode.Core.Generation
             var map = Map(layout);
 
             Assert.That(
-                GalaxyRouteConnector.TryConnect(ids, map, layout, shape, 40f, out _),
-                Is.False);
+                GalaxyRouteConnector.TryConnect(ids, map, layout, shape, 40f, out var routes),
+                Is.True);
+            Assert.That(routes.Count, Is.EqualTo(1));
+            Assert.That(HasRoute(routes, ids[0], ids[1]), Is.True);
+
+            Object.DestroyImmediate(shape);
+        }
+
+        [Test]
+        public void TryConnect_NearbyCluster_PrefersLocalDelaunayLinks()
+        {
+            var shape = ScriptableObject.CreateInstance<StubShape>();
+            var layout = Nodes(
+                new Vector2(0.2f, 0.2f),
+                new Vector2(0.3f, 0.25f),
+                new Vector2(0.25f, 0.35f),
+                new Vector2(0.8f, 0.8f),
+                new Vector2(0.85f, 0.75f),
+                new Vector2(0.75f, 0.85f));
+            var ids = Ids(layout.Count);
+            var map = Map(layout);
+
+            Assert.That(
+                GalaxyRouteConnector.TryConnect(ids, map, layout, shape, 40f, out var routes),
+                Is.True);
+
+            // Local triangle neighbors should link; a far chord is not required.
+            Assert.That(HasRoute(routes, ids[0], ids[1]) || HasRoute(routes, ids[0], ids[2]), Is.True);
+            Assert.That(routes.Count, Is.GreaterThanOrEqualTo(layout.Count - 1));
 
             Object.DestroyImmediate(shape);
         }

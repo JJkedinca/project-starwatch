@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21a7aa14488c2bf4cb273b03bfff8a05, type: 3}
   m_Name: GenerationSettingsMedium
   m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Generation.GenerationSettingsSO
-  <TargetNodeCount>k__BackingField: 30
-  <NodeCountVariancePercentage>k__BackingField: 10
-  <MinSpacing>k__BackingField: 0.08
-  <CandidatesPerNode>k__BackingField: 12
-  <MaxPlacementAttempts>k__BackingField: 32
+  <TargetNodeCount>k__BackingField: 90
+  <NodeCountVariancePercentage>k__BackingField: 12
+  <MinSpacing>k__BackingField: 0.04
+  <CandidatesPerNode>k__BackingField: 16
+  <MaxPlacementAttempts>k__BackingField: 48
   <MapScale>k__BackingField: 20
   <TargetMedianTravelSeconds>k__BackingField: 40
