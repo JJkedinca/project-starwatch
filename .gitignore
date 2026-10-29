@@ -71,3 +71,5 @@ Starwatch/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
 # Temporary auto-generated Android assets
 Starwatch/[Aa]ssets/[Ss]treamingAssets/aa.meta
 Starwatch/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+Starwatch/TestResults/
