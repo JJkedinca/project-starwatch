@@ -57,11 +57,13 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             stack.SensorService.ScanPlanet(run, ObserverId.Player, moon);
 
             var outpost = stack.SettlementService.FoundOutpost(run, ObserverId.Player, moon);
-            var colony = stack.SettlementService.FoundColony(run, ObserverId.Player, home);
 
             Assert.That(outpost.Success, Is.True);
             Assert.That(run.Timeline.ColonyCount(), Is.EqualTo(0));
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(70));
+
+            var colony = stack.SettlementService.FoundColony(run, ObserverId.Player, home);
+
             Assert.That(colony.Success, Is.True);
             Assert.That(run.Timeline.Resources.Get(ResourceKind.Industry), Is.EqualTo(30));
             Assert.That(run.Timeline.TryGetColony(moon, out var claim), Is.True);
@@ -160,22 +162,25 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var ticksPerInterval = TicksPerEconomyStep();
             var seconds = EconomyTickSystem.kIntervalSeconds;
             var notices = ResourceChangeCount(stack.Journal);
+            var industryRemainder = 0f;
 
             AdvanceTicks(stack.Loop, stack.Clock, ticksPerInterval - 1);
+            var creditedBeforeClose = FlooredCredit(homeIndustryRate, seconds - 1, ref industryRemainder);
 
             Assert.That(
                 run.Timeline.Resources.Get(ResourceKind.Industry),
-                Is.EqualTo(industryBefore + (homeIndustryRate * (seconds - 1))).Within(0.01f));
+                Is.EqualTo(industryBefore + creditedBeforeClose));
             Assert.That(
                 run.Timeline.Resources.Get(ResourceKind.Energy),
                 Is.EqualTo(energyBefore - (homeEnergyUpkeep * (seconds - 1))).Within(0.01f));
             Assert.That(ResourceChangeCount(stack.Journal), Is.EqualTo(notices));
 
             AdvanceTicks(stack.Loop, stack.Clock, 1);
+            var creditedAtClose = FlooredCredit(homeIndustryRate, 1, ref industryRemainder);
 
             Assert.That(
                 run.Timeline.Resources.Get(ResourceKind.Industry),
-                Is.EqualTo(industryBefore + (homeIndustryRate * seconds)).Within(0.01f));
+                Is.EqualTo(industryBefore + creditedBeforeClose + creditedAtClose));
             Assert.That(
                 run.Timeline.Resources.Get(ResourceKind.Energy),
                 Is.EqualTo(energyBefore - (homeEnergyUpkeep * seconds)).Within(0.01f));
@@ -193,20 +198,24 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             Assert.That(stack.ObjectDatabase.TryGetPlanet(forge.Value, out var forgePlanet), Is.True);
             Assert.That(run.Timeline.TryGetColony(forge, out var forgeColony), Is.True);
             var forgeQuote = new ProductionService(stack.ObjectDatabase).Quote(forgeColony, forgePlanet);
+            var combinedIndustry =
+                homeIndustryRate + forgeQuote.Output.Get(ResourceKind.Industry);
             var beforeForgeTick = run.Timeline.Resources.Get(ResourceKind.Industry);
             var strategicBefore = run.Timeline.Resources.Get(ResourceKind.Strategic);
+            var strategicRemainder = 0f;
             AdvanceTicks(stack.Loop, stack.Clock, ticksPerInterval);
+            var forgeIndustryCredit = FlooredCredit(combinedIndustry, seconds, ref industryRemainder);
+            var forgeStrategicCredit = FlooredCredit(
+                forgeQuote.Output.Get(ResourceKind.Strategic),
+                seconds,
+                ref strategicRemainder);
 
             Assert.That(
                 run.Timeline.Resources.Get(ResourceKind.Industry),
-                Is.EqualTo(
-                        beforeForgeTick
-                        + ((homeIndustryRate + forgeQuote.Output.Get(ResourceKind.Industry)) * seconds))
-                    .Within(0.01f));
+                Is.EqualTo(beforeForgeTick + forgeIndustryCredit));
             Assert.That(
                 run.Timeline.Resources.Get(ResourceKind.Strategic),
-                Is.EqualTo(strategicBefore + (forgeQuote.Output.Get(ResourceKind.Strategic) * seconds))
-                    .Within(0.01f));
+                Is.EqualTo(strategicBefore + forgeStrategicCredit));
         }
 
         [Test]
@@ -246,7 +255,6 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var ticksPerSecond = (int)Math.Round(1f / SimulationLoop.kTickIntervalSeconds);
             var seconds = EconomyTickSystem.kIntervalSeconds;
             AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond * (seconds - 1));
-            var industryBefore = run.Timeline.Resources.Get(ResourceKind.Industry);
             var notices = ResourceChangeCount(stack.Journal);
 
             Assert.That(stack.BuildingService.Place(run, home, ContentId.From("industry-works")).Success, Is.True);
@@ -255,11 +263,13 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
             var industryRate = new ProductionService(stack.ObjectDatabase)
                 .Quote(colony, planet)
                 .Output.Get(ResourceKind.Industry);
+            var industryBefore = run.Timeline.Resources.Get(ResourceKind.Industry);
             AdvanceTicks(stack.Loop, stack.Clock, ticksPerSecond);
 
+            var industryRemainder = 0f;
             Assert.That(
                 run.Timeline.Resources.Get(ResourceKind.Industry),
-                Is.EqualTo(industryBefore + industryRate).Within(0.01f));
+                Is.EqualTo(industryBefore + FlooredCredit(industryRate, 1, ref industryRemainder)));
             Assert.That(ResourceChangeCount(stack.Journal), Is.EqualTo(notices + 1));
         }
 
@@ -469,6 +479,23 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         private static int TicksPerEconomyStep()
         {
             return (int)Math.Round(EconomyTickSystem.kIntervalSeconds / (double)SimulationLoop.kTickIntervalSeconds);
+        }
+
+        /// <summary>
+        /// Matches <see cref="ResourceInventory.DepositFlooredInto"/> + RetainFraction across settled seconds.
+        /// </summary>
+        private static int FlooredCredit(float ratePerSecond, int seconds, ref float remainder)
+        {
+            var credited = 0;
+            for (var i = 0; i < seconds; i++)
+            {
+                remainder += ratePerSecond;
+                var whole = (int)MathF.Floor(remainder);
+                credited += whole;
+                remainder -= whole;
+            }
+
+            return credited;
         }
 
         private static void AdvanceTicks(SimulationLoop loop, SimulationClock clock, int ticks)

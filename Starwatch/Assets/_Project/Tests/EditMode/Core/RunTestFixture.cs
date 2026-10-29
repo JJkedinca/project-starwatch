@@ -15,6 +15,7 @@ using ProjectStarwatch.Fleet;
 using ProjectStarwatch.Research;
 using ProjectStarwatch.Settlement;
 using UnityEngine;
+using EntityId = ProjectStarwatch.Core.Identifiers.EntityId;
 
 namespace ProjectStarwatch.Tests.EditMode.Core
 {

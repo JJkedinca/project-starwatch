@@ -53,7 +53,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             var status = new OverworldStatus();
             var view = new FakeStarMapView();
             var presenter = CreatePresenter(view, selection, status, stack);
+            // Arrival copy is owned by the toast presenter, not StarMapPresenter.
+            var toast = new OverworldToastPresenter(status, stack.Events, stack.ObjectDatabase);
             presenter.Start();
+            toast.Start();
             selection.SelectFleet(run.Timeline.Fleets[0].Id);
             view.ClickNode(RunTestFixture.FirstNeighbor(run));
             var beforeTravel = status.Text;
@@ -70,6 +73,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(run.Timeline.Fleets.IsFleetTraveling(fleetId), Is.False);
             Assert.That(status.Text, Is.Not.EqualTo(whileTraveling));
             Assert.That(run.Archive.PlayerMapKnowledge.HasExploredNode(RunTestFixture.FirstNeighbor(run)), Is.True);
+            toast.Dispose();
             presenter.Dispose();
         }
 
@@ -220,7 +224,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(view.CardApplyCount, Is.EqualTo(1));
             Assert.That(view.AppliedNodeIds, Is.EquivalentTo(BothNeighborhoods(run, forge, home)));
             Assert.That(view.AppliedStates[belt].IsExplorable, Is.True);
-            Assert.That(view.AppliedStates[forgeBranch].IsExplorable, Is.False);
+            // Exploring forge reveals routes to its other neighbors.
+            Assert.That(view.AppliedStates[forgeBranch].IsExplorable, Is.True);
             Assert.That(run.Timeline.Fleets.TryGetFleet(fleetId, out var fleet), Is.True);
             Assert.That(fleet.LocationSystemId, Is.EqualTo(home));
             presenter.Dispose();
