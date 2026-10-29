@@ -10,33 +10,49 @@ namespace ProjectStarwatch.Tests.EditMode.Core
     public sealed class ObjectDatabaseSOTests
     {
         [Test]
-        public void TryGetScenario_RebuildsAfterRuntimeScenarioIsDestroyed()
+        public void TryGetScenario_ReturnsRegisteredScenario()
         {
             var database = RunTestFixture.CreateObjectDatabase();
-            Assert.That(database.TryGetScenario("authored-vertical-slice", out var first), Is.True);
+            var scenario = CreateGeneratedStandIn("gen-node-0-0");
+            database.RegisterScenario(scenario);
 
-            Object.DestroyImmediate(first);
+            Assert.That(database.TryGetScenario(GalaxyGenerator.ScenarioId, out var found), Is.True);
+            Assert.That(found, Is.SameAs(scenario));
 
-            Assert.That(database.TryGetScenario("authored-vertical-slice", out var rebuilt), Is.True);
-            Assert.That(rebuilt.ScenarioId, Is.EqualTo("authored-vertical-slice"));
-
-            Object.DestroyImmediate(rebuilt);
+            Object.DestroyImmediate(scenario);
             Object.DestroyImmediate(database);
         }
 
         [Test]
-        public void TryGetScenario_RebuildsWhenTheIndexWasCleared()
+        public void TryGetScenario_FailsAfterResetBuiltIndexUntilReRegistered()
         {
             var database = RunTestFixture.CreateObjectDatabase();
-            Assert.That(database.TryGetScenario("authored-vertical-slice", out _), Is.True);
+            var scenario = CreateGeneratedStandIn("gen-node-0-0");
+            database.RegisterScenario(scenario);
+            Assert.That(database.TryGetScenario(GalaxyGenerator.ScenarioId, out _), Is.True);
 
             database.ResetBuiltIndex();
 
-            Assert.That(database.TryGetScenario("authored-vertical-slice", out var rebuilt), Is.True);
-            Assert.That(rebuilt.ScenarioId, Is.EqualTo("authored-vertical-slice"));
-            Assert.That(database.Scenarios.ContainsKey("authored-vertical-slice"), Is.True);
+            Assert.That(database.TryGetScenario(GalaxyGenerator.ScenarioId, out _), Is.False);
 
-            Object.DestroyImmediate(rebuilt);
+            var again = CreateGeneratedStandIn("gen-node-0-0");
+            database.RegisterScenario(again);
+            Assert.That(database.TryGetScenario(GalaxyGenerator.ScenarioId, out var found), Is.True);
+            Assert.That(found, Is.SameAs(again));
+
+            Object.DestroyImmediate(again);
+            Object.DestroyImmediate(database);
+        }
+
+        [Test]
+        public void ListScenarioIds_IncludesGeneratedGalaxyWithoutRegistration()
+        {
+            var database = RunTestFixture.CreateObjectDatabase();
+            var ids = database.ListScenarioIds();
+
+            Assert.That(ids, Does.Contain(GalaxyGenerator.ScenarioId));
+            Assert.That(database.TryGetScenario(GalaxyGenerator.ScenarioId, out _), Is.False);
+
             Object.DestroyImmediate(database);
         }
 

@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
+using ProjectStarwatch.Core.Run.Universe;
 using ProjectStarwatch.Core.Simulation;
 using ProjectStarwatch.Overworld.UI;
 using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
+using UnityEngine;
+using EntityId = ProjectStarwatch.Core.Identifiers.EntityId;
 
 namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 {
@@ -18,11 +22,31 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         [Test]
         public void EmptySystem_KeepsItsStatusAcrossPresenterRestart()
         {
-            var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(33));
-            var belt = ContentId.From("asteroid-belt");
-            run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, belt);
-            stack.ExplorationService.Explore(run, ObserverId.Player, belt);
+            var objectDatabase = RunTestFixture.CreateObjectDatabase();
+            var homeId = ContentId.From("empty-scenario-home");
+            var emptySystemId = ContentId.From("empty-scenario-system");
+            var homePlanetId = ContentId.From("empty-scenario-home-planet");
+            const string scenarioId = "empty-neighbor-scenario";
+            var scenario = ScriptableObject.CreateInstance<ScenarioDefinition>();
+            scenario.Configure(
+                scenarioId,
+                new StartingEmpireDefinition(homeId, ContentId.From("starter-screen"), starterShipCount: 1),
+                new[]
+                {
+                    new MapNodeDefinition(homeId, MapNodeKind.System, UnityEngine.Vector2.zero, new[] { homePlanetId }),
+                    new MapNodeDefinition(emptySystemId, MapNodeKind.System, UnityEngine.Vector2.one, System.Array.Empty<ContentId>()),
+                },
+                new[] { new MapRouteDefinition(homeId, emptySystemId, 5f) },
+                new[]
+                {
+                    new PlanetDefinition(homePlanetId, homeId, "Home", string.Empty, footprintBudget: 10),
+                });
+            objectDatabase.RegisterScenario(scenario);
+
+            var stack = RunTestFixture.CreateOverworldStack(objectDatabase);
+            var run = stack.Manager.CreateRun(scenarioId, RunSeed.FromValue(33));
+            run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, emptySystemId);
+            stack.ExplorationService.Explore(run, ObserverId.Player, emptySystemId);
             var selection = new OverworldSelection();
             var status = new OverworldStatus();
             var map = new FakeStarMapView();
@@ -32,7 +56,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             systemPresenter.Start();
             mapPresenter.Start();
 
-            map.ClickNode(belt);
+            map.ClickNode(emptySystemId);
 
             var posted = status.Text;
             Assert.That(posted, Is.Not.Empty);
@@ -58,9 +82,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ForeignPlanetScan_DoesNotRefreshTheSystem()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(58));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 58);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             var view = new FakeStarSystemView();
             var presenter = CreateSystem(view, selection, new OverworldStatus(), stack);
             presenter.Start();
@@ -69,7 +93,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             stack.Events.Publish(new MapKnowledgeChangedEvent(
                 GameTime.Zero,
                 ObserverId.From("rival"),
-                ContentId.From("home-prime"),
+                RunTestFixture.HomePlanet(run),
                 MapKnowledgeKind.PlanetScanned));
 
             Assert.That(view.Model, Is.SameAs(shown));
@@ -80,9 +104,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Back_ReturnsToTheMap()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(50));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 50);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             var status = new OverworldStatus();
             var view = new FakeStarSystemView();
             var presenter = CreateSystem(view, selection, status, stack);
@@ -100,11 +124,11 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FleetClick_SelectsAFleetAtTheOpenSystem()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(62));
-            var home = ContentId.From("home-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 62);
+            var home = RunTestFixture.HomeSystem(run);
             var fleetId = run.Timeline.Fleets[0].Id;
             Assert.That(
-                run.Timeline.Fleets.TryAddFleet(ContentId.From("starter-screen"), 1, ContentId.From("forge-system"), out _),
+                run.Timeline.Fleets.TryAddFleet(ContentId.From("starter-screen"), 1, RunTestFixture.FirstNeighbor(run), out _),
                 Is.True);
             var selection = new OverworldSelection();
             selection.EnterSystem(home);
@@ -126,9 +150,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResearchCompleted_RefreshesFleetSpeed()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(87));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 87);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             var view = new FakeStarSystemView();
             var presenter = CreateSystem(view, selection, new OverworldStatus(), stack);
             presenter.Start();
@@ -136,7 +160,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(view.Model.Fleets[0].TravelSpeed, Is.EqualTo(1f).Within(0.001f));
 
             Assert.That(run.Archive.Research.TryAdd(ContentId.From("basic-travel")), Is.True);
-            stack.Effects.Rebuild(run, RunTestFixture.CreateObjectDatabase().ResearchCatalog);
+            stack.Effects.Rebuild(run, stack.ObjectDatabase.ResearchCatalog);
             stack.Events.Publish(new ResearchCompletedEvent(GameTime.Zero, ContentId.From("basic-travel")));
 
             Assert.That(view.Model.Fleets[0].TravelSpeed, Is.EqualTo(1.25f).Within(0.001f));
@@ -149,7 +173,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             OverworldStatus status,
             OverworldTestContext stack)
         {
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack.ObjectDatabase;
             var fleetListQuery = new FleetListQuery(database, stack.Effects, stack.Clock);
             return new StarMapPresenter(
                 view,
@@ -168,7 +192,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             OverworldStatus status,
             OverworldTestContext stack)
         {
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack.ObjectDatabase;
             return new StarSystemPresenter(
                 view,
                 selection,

@@ -19,8 +19,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Start_ListsEveryFleetAndMarksTheSelection()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(91));
-            var home = ContentId.From("home-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 91);
+            var home = RunTestFixture.HomeSystem(run);
             Assert.That(
                 run.Timeline.Fleets.TryAddFleet(ContentId.From("line-ship"), 2, home, out var second),
                 Is.True);
@@ -41,7 +41,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Click_SelectsTheFleet()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(92));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 92);
             var fleetId = run.Timeline.Fleets[0].Id;
             var selection = new OverworldSelection();
             var view = new FakeFleetRosterView();
@@ -59,10 +59,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FleetCreated_AddsTheNewRow()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(93));
-            var home = ContentId.From("home-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 93);
+            var home = RunTestFixture.HomeSystem(run);
             Assert.That(
-                run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, ContentId.From("forge-system")),
+                run.Timeline.Fleets.TrySetFleetLocation(run.Timeline.Fleets[0].Id, RunTestFixture.FirstNeighbor(run)),
                 Is.True);
             var selection = new OverworldSelection();
             var view = new FakeFleetRosterView();
@@ -81,7 +81,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResearchCompleted_RefreshesTravelSpeed()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(94));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 94);
             var selection = new OverworldSelection();
             selection.SelectFleet(run.Timeline.Fleets[0].Id);
             var view = new FakeFleetRosterView();
@@ -91,7 +91,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(view.Fleets[0].TravelSpeed, Is.EqualTo(1f).Within(0.001f));
 
             Assert.That(run.Archive.Research.TryAdd(ContentId.From("basic-travel")), Is.True);
-            stack.Effects.Rebuild(run, RunTestFixture.CreateObjectDatabase().ResearchCatalog);
+            stack.Effects.Rebuild(run, stack.ObjectDatabase.ResearchCatalog);
             stack.Events.Publish(new ResearchCompletedEvent(GameTime.Zero, ContentId.From("basic-travel")));
 
             Assert.That(view.Fleets[0].TravelSpeed, Is.EqualTo(1.25f).Within(0.001f));
@@ -102,8 +102,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Merge_DropsTheRemovedFleet()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(95));
-            var home = ContentId.From("home-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 95);
+            var home = RunTestFixture.HomeSystem(run);
             var target = run.Timeline.Fleets[0].Id;
             Assert.That(
                 run.Timeline.Fleets.TryAddFleet(ContentId.From("starter-screen"), 1, home, out var source),
@@ -139,10 +139,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void TransitEta_AdvancesWithSimulationTime()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(97));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 97);
             var fleetId = run.Timeline.Fleets[0].Id;
             Assert.That(
-                stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, ContentId.From("forge-system")).Success,
+                stack.TravelService.StartTravel(run, ObserverId.Player, fleetId, RunTestFixture.FirstNeighbor(run)).Success,
                 Is.True);
             var selection = new OverworldSelection();
             var view = new FakeFleetRosterView();
@@ -169,7 +169,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             OverworldSelection selection,
             OverworldTestContext stack)
         {
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack.ObjectDatabase;
             return new FleetRosterPresenter(
                 view,
                 selection,

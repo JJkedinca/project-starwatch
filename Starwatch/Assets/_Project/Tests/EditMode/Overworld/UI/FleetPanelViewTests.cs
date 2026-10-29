@@ -1,6 +1,7 @@
 using System;
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Overworld.UI;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 using UnityEngine.UIElements;
 
@@ -61,7 +62,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 hasFleet: true,
                 isOpen: true,
                 new EntityId(1),
-                new FleetRouteModel(ContentId.From("home-system"), "Home", default, string.Empty, 0f, false),
+                new FleetRouteModel(ContentId.From("route-system"), "Home", default, string.Empty, 0f, false),
                 speed,
                 true,
                 new[] { new FleetStackRow(ContentId.From(classId), count, "Screen") },

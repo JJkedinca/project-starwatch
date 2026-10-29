@@ -3,6 +3,7 @@ using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Core.Run.Universe;
 using ProjectStarwatch.Core.Simulation;
+using ProjectStarwatch.Core.Generation;
 using NUnit.Framework;
 
 namespace ProjectStarwatch.Tests.EditMode.Core
@@ -99,7 +100,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var second = new CountingSystem();
             loop.Register(first);
             loop.Register(second);
-            var run = RunTestFixture.CreateRunManager().CreateRun("authored-vertical-slice", RunSeed.FromValue(9));
+            var run = RunTestFixture.CreateStandardRun(RunTestFixture.CreateRunManager(), 9);
 
             loop.NotifyRunChanged(run);
             var late = new CountingSystem();
@@ -134,7 +135,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 journal,
                 new DomainEventBus(journal),
                 loop);
-            var run = manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(10));
+            var run = RunTestFixture.CreateStandardRun(manager, 10);
 
             var timeline = manager.RecreateTimeline(1);
 

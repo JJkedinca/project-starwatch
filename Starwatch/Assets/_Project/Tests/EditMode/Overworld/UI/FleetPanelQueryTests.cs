@@ -19,14 +19,14 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Describe_IsClosedUntilAFleetIsSelected()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(70));
-            var query = new FleetPanelQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects, stack.Clock);
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 70);
+            var query = new FleetPanelQuery(stack.ObjectDatabase, stack.Effects, stack.Clock);
             var selection = new OverworldSelection();
 
             Assert.That(query.Describe(run, selection).HasFleet, Is.False);
             Assert.That(query.Describe(run, selection).IsOpen, Is.False);
 
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             selection.SelectFleet(new EntityId(99));
 
             Assert.That(query.Describe(run, selection).HasFleet, Is.False);
@@ -37,8 +37,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Describe_ShowsTheBarWithoutOpeningDetails()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(69));
-            var query = new FleetPanelQuery(RunTestFixture.CreateObjectDatabase(), stack.Effects, stack.Clock);
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 69);
+            var query = new FleetPanelQuery(stack.ObjectDatabase, stack.Effects, stack.Clock);
             var selection = new OverworldSelection();
             selection.SelectFleet(run.Timeline.Fleets[0].Id);
 
@@ -52,10 +52,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Describe_ListsTheSelectedFleetsStacksWhenDetailsAreOpen()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(71));
-            var database = RunTestFixture.CreateObjectDatabase();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 71);
+            var database = stack.ObjectDatabase;
             var query = new FleetPanelQuery(database, stack.Effects, stack.Clock);
-            var home = ContentId.From("home-system");
+            var home = RunTestFixture.HomeSystem(run);
             var fleet = run.Timeline.Fleets[0];
             var selection = new OverworldSelection();
             selection.EnterSystem(home);
@@ -80,8 +80,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Describe_UsesTheSlowestClassAndTheResearchMultiplier()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(72));
-            var database = RunTestFixture.CreateObjectDatabase();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 72);
+            var database = stack.ObjectDatabase;
             var screen = ContentId.From("starter-screen");
             var line = ContentId.From("line-ship");
             Assert.That(database.ShipCatalog.TryGet(screen, out var screenClass), Is.True);
@@ -89,13 +89,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(
                 run.Timeline.Fleets.TryAddFleet(
                     new[] { new ShipStack(screen, 2), new ShipStack(line, 1) },
-                    ContentId.From("home-system"),
+                    RunTestFixture.HomeSystem(run),
                     out var fleetId),
                 Is.True);
             var effects = new FixedTravelSpeed(1.25f);
             var query = new FleetPanelQuery(database, effects, stack.Clock);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             selection.SelectFleet(fleetId);
             selection.OpenFleetDetails();
 

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using ProjectStarwatch.Core.Bootstrap;
+using ProjectStarwatch.Core.Generation;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Simulation;
 using NUnit.Framework;
@@ -25,7 +26,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var service = CreateService(clock, loader);
 
             var started = await service.StartRunAsync(
-                new RunStartConfiguration("authored-vertical-slice", 7));
+                new RunStartConfiguration(GalaxyGenerator.ScenarioId, 7));
 
             Assert.That(started, Is.True);
             Assert.That(clock.CurrentTime.Seconds, Is.EqualTo(0d));
@@ -39,7 +40,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             var clock = new SimulationClock();
             var loader = new FakeSceneLoader { BlockOverworldLoad = true };
             var service = CreateService(clock, loader);
-            var configuration = new RunStartConfiguration("authored-vertical-slice", 1);
+            var configuration = new RunStartConfiguration(GalaxyGenerator.ScenarioId, 1);
 
             var first = service.StartRunAsync(configuration);
             await UniTask.Yield();

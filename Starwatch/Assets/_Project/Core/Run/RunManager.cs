@@ -21,6 +21,11 @@ namespace ProjectStarwatch.Core.Run
 
         public RunState CurrentRun => _currentRun;
 
+        /// <summary>
+        /// Content/catalog lookup used by this manager. Generated planets register here on CreateRun.
+        /// </summary>
+        internal ObjectDatabaseSO ObjectDatabase => _objectDatabase;
+
         private readonly TimelineFactory _timelineFactory;
         private readonly UniverseLoader _universeLoader;
         private readonly ObjectDatabaseSO _objectDatabase;
@@ -74,7 +79,8 @@ namespace ProjectStarwatch.Core.Run
                     seed,
                     configuration.GalaxySizeId,
                     configuration.GalaxyShapeId,
-                    out var definition))
+                    out var definition,
+                    out var generatedScenario))
             {
                 return null;
             }
@@ -88,7 +94,19 @@ namespace ProjectStarwatch.Core.Run
                     out var timeline,
                     startingEmpireOverride))
             {
+                // Generated scenarios are only registered after a successful load so a failed create
+                // cannot replace the active run's planet/system content.
+                if (generatedScenario)
+                {
+                    DestroyScenario(definition);
+                }
+
                 return null;
+            }
+
+            if (generatedScenario)
+            {
+                _objectDatabase.RegisterScenario(definition);
             }
 
             _eventJournal.Clear();
@@ -120,9 +138,11 @@ namespace ProjectStarwatch.Core.Run
             RunSeed seed,
             GalaxySizeId galaxySizeId,
             GalaxyShapeId galaxyShapeId,
-            out ScenarioDefinition definition)
+            out ScenarioDefinition definition,
+            out bool generatedScenario)
         {
             definition = null;
+            generatedScenario = false;
             if (scenarioId == GalaxyGenerator.ScenarioId)
             {
                 if (!_galaxyGenerator.TryCreateScenario(
@@ -136,7 +156,7 @@ namespace ProjectStarwatch.Core.Run
                     return false;
                 }
 
-                _objectDatabase.RegisterScenario(definition);
+                generatedScenario = true;
                 return true;
             }
 
@@ -148,6 +168,23 @@ namespace ProjectStarwatch.Core.Run
             }
 
             return true;
+        }
+
+        private static void DestroyScenario(ScenarioDefinition definition)
+        {
+            if (definition == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                UnityEngine.Object.Destroy(definition);
+            }
+            else
+            {
+                UnityEngine.Object.DestroyImmediate(definition);
+            }
         }
 
         /// <summary>

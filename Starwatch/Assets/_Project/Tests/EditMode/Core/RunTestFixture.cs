@@ -4,6 +4,7 @@ using ProjectStarwatch.Core.Data;
 using ProjectStarwatch.Core.Effects;
 using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Generation;
+using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Core.Run;
 using ProjectStarwatch.Core.Run.Timeline;
 using ProjectStarwatch.Core.Run.Universe;
@@ -14,6 +15,7 @@ using ProjectStarwatch.Fleet;
 using ProjectStarwatch.Research;
 using ProjectStarwatch.Settlement;
 using UnityEngine;
+using EntityId = ProjectStarwatch.Core.Identifiers.EntityId;
 
 namespace ProjectStarwatch.Tests.EditMode.Core
 {
@@ -24,10 +26,6 @@ namespace ProjectStarwatch.Tests.EditMode.Core
     {
         public static ObjectDatabaseSO CreateObjectDatabase()
         {
-            var starSystems = UnityEditor.AssetDatabase.LoadAssetAtPath<StarSystemDatabaseSO>(
-                "Assets/_Project/ScriptableObjects/Data/StarSystemDatabase.asset");
-            var planets = UnityEditor.AssetDatabase.LoadAssetAtPath<PlanetDatabaseSO>(
-                "Assets/_Project/ScriptableObjects/Data/PlanetDatabase.asset");
             var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<SettlementCatalogSO>(
                 "Assets/_Project/ScriptableObjects/Data/SettlementCatalog.asset");
             var research = UnityEditor.AssetDatabase.LoadAssetAtPath<ResearchCatalogSO>(
@@ -36,15 +34,22 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 "Assets/_Project/ScriptableObjects/Data/ShipCatalog.asset");
             var galaxyCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<GalaxyCatalogSO>(
                 "Assets/_Project/ScriptableObjects/Map/Generation/GalaxyCatalog.asset");
+            var planets = UnityEditor.AssetDatabase.LoadAssetAtPath<PlanetDatabaseSO>(
+                "Assets/_Project/ScriptableObjects/Data/PlanetDatabase.asset");
+            var starSystems = UnityEditor.AssetDatabase.LoadAssetAtPath<StarSystemDatabaseSO>(
+                "Assets/_Project/ScriptableObjects/Data/StarSystemDatabase.asset");
             var database = ScriptableObject.CreateInstance<ObjectDatabaseSO>();
-            database.AssignDatabases(starSystems, planets, catalog, research, ships, galaxyCatalog);
+            database.AssignDatabases(catalog, research, ships, galaxyCatalog, planets, starSystems);
             return database;
         }
 
         internal static GalaxyGenerator CreateGalaxyGenerator(ObjectDatabaseSO objectDatabase = null)
         {
             objectDatabase = objectDatabase ?? CreateObjectDatabase();
-            return new GalaxyGenerator(objectDatabase.GalaxyCatalog);
+            return new GalaxyGenerator(
+                objectDatabase.GalaxyCatalog,
+                objectDatabase.PlanetDatabase,
+                objectDatabase.StarSystemDatabase);
         }
 
         internal static RunManager CreateRunManager(ObjectDatabaseSO objectDatabase = null, EventJournal journal = null)
@@ -63,9 +68,9 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 new SimulationLoop(new SimulationClock()));
         }
 
-        internal static OverworldTestContext CreateOverworldStack()
+        internal static OverworldTestContext CreateOverworldStack(ObjectDatabaseSO objectDatabase = null)
         {
-            var objectDatabase = CreateObjectDatabase();
+            objectDatabase = objectDatabase ?? CreateObjectDatabase();
             var journal = new EventJournal();
             var events = new DomainEventBus(journal);
             var clock = new SimulationClock();
@@ -104,6 +109,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             loop.Register(shipProductionSystem);
             return new OverworldTestContext(
                 manager: manager,
+                objectDatabase: objectDatabase,
                 explorationService: explorationService,
                 sensorService: sensorService,
                 travelService: travelService,
@@ -122,16 +128,133 @@ namespace ProjectStarwatch.Tests.EditMode.Core
                 shipProductionService: shipProductionService);
         }
 
-        internal static StartingEmpireDefinition UnsettledVerticalSlice()
+        internal static RunState CreateStandardRun(RunManager manager, int seed = 42)
+            => manager.CreateRun(GalaxyGenerator.ScenarioId, RunSeed.FromValue(seed));
+
+        internal static ContentId HomeSystem(RunState run)
+            => run.Universe.StartingEmpire.HomeSystemId;
+
+        internal static ContentId HomePlanet(RunState run)
         {
-            var database = CreateObjectDatabase();
-            if (!database.TryGetScenario(VerticalSliceScenarioFactory.ScenarioId, out var scenario)
-                || scenario.StartingEmpire == null)
+            var settlements = run.Universe.StartingEmpire.StartingSettlements;
+            if (settlements != null && settlements.Count > 0 && !settlements[0].PlanetId.IsEmpty)
             {
-                throw new InvalidOperationException("The vertical slice scenario is missing.");
+                return settlements[0].PlanetId;
             }
 
-            return scenario.StartingEmpire.WithoutSettlements();
+            if (run.Universe.MapGraph.TryGetNode(HomeSystem(run), out var node) && node.PlanetIds.Count > 0)
+            {
+                return node.PlanetIds[0];
+            }
+
+            return default;
+        }
+
+        internal static ContentId FirstNeighbor(RunState run, ContentId systemId = default)
+        {
+            if (systemId.IsEmpty)
+            {
+                systemId = HomeSystem(run);
+            }
+
+            var neighbors = run.Universe.MapGraph.GetNeighbors(systemId);
+            return neighbors.Count > 0 ? neighbors[0] : default;
+        }
+
+        internal static ContentId FirstPlanetAt(RunState run, ContentId systemId)
+        {
+            if (!run.Universe.MapGraph.TryGetNode(systemId, out var node) || node.PlanetIds.Count == 0)
+            {
+                return default;
+            }
+
+            return node.PlanetIds[0];
+        }
+
+        /// <summary>
+        /// Second planet in a system (home systems are generated with an extra body).
+        /// </summary>
+        internal static ContentId SecondPlanetAt(RunState run, ContentId systemId)
+        {
+            if (!run.Universe.MapGraph.TryGetNode(systemId, out var node) || node.PlanetIds.Count < 2)
+            {
+                return default;
+            }
+
+            return node.PlanetIds[1];
+        }
+
+        internal static float RouteTravelSeconds(RunState run, ContentId from, ContentId to)
+        {
+            if (run == null
+                || !run.Universe.MapGraph.TryGetRoute(from, to, out var route))
+            {
+                return 0f;
+            }
+
+            return route.TravelDurationSeconds;
+        }
+
+        /// <summary>
+        /// Empty home (no settlements) on a generated galaxy, ready to found/build in tests.
+        /// Regenerates on the same manager so planet ids stay registered for services.
+        /// </summary>
+        internal static RunState CreateUnsettledRun(RunManager manager, int seed = 42)
+        {
+            var probe = CreateStandardRun(manager, seed);
+            return manager.CreateRun(
+                GalaxyGenerator.ScenarioId,
+                RunSeed.FromValue(seed),
+                probe.Universe.StartingEmpire.WithoutSettlements());
+        }
+
+        /// <summary>
+        /// Starting empire for <paramref name="seed"/> with settlements stripped.
+        /// Must be paired with CreateRun using the same seed (and preferably the same manager via
+        /// <see cref="CreateUnsettledRun"/>).
+        /// </summary>
+        internal static StartingEmpireDefinition UnsettledGeneratedEmpire(int seed = 42)
+        {
+            var manager = CreateRunManager();
+            var run = CreateStandardRun(manager, seed);
+            return run.Universe.StartingEmpire.WithoutSettlements();
+        }
+
+        /// <summary>
+        /// Advances the simulation until the fleet is idle or the timeout elapses.
+        /// </summary>
+        internal static void PumpUntilFleetIdle(
+            OverworldTestContext stack,
+            RunState run,
+            EntityId fleetId,
+            float timeoutSeconds)
+        {
+            stack.Clock.SetPaused(false);
+            var travels = run.Timeline.Fleets.ActiveTravels;
+            for (var i = 0; i < travels.Count; i++)
+            {
+                if (travels[i].FleetId != fleetId)
+                {
+                    continue;
+                }
+
+                var remaining = (float)(travels[i].ArriveTime.Seconds - stack.Clock.CurrentTime.Seconds);
+                if (remaining + 5f > timeoutSeconds)
+                {
+                    timeoutSeconds = remaining + 5f;
+                }
+
+                break;
+            }
+
+            var step = SimulationLoop.kTickIntervalSeconds;
+            var ticks = 0;
+            var maxTicks = Mathf.Max(1, Mathf.CeilToInt(timeoutSeconds / step) + 30);
+            while (run.Timeline.Fleets.IsFleetTraveling(fleetId) && ticks < maxTicks)
+            {
+                stack.Loop.Pump(step);
+                ticks++;
+            }
         }
     }
 }

@@ -66,7 +66,7 @@ namespace ProjectStarwatch.Overworld.UI
 
             return new StarSystemModel(
                 true,
-                NodeLabel(node),
+                OverworldNames.StarSystem(_objectDatabase, node.Id),
                 planets,
                 _fleetListQuery.AtLocation(run, node.Id, selection.SelectedFleetId),
                 StarSystemStatus(planets.Count),
@@ -132,9 +132,5 @@ namespace ProjectStarwatch.Overworld.UI
             return planetId.Value;
         }
 
-        private static string NodeLabel(MapNode node)
-        {
-            return node == null || node.Id.IsEmpty ? string.Empty : node.Id.Value;
-        }
     }
 }

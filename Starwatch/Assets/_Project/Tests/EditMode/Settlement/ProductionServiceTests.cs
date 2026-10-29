@@ -17,28 +17,43 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         [Test]
         public void Quote_ReturnsOutputAndUpkeepOwnedByTheQuote()
         {
-            var database = RunTestFixture.CreateObjectDatabase();
+            var manager = RunTestFixture.CreateRunManager();
+            var database = manager.ObjectDatabase;
             var productionService = new ProductionService(database);
-            Assert.That(database.TryGetPlanet("home-prime", out var planet), Is.True);
-            var colony = new ColonyState(ContentId.From("home-prime"), ColonyPresence.Colony);
+            var run = RunTestFixture.CreateStandardRun(manager, 42);
+            var homePlanetId = RunTestFixture.HomePlanet(run);
+            Assert.That(database.TryGetPlanet(homePlanetId.Value, out var planet), Is.True);
+            Assert.That(
+                database.SettlementCatalog.TryGetBuilding(ContentId.From("industry-works"), out var industryWorks),
+                Is.True);
+            var colony = new ColonyState(homePlanetId, ColonyPresence.Colony);
             colony.AddBuilding(new ColonyBuildingState(ContentId.From("industry-works"), 1));
 
             var quote = productionService.Quote(colony, planet);
             var again = productionService.Quote(colony, planet);
 
-            Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(2f));
-            Assert.That(quote.Upkeep.Get(ResourceKind.Energy), Is.EqualTo(1f));
+            Assert.That(
+                quote.Output.Get(ResourceKind.Industry),
+                Is.EqualTo(LevelOne(planet, industryWorks, ResourceKind.Industry)));
+            Assert.That(
+                quote.Upkeep.Get(ResourceKind.Energy),
+                Is.EqualTo(ResourceAmount.Total(industryWorks.Upkeep, ResourceKind.Energy)));
             Assert.That(again.Output, Is.Not.SameAs(quote.Output));
-            Assert.That(quote.Output.Get(ResourceKind.Industry), Is.EqualTo(2f));
+            Assert.That(
+                quote.Output.Get(ResourceKind.Industry),
+                Is.EqualTo(LevelOne(planet, industryWorks, ResourceKind.Industry)));
         }
 
         [Test]
         public void Quote_OutpostProducesNothing()
         {
-            var database = RunTestFixture.CreateObjectDatabase();
+            var manager = RunTestFixture.CreateRunManager();
+            var database = manager.ObjectDatabase;
             var productionService = new ProductionService(database);
-            Assert.That(database.TryGetPlanet("home-prime", out var planet), Is.True);
-            var outpost = new ColonyState(ContentId.From("home-prime"), ColonyPresence.Outpost);
+            var run = RunTestFixture.CreateStandardRun(manager, 42);
+            var homePlanetId = RunTestFixture.HomePlanet(run);
+            Assert.That(database.TryGetPlanet(homePlanetId.Value, out var planet), Is.True);
+            var outpost = new ColonyState(homePlanetId, ColonyPresence.Outpost);
             outpost.AddBuilding(new ColonyBuildingState(ContentId.From("industry-works"), 1));
 
             var quote = productionService.Quote(outpost, planet);
@@ -52,7 +67,14 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
         {
             var database = RunTestFixture.CreateObjectDatabase();
             var productionService = new ProductionService(database);
-            Assert.That(database.TryGetPlanet("forge-world", out var planet), Is.True);
+            var planet = new PlanetDefinition(
+                ContentId.From("deposit-world"),
+                ContentId.From("deposit-system"),
+                "Deposit",
+                string.Empty,
+                footprintBudget: 10,
+                deposits: new[] { ResourceKind.Strategic },
+                modifiers: new PlanetModifiers(1.2f, 1f, 1f, 1f));
             Assert.That(
                 database.SettlementCatalog.TryGetBuilding(ContentId.From("industry-works"), out var industry),
                 Is.True);
@@ -94,7 +116,7 @@ namespace ProjectStarwatch.Tests.EditMode.Settlement
                         new ResourceAmount(ResourceKind.Strategic, 0.25f),
                     });
                 catalog.SetContent(new[] { building });
-                database.AssignDatabases(null, null, catalog);
+                database.AssignDatabases(catalog);
                 var productionService = new ProductionService(database);
                 var plain = new PlanetDefinition(
                     ContentId.From("plain"),

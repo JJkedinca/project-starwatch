@@ -22,13 +22,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FoundOutpost_UpdatesThePanelAndPostsSuccess()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun(
-                "authored-vertical-slice",
-                RunSeed.FromValue(34),
-                RunTestFixture.UnsettledVerticalSlice());
-            var prime = ContentId.From("home-prime");
+            var run = RunTestFixture.CreateUnsettledRun(stack.Manager, 34);
+            var prime = RunTestFixture.HomePlanet(run);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             selection.SelectPlanet(prime);
             var status = new OverworldStatus();
             var view = new FakeSettlementView();
@@ -50,13 +47,13 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResourceChanged_RebuildsTheSettlementPanelOnly()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(51));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 51);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
-            selection.SelectPlanet(ContentId.From("home-prime"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
+            selection.SelectPlanet(RunTestFixture.HomePlanet(run));
             var map = new FakeStarMapView();
             var settlement = new FakeSettlementView();
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack.ObjectDatabase;
             var fleetListQuery = new FleetListQuery(database, stack.Effects, stack.Clock);
             var mapPresenter = new StarMapPresenter(
                 map,
@@ -85,7 +82,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResourceChanged_SkipsThePanelWhileTheStarMapIsShowing()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(59));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 59);
             var selection = new OverworldSelection();
             var view = new FakeSettlementView();
             var presenter = CreatePresenter(view, selection, new OverworldStatus(), stack);
@@ -104,20 +101,17 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Scan_RevealsTheSelectedPlanetWithoutReselecting()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun(
-                "authored-vertical-slice",
-                RunSeed.FromValue(61),
-                RunTestFixture.UnsettledVerticalSlice());
-            var prime = ContentId.From("home-prime");
+            var run = RunTestFixture.CreateUnsettledRun(stack.Manager, 61);
+            var prime = RunTestFixture.HomePlanet(run);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             selection.SelectPlanet(prime);
             var view = new FakeSettlementView();
             var presenter = CreatePresenter(view, selection, new OverworldStatus(), stack);
             presenter.Start();
             var applies = view.ApplyCount;
             var beforeScan = view.Model.Development;
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack.ObjectDatabase;
             database.TryGetPlanet(prime.Value, out var planet);
             var productionService = new ProductionService(database);
 
@@ -148,7 +142,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Commands_DoNothingWhileTheStarMapIsShowing()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(52));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 52);
             var status = new OverworldStatus();
             var selection = new OverworldSelection();
             var view = new FakeSettlementView();
@@ -169,17 +163,17 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Scan_PostsDisplayNameAndClearsCanScan()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(49));
-            var prime = ContentId.From("home-prime");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 49);
+            var prime = RunTestFixture.HomePlanet(run);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             selection.SelectPlanet(prime);
             var status = new OverworldStatus();
             var view = new FakeSettlementView();
             var presenter = CreatePresenter(view, selection, status, stack);
             presenter.Start();
             Assert.That(view.Model.Header.CanScan, Is.True);
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack.ObjectDatabase;
             Assert.That(database.TryGetPlanet(prime.Value, out var planet), Is.True);
 
             view.ClickScan();
@@ -195,10 +189,10 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ResearchCompleted_RefreshesProduction()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(89));
-            var prime = ContentId.From("home-prime");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 89);
+            var prime = RunTestFixture.HomePlanet(run);
             var selection = new OverworldSelection();
-            selection.EnterSystem(ContentId.From("home-system"));
+            selection.EnterSystem(RunTestFixture.HomeSystem(run));
             selection.SelectPlanet(prime);
             var view = new FakeSettlementView();
             var presenter = CreatePresenter(view, selection, new OverworldStatus(), stack);
@@ -208,7 +202,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
 
             Assert.That(before, Is.GreaterThan(0f));
             Assert.That(run.Archive.Research.TryAdd(ContentId.From("basic-construction")), Is.True);
-            stack.Effects.Rebuild(run, RunTestFixture.CreateObjectDatabase().ResearchCatalog);
+            stack.Effects.Rebuild(run, stack.ObjectDatabase.ResearchCatalog);
             stack.Events.Publish(new ResearchCompletedEvent(GameTime.Zero, ContentId.From("basic-construction")));
 
             Assert.That(
@@ -223,7 +217,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             OverworldStatus status,
             OverworldTestContext stack)
         {
-            var database = RunTestFixture.CreateObjectDatabase();
+            var database = stack.ObjectDatabase;
             return new SettlementPresenter(
                 view,
                 selection,

@@ -16,9 +16,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void FleetTitle_JoinsEveryStackLikeTheRoster()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(71));
-            var database = RunTestFixture.CreateObjectDatabase();
-            var home = ContentId.From("home-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 71);
+            var database = stack.ObjectDatabase;
+            var home = RunTestFixture.HomeSystem(run);
             Assert.That(
                 run.Timeline.Fleets.TryAddFleet(ContentId.From("line-ship"), 4, home, out var fleetId),
                 Is.True);
@@ -39,16 +39,18 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         [Test]
         public void Labels_PreferCatalogDisplayNames()
         {
-            var database = RunTestFixture.CreateObjectDatabase();
-            var forge = ContentId.From("forge-system");
-            var prime = ContentId.From("home-prime");
+            var stack = RunTestFixture.CreateOverworldStack();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 42);
+            var database = stack.ObjectDatabase;
+            var systemId = RunTestFixture.FirstNeighbor(run);
+            var planetId = RunTestFixture.HomePlanet(run);
             var researchId = ContentId.From("basic-travel");
-            Assert.That(database.TryGetStarSystem(forge.Value, out var system), Is.True);
-            Assert.That(database.TryGetPlanet(prime.Value, out var planet), Is.True);
+            Assert.That(database.TryGetPlanet(planetId.Value, out var planet), Is.True);
             Assert.That(database.ResearchCatalog.TryGet(researchId, out var project), Is.True);
 
-            Assert.That(OverworldNames.StarSystem(database, forge), Is.EqualTo(system.DisplayName));
-            Assert.That(OverworldNames.Planet(database, prime), Is.EqualTo(planet.DisplayName));
+            Assert.That(database.TryGetStarSystemDisplayName(systemId.Value, out var systemName), Is.True);
+            Assert.That(OverworldNames.StarSystem(database, systemId), Is.EqualTo(systemName));
+            Assert.That(OverworldNames.Planet(database, planetId), Is.EqualTo(planet.DisplayName));
             Assert.That(OverworldNames.Research(database, researchId), Is.EqualTo(project.DisplayName));
         }
 

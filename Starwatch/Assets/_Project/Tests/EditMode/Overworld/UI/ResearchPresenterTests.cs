@@ -15,8 +15,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Describe_FlagsDroppedScienceOnlyWhenTheHandOffWasPositive()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(80));
-            var query = new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService);
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 80);
+            var query = new ResearchQuery(stack.ObjectDatabase, stack.EconomyService);
 
             var idle = query.Describe(run);
 
@@ -38,8 +38,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Describe_ListsCompletedResearchByName()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(83));
-            var database = RunTestFixture.CreateObjectDatabase();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 83);
+            var database = stack.ObjectDatabase;
             var id = ContentId.From("basic-construction");
             Assert.That(database.ResearchCatalog.TryGet(id, out var project), Is.True);
             run.Archive.Research.TryAdd(id);
@@ -55,8 +55,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Describe_OffersCarryTheEffectTooltip()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(85));
-            var database = RunTestFixture.CreateObjectDatabase();
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 85);
+            var database = stack.ObjectDatabase;
             var model = new ResearchQuery(database, stack.EconomyService).Describe(run);
 
             Assert.That(model.Offers, Is.Not.Empty);
@@ -71,7 +71,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Start_RefreshesThePanelAndRejectsASecondProject()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(81));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 81);
             var view = new FakeResearchView();
             var status = new OverworldStatus();
             var presenter = CreatePresenter(view, new OverworldSelection(), status, stack);
@@ -83,7 +83,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
             Assert.That(view.Model.HasActive, Is.True);
             Assert.That(view.Model.ActiveId, Is.EqualTo(first));
             Assert.That(
-                RunTestFixture.CreateObjectDatabase().ResearchCatalog.TryGet(first, out var started),
+                stack.ObjectDatabase.ResearchCatalog.TryGet(first, out var started),
                 Is.True);
             Assert.That(view.Model.ActiveEffectText, Is.EqualTo(ResearchEffectText.Describe(started.Effect)));
             // Offers stay startable so the player can click through to PromptSwitch.
@@ -107,7 +107,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ScienceTick_SkipsAClosedPanelAndRedrawsWhenOpen()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(84));
+            RunTestFixture.CreateStandardRun(stack.Manager, 84);
             var view = new FakeResearchView();
             var selection = new OverworldSelection();
             var presenter = CreatePresenter(view, selection, new OverworldStatus(), stack);
@@ -137,7 +137,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void Completion_DismissesAnOpenSwitchPrompt()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(86));
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 86);
             var view = new FakeResearchView();
             var presenter = CreatePresenter(view, new OverworldSelection(), new OverworldStatus(), stack);
             presenter.Start();
@@ -158,7 +158,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void OpenResearch_ReplacesFleetDetailsInTheRightColumn()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(87));
+            RunTestFixture.CreateStandardRun(stack.Manager, 87);
             var selection = new OverworldSelection();
             selection.SelectFleet(new EntityId(3));
             selection.OpenFleetDetails();
@@ -190,7 +190,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
                 status,
                 stack.Manager,
                 stack.ResearchService,
-                new ResearchQuery(RunTestFixture.CreateObjectDatabase(), stack.EconomyService),
+                new ResearchQuery(stack.ObjectDatabase, stack.EconomyService),
                 stack.Events);
         }
 

@@ -53,14 +53,14 @@ namespace ProjectStarwatch.Core.Data
         }
 
         /// <summary>
-        /// Development default aligned with VerticalSliceScenarioFactory home.
+        /// Empty fallback when a scenario omits a starting empire. Not a playable start.
         /// </summary>
         public static StartingEmpireDefinition CreateDefault()
         {
             return new StartingEmpireDefinition(
-                ContentId.From("home-system"),
+                default,
                 ContentId.From("starter-screen"),
-                starterShipCount: 3);
+                starterShipCount: 0);
         }
 
         private static List<StartingSettlement> Copy(IReadOnlyList<StartingSettlement> source)

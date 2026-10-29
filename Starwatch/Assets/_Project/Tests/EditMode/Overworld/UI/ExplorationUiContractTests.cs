@@ -14,8 +14,8 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void CanExplore_TrueOnlyWhenFleetIsAtUnexploredNode()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(11));
-            var forge = ContentId.From("forge-system");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 11);
+            var forge = RunTestFixture.FirstNeighbor(run);
 
             Assert.That(stack.ExplorationService.CanExplore(run, ObserverId.Player, forge), Is.False);
 
@@ -31,9 +31,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.UI
         public void ExploreThenScan_MatchesPresenterFlow()
         {
             var stack = RunTestFixture.CreateOverworldStack();
-            var run = stack.Manager.CreateRun("authored-vertical-slice", RunSeed.FromValue(12));
-            var forge = ContentId.From("forge-system");
-            var planet = ContentId.From("forge-world");
+            var run = RunTestFixture.CreateStandardRun(stack.Manager, 12);
+            var forge = RunTestFixture.FirstNeighbor(run);
+            var planet = RunTestFixture.FirstPlanetAt(run, RunTestFixture.FirstNeighbor(run));
 
             Assert.That(stack.SensorService.ScanPlanet(run, ObserverId.Player, planet).Success, Is.False);
 

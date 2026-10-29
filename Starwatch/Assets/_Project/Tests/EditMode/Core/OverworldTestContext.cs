@@ -1,3 +1,4 @@
+using ProjectStarwatch.Core.Content;
 using ProjectStarwatch.Core.Effects;
 using ProjectStarwatch.Core.Events;
 using ProjectStarwatch.Core.Run;
@@ -16,6 +17,11 @@ namespace ProjectStarwatch.Tests.EditMode.Core
     internal sealed class OverworldTestContext
     {
         public RunManager Manager { get; }
+
+        /// <summary>
+        /// Same instance as <see cref="Manager"/>.ObjectDatabase — use after CreateRun for planet lookups.
+        /// </summary>
+        public ObjectDatabaseSO ObjectDatabase { get; }
 
         public ExplorationService ExplorationService { get; }
 
@@ -51,6 +57,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
 
         public OverworldTestContext(
             RunManager manager,
+            ObjectDatabaseSO objectDatabase,
             ExplorationService explorationService,
             SensorService sensorService,
             TravelService travelService,
@@ -69,6 +76,7 @@ namespace ProjectStarwatch.Tests.EditMode.Core
             ShipProductionService shipProductionService)
         {
             Manager = manager;
+            ObjectDatabase = objectDatabase;
             ExplorationService = explorationService;
             SensorService = sensorService;
             TravelService = travelService;

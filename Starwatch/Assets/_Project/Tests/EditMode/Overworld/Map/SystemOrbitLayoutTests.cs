@@ -1,5 +1,6 @@
 using ProjectStarwatch.Core.Identifiers;
 using ProjectStarwatch.Overworld.Map;
+using ProjectStarwatch.Tests.EditMode.Core;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -37,7 +38,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Map
         [Test]
         public void OrbitAngle_IsStableAndInRange()
         {
-            var planetId = ContentId.From("home-prime");
+            var planetId = ContentId.From("orbit-layout-planet-a");
 
             var first = SystemOrbitLayout.OrbitAngle(2, planetId);
             var second = SystemOrbitLayout.OrbitAngle(2, planetId);
@@ -49,7 +50,7 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Map
         [Test]
         public void OrbitAngle_SpreadsNeighboringPlanets()
         {
-            var planetId = ContentId.From("home-prime");
+            var planetId = ContentId.From("orbit-layout-planet-a");
 
             var a = SystemOrbitLayout.OrbitAngle(0, planetId);
             var b = SystemOrbitLayout.OrbitAngle(1, planetId);
@@ -77,7 +78,9 @@ namespace ProjectStarwatch.Tests.EditMode.Overworld.Map
         [Test]
         public void PlanetScale_IsStableAndBounded()
         {
-            var planetId = ContentId.From("home-moon");
+            var run = RunTestFixture.CreateStandardRun(RunTestFixture.CreateRunManager(), 42);
+            var planetId = RunTestFixture.SecondPlanetAt(run, RunTestFixture.HomeSystem(run));
+            Assert.That(planetId.IsEmpty, Is.False);
             const float minScale = 0.45f;
             const float maxScale = 0.85f;
 

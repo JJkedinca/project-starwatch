@@ -9,14 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7c3e1b94d2f4a6e8b0c1d2e3f405162, type: 3}
+  m_Script: {fileID: 11500000, guid: e8179eceed1a40a39b23277eba2f39ee, type: 3}
   m_Name: PlanetDatabase
   m_EditorClassIdentifier: ProjectStarwatch.Core::ProjectStarwatch.Core.Data.PlanetDatabaseSO
   _planets:
-  - _id: home-prime
-    _systemId: home-system
-    _displayName: Home Prime
-    _summary: Temperate starter world.
+  - _displayName: Temperate World
+    _summary: Balanced colony world.
     <Modifiers>k__BackingField:
       _industryMultiplier: 1
       _energyMultiplier: 1
@@ -24,71 +22,40 @@ MonoBehaviour:
       _strategicMultiplier: 1
     _footprintBudget: 10
     _deposits: []
-  - _id: home-moon
-    _systemId: home-system
-    _displayName: Home Moon
-    _summary: Barren moon with sensor coverage.
+  - _displayName: Industrial World
+    _summary: Dense crust and easy extraction.
+    <Modifiers>k__BackingField:
+      _industryMultiplier: 1.5
+      _energyMultiplier: 1
+      _scienceMultiplier: 0.9
+      _strategicMultiplier: 1
+    _footprintBudget: 10
+    _deposits: []
+  - _displayName: Research World
+    _summary: Clear skies and deep archives.
+    <Modifiers>k__BackingField:
+      _industryMultiplier: 0.9
+      _energyMultiplier: 1
+      _scienceMultiplier: 1.5
+      _strategicMultiplier: 1
+    _footprintBudget: 10
+    _deposits: []
+  - _displayName: Strategic World
+    _summary: Rare materials near the surface.
     <Modifiers>k__BackingField:
       _industryMultiplier: 1
       _energyMultiplier: 1
       _scienceMultiplier: 1
-      _strategicMultiplier: 1
-    _footprintBudget: 10
-    _deposits: []
-  - _id: forge-world
-    _systemId: forge-system
-    _displayName: Forge World
-    _summary: Industrial crust with rich metals.
-    <Modifiers>k__BackingField:
-      _industryMultiplier: 2
-      _energyMultiplier: 1
-      _scienceMultiplier: 1
-      _strategicMultiplier: 1
+      _strategicMultiplier: 1.25
     _footprintBudget: 10
     _deposits:
     - 3
-  - _id: forge-inner-belt
-    _systemId: forge-system
-    _displayName: Inner Belt
-    _summary: Dense ore field near the forge star.
+  - _displayName: Barren Rock
+    _summary: Thin atmosphere, tight footprint.
     <Modifiers>k__BackingField:
-      _industryMultiplier: 1
-      _energyMultiplier: 1
-      _scienceMultiplier: 1
-      _strategicMultiplier: 2
-    _footprintBudget: 10
-    _deposits:
-    - 3
-  - _id: frontier-world
-    _systemId: frontier-system
-    _displayName: Frontier World
-    _summary: Sparse but expandable rim colony site.
-    <Modifiers>k__BackingField:
-      _industryMultiplier: 1
-      _energyMultiplier: 1
+      _industryMultiplier: 0.8
+      _energyMultiplier: 1.1
       _scienceMultiplier: 1
       _strategicMultiplier: 1
-    _footprintBudget: 10
-    _deposits: []
-  - _id: relic-world
-    _systemId: relic-system
-    _displayName: Relic World
-    _summary: Ruined surface with scan-worthy anomalies.
-    <Modifiers>k__BackingField:
-      _industryMultiplier: 1
-      _energyMultiplier: 1
-      _scienceMultiplier: 2
-      _strategicMultiplier: 1
-    _footprintBudget: 10
-    _deposits: []
-  - _id: relic-outpost
-    _systemId: relic-system
-    _displayName: Relic Outpost
-    _summary: Derelict station in high orbit.
-    <Modifiers>k__BackingField:
-      _industryMultiplier: 1
-      _energyMultiplier: 1
-      _scienceMultiplier: 2
-      _strategicMultiplier: 1
-    _footprintBudget: 10
+    _footprintBudget: 6
     _deposits: []
